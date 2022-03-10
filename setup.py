@@ -4,7 +4,7 @@ import os
 
 def read_file(file):
     here = os.path.abspath(os.path.dirname(__file__))
-    with open(os.path.join(here, file), mode='R', encoding='UTF-8') as file:
+    with open(os.path.join(here, file), mode='r', encoding='UTF-8') as file:
         return file.read()
 
 
@@ -20,7 +20,7 @@ def get_version(file):
 setup(
     name='sonnen_api_v2',
     version=get_version('sonnen/__init__.py'),
-    packages=[find_packages(exclude='tests')],
+    packages=find_packages(exclude='tests'),
     url='https://github.com/Katamave/sonnen_api_v2.git',
     license=read_file('LICENSE'),
     author='Vaclav Silhan',

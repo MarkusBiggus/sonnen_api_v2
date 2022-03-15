@@ -26,5 +26,7 @@ setup(
     author='Vaclav Silhan',
     author_email='katamave@gmail.com',
     description=read_file('README.md'),
-    install_requires=[req for req in read_file('requirements.txt').splitlines()]
+    install_requires=[
+        'requests~=2.27.1',
+    ]
 )

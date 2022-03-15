@@ -18,8 +18,8 @@ def get_version(file):
 
 
 setup(
-    name='sonnen_api_v2',
-    version=get_version('sonnen/__init__.py'),
+    name='sonnen-api-v2',
+    version=get_version('sonnen_api_v2/__init__.py'),
     packages=find_packages(exclude='tests'),
     url='https://github.com/Katamave/sonnen_api_v2.git',
     license=read_file('LICENSE'),

@@ -149,7 +149,7 @@ class Sonnen:
     @property
     def remaining_capacity_wh(self) -> int:
         """ Remaining capacity in watt hours
-            IMPORTANT NOTE: it seems that sonnen have made a mistake
+            IMPORTANT NOTE: it seems that sonnen_api_v2 have made a mistake
             in the API. The value should be the half.
             I have made the simple division hack here
             2300W reserve is removed as well

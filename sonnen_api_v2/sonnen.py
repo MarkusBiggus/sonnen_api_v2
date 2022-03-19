@@ -35,21 +35,25 @@ class Sonnen:
         self._latest_details_data = None
         self._status_data = None
 
-    def fetch_latest_details(self) -> None:
+    def fetch_latest_details(self) -> bool:
         """ Fetches latest details api """
         try:
             response = requests.get(self.latest_details_api_endpoint, headers=self.header)
             self._latest_details_data = response.json()
+            return True
         except requests.ConnectionError as e:
             print('Connection error to battery system - ', e)
+            return False
 
-    def fetch_status(self) -> None:
+    def fetch_status(self) -> bool:
         """ Fetches status api """
         try:
             response = requests.get(self.status_api_endpoint, headers=self.header)
             self._status_data = response.json()
+            return True
         except requests.ConnectionError as e:
             print('Connection error to battery system - ', e)
+            return False
 
     def update(self) -> None:
         """ Updates data from apis of the sonnenBatterie """
@@ -57,12 +61,14 @@ class Sonnen:
         self.fetch_status()
 
     @property
-    def consumption_average(self) -> str:
+    def consumption_average(self) -> int:
         """Average consumption in watt
            Returns:
                average consumption in watt
         """
-        return self._status_data[self.CONSUMPTION_AVG_KEY]
+        if self._status_data:
+            return self._status_data[self.CONSUMPTION_AVG_KEY]
+        return 0
 
     @property
     def time_to_empty(self) -> datetime.timedelta:

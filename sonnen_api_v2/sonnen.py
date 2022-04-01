@@ -2,6 +2,18 @@ import requests
 import datetime
 
 
+def get_item(func):
+    def inner(*args):
+        key = args[1]
+        try:
+            result = func(*args)
+        except KeyError:
+            print(f'{key} key not found')
+            result = None
+        return int(result) if result else 0
+    return inner
+
+
 class Sonnen:
     """Class for managing Sonnen API data"""
     # API Groups
@@ -32,14 +44,16 @@ class Sonnen:
         self.latest_details_api_endpoint = f'{self.url}/api/v2/latestdata'
 
         # api data
-        self._latest_details_data = None
-        self._status_data = None
+        self._latest_details_data = {}
+        self._status_data = {}
+        self._ic_status = {}
 
     def fetch_latest_details(self) -> bool:
         """ Fetches latest details api """
         try:
             response = requests.get(self.latest_details_api_endpoint, headers=self.header)
             self._latest_details_data = response.json()
+            self._latest_details_data = self._latest_details_data.get(self.IC_STATUS)
             return True
         except requests.ConnectionError as e:
             print('Connection error to battery system - ', e)
@@ -60,14 +74,23 @@ class Sonnen:
         self.fetch_latest_details()
         self.fetch_status()
 
-    @property
-    def consumption_average(self) -> int:
+    @get_item
+    def consumption_average(self, key) -> int:
         """Average consumption in watt
            Returns:
                average consumption in watt
         """
-        if self._status_data:
-            return self._status_data[self.CONSUMPTION_AVG_KEY]
+        return self.status_data[key]
+
+    @property
+    def consumption_average_test(self) -> int:
+        """Average consumption in watt
+           Returns:
+               average consumption in watt
+        """
+        consumption = self._get_item(self.status_data, self.CONSUMPTION_AVG_KEY)
+        if consumption:
+            return int(consumption)
         return 0
 
     @property
@@ -102,7 +125,10 @@ class Sonnen:
             Returns:
                 Number of modules
         """
-        return self._latest_details_data[self.IC_STATUS][self.MODULES_INSTALLED_KEY]
+        modules = self._ic_status.get(self.MODULES_INSTALLED_KEY)
+        if modules:
+            return int(modules)
+        return 0
 
     @property
     def time_since_full(self) -> datetime.timedelta:
@@ -129,28 +155,37 @@ class Sonnen:
         return self._status_data
 
     @property
-    def consumption(self) -> str:
+    def consumption(self) -> int:
         """Consumption of the household
             Returns:
                 house consumption in Watt
         """
-        return self._latest_details_data[self.CONSUMPTION_KEY]
+        consumption = self.latest_details_data.get(self.CONSUMPTION_KEY)
+        if consumption:
+            return int(consumption)
+        return 0
 
     @property
-    def production(self) -> str:
+    def production(self) -> int:
         """Power production of the household
             Returns:
                 house production in Watt
         """
-        return self._latest_details_data[self.PRODUCTION_KEY]
+        production = self.latest_details_data.get(self.PRODUCTION_KEY)
+        if production:
+            return int(production)
+        return 0
 
     @property
-    def u_soc(self) -> str:
+    def u_soc(self) -> int:
         """User state of charge
             Returns:
                 User SoC in percent
         """
-        return self._latest_details_data[self.USOC_KEY]
+        user_soc = self.latest_details_data.get(self.USOC_KEY)
+        if user_soc:
+            return int(user_soc)
+        return 0
 
     @property
     def remaining_capacity_wh(self) -> int:
@@ -162,7 +197,10 @@ class Sonnen:
             Returns:
                  Remaining USABLE capacity of the battery in Wh
         """
-        return self._status_data[self.REM_CON_WH_KEY] / 2 - 2300
+        remaining = self.status_data.get(self.REM_CON_WH_KEY)
+        if remaining:
+            return int(remaining / 2 - 2300)
+        return 0
 
     @property
     def full_charge_capacity(self) -> int:
@@ -170,7 +208,10 @@ class Sonnen:
             Returns:
                 Capacity in Wh
         """
-        return self._latest_details_data[self.FULL_CHARGE_CAPACITY_KEY]
+        capacity = self.latest_details_data.get(self.FULL_CHARGE_CAPACITY_KEY)
+        if capacity:
+            return int(capacity)
+        return 0
 
     @property
     def time_remaining_to_fully_charged(self) -> datetime.timedelta:
@@ -194,7 +235,8 @@ class Sonnen:
             Returns:
                   Inverter load value in watt
         """
-        return self._latest_details_data[self.PAC_KEY]
+        pac = self.latest_details_data.get(self.PAC_KEY)
+        return int(pac) if pac else 0
 
     @property
     def charging(self) -> int:
@@ -202,7 +244,7 @@ class Sonnen:
             Returns:
                 Charging value in watt
         """
-        if self.pac_total < -1:
+        if self.pac_total < 0:
             return abs(self.pac_total)
         return 0
 
@@ -222,8 +264,11 @@ class Sonnen:
             Returns:
                 Value in watt
         """
-        if self._status_data[self.GRID_FEED_IN_WATT_KEY] > 0:
-            return self._status_data[self.GRID_FEED_IN_WATT_KEY]
+        grid_in = self.status_data.get(self.GRID_FEED_IN_WATT_KEY)
+        if grid_in:
+            grid_in = int(grid_in)
+            if grid_in > 0:
+                return grid_in
         return 0
 
     @property
@@ -232,7 +277,10 @@ class Sonnen:
             Returns:
                 Value in watt
         """
-        if self._status_data[self.GRID_FEED_IN_WATT_KEY] < 0:
-            return abs(self._status_data[self.GRID_FEED_IN_WATT_KEY])
+        grid_out = self.status_data.get(self.GRID_FEED_IN_WATT_KEY)
+        if grid_out:
+            grid_out = int(grid_out)
+            if grid_out < 0:
+                return int(abs(grid_out))
         return 0
 

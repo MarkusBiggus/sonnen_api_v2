@@ -6,10 +6,10 @@ PIP=pip
 
 
 test:
-	$(PYTHON) -m pytest $(TESTS) -b
+	$(PYTHON) -m pytest $(TESTS)
 
 test-cov:
-	$(PYTHON) -m pytest --cov=$(CORE) $(TESTS) -b
+	$(PYTHON) -m pytest --cov=$(CORE) $(TESTS)
 
 test-cov-html:
 	$(PYTHON) -m pytest --cov=$(CORE) $(TESTS) --cov-report html

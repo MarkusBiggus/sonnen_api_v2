@@ -1,8 +1,11 @@
+import functools
+
 import requests
 import datetime
 
 
 def get_item(func):
+    @functools.wraps(func)
     def inner(*args):
         try:
             result = func(*args)
@@ -147,7 +150,7 @@ class Sonnen:
             Returns:
                  Remaining USABLE capacity of the battery in Wh
         """
-        return self._status_data[self.REM_CON_WH_KEY]
+        return self._status_data[self.REM_CON_WH_KEY] - 22000
 
     @get_item
     def full_charge_capacity(self) -> int:
@@ -157,7 +160,6 @@ class Sonnen:
         """
         return self._latest_details_data[self.FULL_CHARGE_CAPACITY_KEY]
 
-    @property
     def time_since_full(self) -> datetime.timedelta:
         """Calculates time since full charge.
            Returns:
@@ -165,19 +167,22 @@ class Sonnen:
         """
         return datetime.timedelta(seconds=self.seconds_since_full())
 
-    @property
-    def time_remaining_to_fully_charged(self) -> datetime.timedelta:
+    @get_item
+    def seconds_remaining_to_fully_charged(self) -> int:
         """Time remaining until fully charged
             Returns:
-                Time in HH MM format
+                Time in seconds
         """
         remaining_charge = self.full_charge_capacity() - self.remaining_capacity_wh()
-        seconds = int((remaining_charge / self.charging()) * 3600) if self.charging else 0
-        return datetime.timedelta(seconds=seconds)
+        if self.charging():
+            return int(remaining_charge / self.charging()) * 3600
+        return 0
 
-    @property
     def fully_charged_at(self) -> datetime:
-        return (datetime.datetime.now() + self.time_remaining_to_fully_charged).strftime('%d.%B %H:%M')
+        if self.charging():
+            final_time = (datetime.datetime.now() + datetime.timedelta(seconds=self.seconds_remaining_to_fully_charged()))
+            return final_time.strftime('%d.%B.%Y %H:%M')
+        return 0
 
     @property
     def pac_total(self) -> int:

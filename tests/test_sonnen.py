@@ -2,6 +2,7 @@ import datetime
 import os
 import unittest
 import responses
+import logging
 from freezegun import freeze_time
 from sonnen_api_v2 import Sonnen
 
@@ -519,7 +520,7 @@ class TestSonnen(unittest.TestCase):
         self.assertEqual(result1, 0)
         self.assertEqual(result2, 0)
         self.assertEqual(result3, 0)
-        self.assertEqual(result4, 336440)
+        self.assertEqual(result4, 156030)
 
     @responses.activate
     @freeze_time("24-05-2022 15:38:23")
@@ -531,4 +532,63 @@ class TestSonnen(unittest.TestCase):
         self.assertEqual(result1, '00:00')
         self.assertEqual(result2, '00:00')
         self.assertEqual(result3, '00:00')
-        self.assertEqual(result4, '28.May 13:05')
+        self.assertEqual(result4, '26.May 10:58')
+
+    @responses.activate
+    @freeze_time("24-04-2022 15:38:23")
+    def test_seconds_since_full(self):
+        result1 = self.battery_charging_working.seconds_since_full()
+        result2 = self.battery_unreachable.seconds_since_full()
+        result3 = self.battery_wrong_token_charging.seconds_since_full()
+        result4 = self.battery_charging_working.seconds_since_full()
+        self.assertEqual(result1, 3720)
+        self.assertEqual(result2, 0)
+        self.assertEqual(result3, 0)
+        self.assertEqual(result4, 3720)
+
+    @responses.activate
+    def test_full_charge_capacity(self):
+        result1 = self.battery_charging_working.full_charge_capacity()
+        result2 = self.battery_unreachable.full_charge_capacity()
+        result3 = self.battery_wrong_token_charging.full_charge_capacity()
+        result4 = self.battery_discharging_working.full_charge_capacity()
+        self.assertEqual(result1, 19531)
+        self.assertEqual(result2, 0)
+        self.assertEqual(result3, 0)
+        self.assertEqual(result4, 19531)
+
+    @responses.activate
+    @freeze_time('24-04-2022 15:38:23')
+    def test_time_since_full(self):
+        result1 = self.battery_charging_working.time_since_full()
+        result2 = self.battery_unreachable.time_since_full()
+        result3 = self.battery_wrong_token_charging.time_since_full()
+        result4 = self.battery_charging_working.time_since_full()
+        self.assertEqual(result1, datetime.timedelta(seconds=3720))
+        self.assertEqual(result2, datetime.timedelta(seconds=0))
+        self.assertEqual(result3, datetime.timedelta(seconds=0))
+        self.assertEqual(result4, datetime.timedelta(seconds=3720))
+
+    @responses.activate
+    @freeze_time('24-04-2022 15:38:23')
+    def test_time_remaining_to_fully_charged(self):
+        result1 = self.battery_charging_working.seconds_remaining_to_fully_charged()
+        result2 = self.battery_unreachable.seconds_remaining_to_fully_charged()
+        result3 = self.battery_wrong_token_charging.seconds_remaining_to_fully_charged()
+        result4 = self.battery_discharging_working.seconds_remaining_to_fully_charged()
+        self.assertEqual(result1, 25200)
+        self.assertEqual(result2, 0)
+        self.assertEqual(result3, 0)
+        self.assertEqual(result4, 0)
+
+    @responses.activate
+    @freeze_time('24-04-2022 15:38:23')
+    def test_fully_charged_at(self):
+        result1 = self.battery_charging_working.fully_charged_at()
+        result2 = self.battery_unreachable.fully_charged_at()
+        result3 = self.battery_wrong_token_charging.fully_charged_at()
+        result4 = self.battery_discharging_working.fully_charged_at()
+        self.assertEqual(result1, '24.April.2022 22:38')
+        self.assertEqual(result2, 0)
+        self.assertEqual(result3, 0)
+        self.assertEqual(result4, 0)

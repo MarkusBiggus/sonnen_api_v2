@@ -34,6 +34,22 @@ class Sonnen:
     MODULES_INSTALLED_KEY = 'nrbatterymodules'
     CONSUMPTION_AVG_KEY = 'Consumption_Avg'
     FULL_CHARGE_CAPACITY_KEY = 'FullChargeCapacity'
+    BATTERY_CYCLE_COUNT = 'cyclecount'
+    BATTERY_FULL_CHARGE_CAPACITY = 'fullchargecapacity'
+    BATTERY_MAX_CELL_TEMP = 'maximumcelltemperature'
+    BATTERY_MAX_CELL_VOLTAGE = 'maximumcellvoltage'
+    BATTERY_MAX_MODULE_CURRENT = 'maximummodulecurrent'
+    BATTERY_MAX_MODULE_VOLTAGE = 'maximummoduledcvoltage'
+    BATTERY_MAX_MODULE_TEMP = 'maximummoduletemperature'
+    BATTERY_MIN_CELL_TEMP = 'minimumcelltemperature'
+    BATTERY_MIN_CELL_VOLTAGE = 'minimumcellvoltage'
+    BATTERY_MIN_MODULE_CURRENT = 'minimummodulecurrent'
+    BATTERY_MIN_MODULE_VOLTAGE = 'minimummoduledcvoltage'
+    BATTERY_MIN_MODULE_TEMP = 'minimummoduletemperature'
+    BATTERY_RSOC = 'relativestateofcharge'
+    BATTERY_REMAINING_CAPACITY = 'remainingcapacity'
+    BATTERY_SYSTEM_CURRENT = 'systemcurrent'
+    BATTERY_SYSTEM_VOLTAGE = 'systemdcvoltage'
     TIMEOUT = 5
 
     def __init__(self, auth_token: str, ip: str):
@@ -45,36 +61,66 @@ class Sonnen:
         # read api endpoints
         self.status_api_endpoint = f'{self.url}/api/v2/status'
         self.latest_details_api_endpoint = f'{self.url}/api/v2/latestdata'
+        self.battery_api_endpoint = f'{self.url}/api/v2/battery'
 
         # api data
         self._latest_details_data = {}
         self._status_data = {}
         self._ic_status = {}
+        self._battery_status = {}
 
-    def fetch_latest_details(self) -> None:
-        """ Fetches latest details api """
+    def fetch_latest_details(self) -> bool:
+        """Fetches latest details api
+            Returns:
+                True if fetch was successful, else False
+        """
         try:
             response = requests.get(self.latest_details_api_endpoint, headers=self.header, timeout=self.TIMEOUT)
             if response.status_code == 200:
                 self._latest_details_data = response.json()
                 self._ic_status = self._latest_details_data[self.IC_STATUS]
-
+                return True
         except requests.ConnectionError as e:
             print('Connection error to battery system - ', e)
+        return False
 
-    def fetch_status(self) -> None:
-        """ Fetches status api """
+    def fetch_status(self) -> bool:
+        """Fetches status api
+            Returns:
+                True if fetch was successful, else False
+        """
         try:
             response = requests.get(self.status_api_endpoint, headers=self.header, timeout=self.TIMEOUT)
             if response.status_code == 200:
                 self._status_data = response.json()
+                return True
         except requests.ConnectionError as e:
             print('Connection error to battery system - ', e)
+        return False
 
-    def update(self) -> None:
-        """ Updates data from apis of the sonnenBatterie """
-        self.fetch_latest_details()
-        self.fetch_status()
+    def fetch_battery_status(self) -> bool:
+        """Fetches battery details api
+            Returns:
+                True if fetch was successful, else False
+        """
+        try:
+            response = requests.get(self.battery_api_endpoint, headers=self.header, timeout=self.TIMEOUT)
+            if response.status_code == 200:
+                self._battery_status = response.json()
+                return True
+        except requests.ConnectionError as e:
+            print('Connection error to battery system - ', e)
+        return False
+
+    def update(self) -> bool:
+        """Updates data from apis of the sonnenBatterie
+            Returns:
+                True if all updates were successful, else False
+        """
+        success = self.fetch_latest_details()
+        success = success and self.fetch_status()
+        success = success and self.fetch_battery_status()
+        return success
 
     @get_item
     def consumption(self) -> int:
@@ -235,4 +281,132 @@ class Sonnen:
         if self._status_data[self.GRID_FEED_IN_WATT_KEY] < 0:
             return abs(self._status_data[self.GRID_FEED_IN_WATT_KEY])
         return 0
+
+    @get_item
+    def battery_cycle_count(self) -> int:
+        """Number of charge/discharge cycles
+            Returns:
+                Number of charge/discharge cycles
+        """
+        return self._battery_status[self.BATTERY_CYCLE_COUNT]
+
+    @get_item
+    def battery_full_charge_capacity(self) -> float:
+        """Fullcharge capacity
+            Returns:
+                Fullcharge capacity in Ah
+        """
+        return self._battery_status[self.BATTERY_FULL_CHARGE_CAPACITY]
+
+    @get_item
+    def battery_max_cell_temp(self) -> float:
+        """Max cell temperature
+            Returns:
+                Maximum cell temperature in ºC
+        """
+        return self._battery_status[self.BATTERY_MAX_CELL_TEMP]
+
+    @get_item
+    def battery_max_cell_voltage(self) -> float:
+        """Max cell voltage
+            Returns:
+                Maximum cell voltage in Volt
+        """
+        return self._battery_status[self.BATTERY_MAX_CELL_VOLTAGE]
+
+    @get_item
+    def battery_max_module_current(self) -> float:
+        """Max module DC current
+            Returns:
+                Maximum module DC current in Ampere
+        """
+        return self._battery_status[self.BATTERY_MAX_MODULE_CURRENT]
+
+    @get_item
+    def battery_max_module_voltage(self) -> float:
+        """Max module DC voltage
+            Returns:
+                Maximum module DC voltage in Volt
+        """
+        return self._battery_status[self.BATTERY_MAX_MODULE_VOLTAGE]
+
+    @get_item
+    def battery_max_module_temp(self) -> float:
+        """Max module DC temperature
+            Returns:
+                Maximum module DC temperature in ºC
+        """
+        return self._battery_status[self.BATTERY_MAX_MODULE_TEMP]
+
+    @get_item
+    def battery_min_cell_temp(self) -> float:
+        """Min cell temperature
+            Returns:
+                Minimum cell temperature in ºC
+        """
+        return self._battery_status[self.BATTERY_MIN_CELL_TEMP]
+
+    @get_item
+    def battery_min_cell_voltage(self) -> float:
+        """Min cell voltage
+            Returns:
+                Minimum cell voltage in Volt
+        """
+        return self._battery_status[self.BATTERY_MIN_CELL_VOLTAGE]
+
+    @get_item
+    def battery_min_module_current(self) -> float:
+        """Min module DC current
+            Returns:
+                Minimum module DC current in Ampere
+        """
+        return self._battery_status[self.BATTERY_MIN_MODULE_CURRENT]
+
+    @get_item
+    def battery_min_module_voltage(self) -> float:
+        """Min module DC voltage
+            Returns:
+                Minimum module DC voltage in Volt
+        """
+        return self._battery_status[self.BATTERY_MIN_MODULE_VOLTAGE]
+
+    @get_item
+    def battery_min_module_temp(self) -> float:
+        """Min module DC temperature
+            Returns:
+                Minimum module DC temperature in ºC
+        """
+        return self._battery_status[self.BATTERY_MIN_MODULE_TEMP]
+
+    @get_item
+    def battery_rsoc(self) -> float:
+        """Relative state of charge
+            Returns:
+                Relative state of charge in %
+        """
+        return self._battery_status[self.BATTERY_RSOC]
+
+    @get_item
+    def battery_remaining_capacity(self) -> float:
+        """Remaining capacity
+            Returns:
+                Remaining capacity in Ah
+        """
+        return self._battery_status[self.BATTERY_REMAINING_CAPACITY]
+
+    @get_item
+    def battery_system_current(self) -> float:
+        """System current
+            Returns:
+                System current in Ampere
+        """
+        return self._battery_status[self.BATTERY_SYSTEM_CURRENT]
+
+    @get_item
+    def battery_system_dc_voltage(self) -> float:
+        """System battery voltage
+            Returns:
+                Voltage in Volt
+        """
+        return self._battery_status[self.BATTERY_SYSTEM_VOLTAGE]
 

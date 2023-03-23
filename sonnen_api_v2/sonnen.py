@@ -1,10 +1,13 @@
+""" SonnenAPI v2 module """
+
 import functools
 
-import requests
 import datetime
+import requests
 
 
 def get_item(func):
+    """ Decorator for getting json data from Sonnen API """
     @functools.wraps(func)
     def inner(*args):
         try:
@@ -50,12 +53,14 @@ class Sonnen:
     BATTERY_REMAINING_CAPACITY = 'remainingcapacity'
     BATTERY_SYSTEM_CURRENT = 'systemcurrent'
     BATTERY_SYSTEM_VOLTAGE = 'systemdcvoltage'
+
+    # default timeout
     TIMEOUT = 5
 
-    def __init__(self, auth_token: str, ip: str):
-        self.ip = ip
+    def __init__(self, auth_token: str, ip_address: str) -> None:
+        self.ip_address = ip_address
         self.auth_token = auth_token
-        self.url = f'http://{ip}'
+        self.url = f'http://{ip_address}'
         self.header = {'Auth-Token': self.auth_token}
 
         # read api endpoints
@@ -75,13 +80,16 @@ class Sonnen:
                 True if fetch was successful, else False
         """
         try:
-            response = requests.get(self.latest_details_api_endpoint, headers=self.header, timeout=self.TIMEOUT)
+            response = requests.get(
+                self.latest_details_api_endpoint,
+                headers=self.header, timeout=self.TIMEOUT
+            )
             if response.status_code == 200:
                 self._latest_details_data = response.json()
                 self._ic_status = self._latest_details_data[self.IC_STATUS]
                 return True
-        except requests.ConnectionError as e:
-            print('Connection error to battery system - ', e)
+        except requests.ConnectionError as conn_error:
+            print('Connection error to battery system - ', conn_error)
         return False
 
     def fetch_status(self) -> bool:
@@ -90,12 +98,15 @@ class Sonnen:
                 True if fetch was successful, else False
         """
         try:
-            response = requests.get(self.status_api_endpoint, headers=self.header, timeout=self.TIMEOUT)
+            response = requests.get(
+                self.status_api_endpoint,
+                headers=self.header, timeout=self.TIMEOUT
+            )
             if response.status_code == 200:
                 self._status_data = response.json()
                 return True
-        except requests.ConnectionError as e:
-            print('Connection error to battery system - ', e)
+        except requests.ConnectionError as conn_error:
+            print('Connection error to battery system - ', conn_error)
         return False
 
     def fetch_battery_status(self) -> bool:
@@ -104,12 +115,14 @@ class Sonnen:
                 True if fetch was successful, else False
         """
         try:
-            response = requests.get(self.battery_api_endpoint, headers=self.header, timeout=self.TIMEOUT)
+            response = requests.get(
+                self.battery_api_endpoint,
+                headers=self.header, timeout=self.TIMEOUT)
             if response.status_code == 200:
                 self._battery_status = response.json()
                 return True
-        except requests.ConnectionError as e:
-            print('Connection error to battery system - ', e)
+        except requests.ConnectionError as conn_err:
+            print('Connection error to battery system - ', conn_err)
         return False
 
     def update(self) -> bool:
@@ -225,6 +238,7 @@ class Sonnen:
         return 0
 
     def fully_charged_at(self) -> datetime:
+        """ Calculating time until fully charged """
         if self.charging():
             final_time = (datetime.datetime.now() + datetime.timedelta(seconds=self.seconds_remaining_to_fully_charged()))
             return final_time.strftime('%d.%B.%Y %H:%M')
@@ -409,4 +423,3 @@ class Sonnen:
                 Voltage in Volt
         """
         return self._battery_status[self.BATTERY_SYSTEM_VOLTAGE]
-

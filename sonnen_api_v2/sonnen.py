@@ -19,6 +19,22 @@ def get_item(func):
     return inner
 
 
+@get_item
+def get_int(func):
+    @functools.wraps(func)
+    def inner(*args):
+        return int(func(*args))
+    return inner
+
+
+@get_item
+def get_float(func):
+    @functools.wraps(func)
+    def inner(*args):
+        return float(func(*args))
+    return inner
+
+
 class Sonnen:
     """Class for managing Sonnen API data"""
     # API Groups

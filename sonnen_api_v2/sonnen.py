@@ -1,38 +1,28 @@
 """ SonnenAPI v2 module """
 
-import functools
+from functools import wraps, singledispatch
 
 import datetime
 import requests
 
 
-def get_item(func):
-    """ Decorator for getting json data from Sonnen API """
-    @functools.wraps(func)
-    def inner(*args):
-        try:
-            result = func(*args)
-        except KeyError:
-            print(f'{func} key not found')
-            result = None
-        return int(result) if result else 0
-    return inner
-
-
-@get_item
-def get_int(func):
-    @functools.wraps(func)
-    def inner(*args):
-        return int(func(*args))
-    return inner
-
-
-@get_item
-def get_float(func):
-    @functools.wraps(func)
-    def inner(*args):
-        return float(func(*args))
-    return inner
+def get_item(_type):
+    """Decorator factory for getting data from the api dictionary and casting
+    to the right type """
+    def decorator(fn):
+        @wraps(fn)
+        def inner(arg):
+            try:
+                result = _type(fn(arg))
+            except KeyError:
+                print('Key not found')
+                result = None
+            except ValueError:
+                print(f'{fn(arg)} is not an {_type} castable!')
+                result = None
+            return result
+        return inner
+    return decorator
 
 
 class Sonnen:
@@ -151,7 +141,7 @@ class Sonnen:
         success = success and self.fetch_battery_status()
         return success
 
-    @get_item
+    @get_item(int)
     def consumption(self) -> int:
         """Consumption of the household
             Returns:
@@ -159,7 +149,7 @@ class Sonnen:
         """
         return self._latest_details_data[self.CONSUMPTION_KEY]
 
-    @get_item
+    @get_item(int)
     def consumption_average(self) -> int:
         """Average consumption in watt
            Returns:
@@ -168,7 +158,7 @@ class Sonnen:
 
         return self._status_data[self.CONSUMPTION_AVG_KEY]
 
-    @get_item
+    @get_item(int)
     def production(self) -> int:
         """Power production of the household
             Returns:
@@ -194,7 +184,7 @@ class Sonnen:
             return (datetime.datetime.now() + datetime.timedelta(seconds=self.seconds_to_empty())).strftime('%d.%B %H:%M')
         return '00:00'
 
-    @get_item
+    @get_item(int)
     def seconds_since_full(self) -> int:
         """Seconds passed since full charge
             Returns:
@@ -202,7 +192,7 @@ class Sonnen:
         """
         return self._latest_details_data[self.IC_STATUS][self.SECONDS_SINCE_FULL_KEY]
 
-    @get_item
+    @get_item(int)
     def installed_modules(self) -> int:
         """Battery modules installed in the system
             Returns:
@@ -210,7 +200,7 @@ class Sonnen:
         """
         return self._ic_status[self.MODULES_INSTALLED_KEY]
 
-    @get_item
+    @get_item(int)
     def u_soc(self) -> int:
         """User state of charge
             Returns:
@@ -218,7 +208,7 @@ class Sonnen:
         """
         return self._latest_details_data[self.USOC_KEY]
 
-    @get_item
+    @get_item(float)
     def remaining_capacity_wh(self) -> int:
         """ Remaining capacity in watt hours
             IMPORTANT NOTE: Why is this double as high as it should be???
@@ -227,7 +217,7 @@ class Sonnen:
         """
         return self._status_data[self.REM_CON_WH_KEY] - 22000
 
-    @get_item
+    @get_item(float)
     def full_charge_capacity(self) -> int:
         """Full charge capacity of the battery system
             Returns:
@@ -242,7 +232,7 @@ class Sonnen:
         """
         return datetime.timedelta(seconds=self.seconds_since_full())
 
-    @get_item
+    @get_item(int)
     def seconds_remaining_to_fully_charged(self) -> int:
         """Time remaining until fully charged
             Returns:
@@ -271,7 +261,7 @@ class Sonnen:
         pac = self._latest_details_data.get(self.PAC_KEY)
         return int(pac) if pac else 0
 
-    @get_item
+    @get_item(int)
     def charging(self) -> int:
         """Actual battery charging value
             Returns:
@@ -281,7 +271,7 @@ class Sonnen:
             return abs(self.pac_total)
         return 0
 
-    @get_item
+    @get_item(int)
     def discharging(self) -> int:
         """Actual battery discharging value
             Returns:
@@ -291,7 +281,7 @@ class Sonnen:
             return self.pac_total
         return 0
 
-    @get_item
+    @get_item(int)
     def grid_in(self) -> int:
         """Actual grid feed in value
             Returns:
@@ -301,7 +291,7 @@ class Sonnen:
             return self._status_data[self.GRID_FEED_IN_WATT_KEY]
         return 0
 
-    @get_item
+    @get_item(int)
     def grid_out(self) -> int:
         """Actual grid out value
             Returns:
@@ -312,7 +302,7 @@ class Sonnen:
             return abs(self._status_data[self.GRID_FEED_IN_WATT_KEY])
         return 0
 
-    @get_item
+    @get_item(int)
     def battery_cycle_count(self) -> int:
         """Number of charge/discharge cycles
             Returns:
@@ -328,7 +318,7 @@ class Sonnen:
         """
         return self._battery_status[self.BATTERY_FULL_CHARGE_CAPACITY]
 
-    @get_item
+    @get_item(float)
     def battery_max_cell_temp(self) -> float:
         """Max cell temperature
             Returns:
@@ -336,7 +326,7 @@ class Sonnen:
         """
         return self._battery_status[self.BATTERY_MAX_CELL_TEMP]
 
-    @get_item
+    @get_item(float)
     def battery_max_cell_voltage(self) -> float:
         """Max cell voltage
             Returns:
@@ -344,7 +334,7 @@ class Sonnen:
         """
         return self._battery_status[self.BATTERY_MAX_CELL_VOLTAGE]
 
-    @get_item
+    @get_item(float)
     def battery_max_module_current(self) -> float:
         """Max module DC current
             Returns:
@@ -352,7 +342,7 @@ class Sonnen:
         """
         return self._battery_status[self.BATTERY_MAX_MODULE_CURRENT]
 
-    @get_item
+    @get_item(float)
     def battery_max_module_voltage(self) -> float:
         """Max module DC voltage
             Returns:
@@ -360,7 +350,7 @@ class Sonnen:
         """
         return self._battery_status[self.BATTERY_MAX_MODULE_VOLTAGE]
 
-    @get_item
+    @get_item(float)
     def battery_max_module_temp(self) -> float:
         """Max module DC temperature
             Returns:
@@ -368,7 +358,7 @@ class Sonnen:
         """
         return self._battery_status[self.BATTERY_MAX_MODULE_TEMP]
 
-    @get_item
+    @get_item(float)
     def battery_min_cell_temp(self) -> float:
         """Min cell temperature
             Returns:
@@ -376,7 +366,7 @@ class Sonnen:
         """
         return self._battery_status[self.BATTERY_MIN_CELL_TEMP]
 
-    @get_item
+    @get_item(float)
     def battery_min_cell_voltage(self) -> float:
         """Min cell voltage
             Returns:
@@ -384,7 +374,7 @@ class Sonnen:
         """
         return self._battery_status[self.BATTERY_MIN_CELL_VOLTAGE]
 
-    @get_item
+    @get_item(float)
     def battery_min_module_current(self) -> float:
         """Min module DC current
             Returns:
@@ -392,7 +382,7 @@ class Sonnen:
         """
         return self._battery_status[self.BATTERY_MIN_MODULE_CURRENT]
 
-    @get_item
+    @get_item(float)
     def battery_min_module_voltage(self) -> float:
         """Min module DC voltage
             Returns:
@@ -400,7 +390,7 @@ class Sonnen:
         """
         return self._battery_status[self.BATTERY_MIN_MODULE_VOLTAGE]
 
-    @get_item
+    @get_item(float)
     def battery_min_module_temp(self) -> float:
         """Min module DC temperature
             Returns:
@@ -408,7 +398,7 @@ class Sonnen:
         """
         return self._battery_status[self.BATTERY_MIN_MODULE_TEMP]
 
-    @get_item
+    @get_item(float)
     def battery_rsoc(self) -> float:
         """Relative state of charge
             Returns:
@@ -416,7 +406,7 @@ class Sonnen:
         """
         return self._battery_status[self.BATTERY_RSOC]
 
-    @get_item
+    @get_item(float)
     def battery_remaining_capacity(self) -> float:
         """Remaining capacity
             Returns:
@@ -424,7 +414,7 @@ class Sonnen:
         """
         return self._battery_status[self.BATTERY_REMAINING_CAPACITY]
 
-    @get_item
+    @get_item(float)
     def battery_system_current(self) -> float:
         """System current
             Returns:
@@ -432,7 +422,7 @@ class Sonnen:
         """
         return self._battery_status[self.BATTERY_SYSTEM_CURRENT]
 
-    @get_item
+    @get_item(float)
     def battery_system_dc_voltage(self) -> float:
         """System battery voltage
             Returns:

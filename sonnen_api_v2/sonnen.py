@@ -1,6 +1,6 @@
 """ SonnenAPI v2 module """
 
-from functools import wraps, singledispatch
+from functools import wraps
 
 import datetime
 import requests
@@ -11,14 +11,14 @@ def get_item(_type):
     to the right type """
     def decorator(fn):
         @wraps(fn)
-        def inner(arg):
+        def inner(*args):
             try:
-                result = _type(fn(arg))
+                result = _type(fn(*args))
             except KeyError:
                 print('Key not found')
                 result = None
             except ValueError:
-                print(f'{fn(arg)} is not an {_type} castable!')
+                print(f'{fn(*args)} is not an {_type} castable!')
                 result = None
             return result
         return inner
@@ -210,7 +210,7 @@ class Sonnen:
 
     @get_item(float)
     def remaining_capacity_wh(self) -> int:
-        """ Remaining capacity in watt hours
+        """ Remaining capacity in watt-hours
             IMPORTANT NOTE: Why is this double as high as it should be???
             Returns:
                  Remaining USABLE capacity of the battery in Wh
@@ -251,6 +251,7 @@ class Sonnen:
         return 0
 
     @property
+    @get_item(int)
     def pac_total(self) -> int:
         """ Battery inverter load
             Negative if charging
@@ -258,8 +259,7 @@ class Sonnen:
             Returns:
                   Inverter load value in watt
         """
-        pac = self._latest_details_data.get(self.PAC_KEY)
-        return int(pac) if pac else 0
+        return self._latest_details_data.get(self.PAC_KEY)
 
     @get_item(int)
     def charging(self) -> int:

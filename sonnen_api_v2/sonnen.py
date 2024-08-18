@@ -3,6 +3,8 @@
 from functools import wraps
 
 import datetime
+from idlelib.pyparse import trans
+
 import requests
 
 
@@ -59,6 +61,8 @@ class Sonnen:
     BATTERY_REMAINING_CAPACITY = 'remainingcapacity'
     BATTERY_SYSTEM_CURRENT = 'systemcurrent'
     BATTERY_SYSTEM_VOLTAGE = 'systemdcvoltage'
+    POWERMETER_KWH_CONSUMED = 'kwh_imported'
+    POWERMETER_KWH_PRODUCED = 'kwh_imported'
 
     # default timeout
     TIMEOUT = 5
@@ -73,12 +77,16 @@ class Sonnen:
         self.status_api_endpoint = f'{self.url}/api/v2/status'
         self.latest_details_api_endpoint = f'{self.url}/api/v2/latestdata'
         self.battery_api_endpoint = f'{self.url}/api/v2/battery'
+        self.powermeter_api_endpoint = f'{self.url}/api/v2/powermeter'
 
         # api data
         self._latest_details_data = {}
         self._status_data = {}
         self._ic_status = {}
         self._battery_status = {}
+        self._powermeter_data = []
+        self._powermeter_production = {}
+        self._powermeter_consumption = {}
 
     def fetch_latest_details(self) -> bool:
         """Fetches latest details api
@@ -115,6 +123,28 @@ class Sonnen:
             print('Connection error to battery system - ', conn_error)
         return False
 
+    def fetch_powermeter(self) -> bool:
+        """Fetches powermeter api
+            Returns:
+                True if fetch was successful, else False
+        """
+
+        try:
+            response = requests.get(
+                self.powermeter_api_endpoint,
+                headers=self.header, timeout=self.TIMEOUT
+            )
+            if response.status_code == 200:
+                self._powermeter_data = response.json()
+                self._powermeter_production = self._powermeter_data[0]
+                self._powermeter_consumption = self._powermeter_data[2]
+
+                print(self._powermeter_data)
+                return True
+        except requests.ConnectionError as conn_error:
+            print('Connection error to battery system - ', conn_error)
+        return False
+
     def fetch_battery_status(self) -> bool:
         """Fetches battery details api
             Returns:
@@ -139,7 +169,19 @@ class Sonnen:
         success = self.fetch_latest_details()
         success = success and self.fetch_status()
         success = success and self.fetch_battery_status()
+        success = success and self.fetch_powermeter()
         return success
+
+
+    @get_item(float)
+    def kwh_consumed(self) -> float:
+        """Consumed kWh"""
+        return self._powermeter_consumption[self.POWERMETER_KWH_CONSUMED]
+
+    @get_item(float)
+    def kwh_produced(self) -> float:
+        """Produced kWh"""
+        return self._powermeter_production[self.POWERMETER_KWH_PRODUCED]
 
     @get_item(int)
     def consumption(self) -> int:

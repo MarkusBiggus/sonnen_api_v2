@@ -5,6 +5,10 @@ from functools import wraps
 import datetime
 from idlelib.pyparse import trans
 
+import aiohttp
+import asyncio
+
+import logging
 import requests
 
 
@@ -67,7 +71,10 @@ class Sonnen:
     # default timeout
     TIMEOUT = 5
 
-    def __init__(self, auth_token: str, ip_address: str) -> None:
+    def __init__(self, auth_token: str, ip_address: str, logger: logging.Logger = None) -> None:
+
+        self.last_updated = None
+        self.logger = logger
         self.ip_address = ip_address
         self.auth_token = auth_token
         self.url = f'http://{ip_address}'
@@ -88,6 +95,12 @@ class Sonnen:
         self._powermeter_production = {}
         self._powermeter_consumption = {}
 
+    def _log_error(self, msg):
+        if self.logger:
+            self.logger.error(msg)
+        else:
+            print(msg)
+
     def fetch_latest_details(self) -> bool:
         """Fetches latest details api
             Returns:
@@ -103,7 +116,7 @@ class Sonnen:
                 self._ic_status = self._latest_details_data[self.IC_STATUS]
                 return True
         except requests.ConnectionError as conn_error:
-            print('Connection error to battery system - ', conn_error)
+            self._log_error(f'Connection error to battery system - {conn_error}')
         return False
 
     def fetch_status(self) -> bool:
@@ -120,7 +133,7 @@ class Sonnen:
                 self._status_data = response.json()
                 return True
         except requests.ConnectionError as conn_error:
-            print('Connection error to battery system - ', conn_error)
+            self._log_error(f'Connection error to battery system - {conn_error}')
         return False
 
     def fetch_powermeter(self) -> bool:
@@ -138,11 +151,9 @@ class Sonnen:
                 self._powermeter_data = response.json()
                 self._powermeter_production = self._powermeter_data[0]
                 self._powermeter_consumption = self._powermeter_data[2]
-
-                print(self._powermeter_data)
                 return True
         except requests.ConnectionError as conn_error:
-            print('Connection error to battery system - ', conn_error)
+            self._log_error(f'Connection error to battery system - {conn_error}')
         return False
 
     def fetch_battery_status(self) -> bool:
@@ -158,7 +169,7 @@ class Sonnen:
                 self._battery_status = response.json()
                 return True
         except requests.ConnectionError as conn_err:
-            print('Connection error to battery system - ', conn_err)
+            self._log_error(f'Connection error to battery system - {conn_err}')
         return False
 
     def update(self) -> bool:
@@ -172,6 +183,74 @@ class Sonnen:
         success = success and self.fetch_powermeter()
         return success
 
+    async def _async_fetch_data(self, url: str) -> dict:
+        """Fetches data from the API endpoint with asyncio"""
+        try:
+            async with aiohttp.ClientSession(headers=self.header) as session:
+                resp = await session.get(url)
+                data = resp.json()
+                return await data
+        except aiohttp.ClientError as error:
+            self._log_error(f'Battery: {self.ip_address} is offline!')
+        except asyncio.TimeoutError as error:
+            self._log_error(f'Timeout error while accessing: {url}')
+        except Exception as error:
+            self._log_error(f'Error while data parsing {error}')
+            return {}
+
+    async def async_fetch_latest_details(self) -> bool:
+        """Fetches latest details api as coroutine"""
+        try:
+            self._latest_details_data = await self._async_fetch_data(
+                self.latest_details_api_endpoint
+            )
+            self._ic_status = self._latest_details_data[self.IC_STATUS]
+            return True
+        except Exception as error:
+            self._log_error(f'Error occurred while data parsing latest details:{error}')
+            return False
+
+    async def async_fetch_status(self) -> bool:
+        """Fetches status api as coroutine"""
+        try:
+            self._status_data = await self._async_fetch_data(
+                self.latest_details_api_endpoint
+            )
+            return True
+        except Exception as error:
+            self._log_error(f'Error occurred while data parsing status:{error}')
+            return False
+
+    async def async_fetch_battery_status(self) -> bool:
+        """Fetches battery details api as coroutine"""
+        try:
+            self._battery_status = await self._async_fetch_data(
+                self.battery_api_endpoint
+            )
+            return True
+        except Exception as error:
+            self._log_error(f'Error occurred while data parsing battery status:{error}')
+        return False
+
+    async def async_fetch_powermeter_status(self) -> bool:
+        """Fetches powermeter data async way"""
+        try:
+            self._powermeter_data = await self._async_fetch_data(self.powermeter_api_endpoint)
+            self._powermeter_production = self._powermeter_data[0]
+            self._powermeter_consumption = self._powermeter_data[2]
+            return True
+        except Exception as error:
+            self._log_error(f'Error occurred while data parsing battery status:{error}')
+        return False
+
+    async def async_update(self) -> bool:
+        """Updates data from apis of the sonnenBatterie as coroutine"""
+        success = await self.async_fetch_latest_details()
+        success = success and await self.async_fetch_status()
+        success = success and await self.async_fetch_battery_status()
+        success = success and await self.async_fetch_powermeter_status()
+        self.last_updated = datetime.datetime.now()
+        return success
 
     @get_item(float)
     def kwh_consumed(self) -> float:

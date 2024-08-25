@@ -29,7 +29,7 @@ def get_item(_type):
 
 class Sonnen:
     """Class for managing Sonnen API data"""
-    # API Groups
+    # API latestdata System-Status Groups
     IC_STATUS = 'ic_status'
 
     # API Item keys
@@ -63,6 +63,12 @@ class Sonnen:
     BATTERY_SYSTEM_VOLTAGE = 'systemdcvoltage'
     POWERMETER_KWH_CONSUMED = 'kwh_imported'
     POWERMETER_KWH_PRODUCED = 'kwh_imported'
+    STATE_KEY = "statecorecontrolmodule"
+    STATUS_BACKUPBUFFER = "BackupBuffer"
+    CONFIGURATION_EM_OPERATINGMODE = "EM_OperatingMode"
+    CONFIGURATION_EM_USOC = "EM_USOC"
+    CONFIGURATION_DE_SOFTWARE = "DE_Software"
+    IC_ECLIPSE_LED = "Eclipse Led"
 
     # default timeout
     TIMEOUT = 5
@@ -78,6 +84,7 @@ class Sonnen:
         self.latest_details_api_endpoint = f'{self.url}/api/v2/latestdata'
         self.battery_api_endpoint = f'{self.url}/api/v2/battery'
         self.powermeter_api_endpoint = f'{self.url}/api/v2/powermeter'
+        self.configurations_api_endpoint = f'{self.url}/api/v2/configurations'
 
         # api data
         self._latest_details_data = {}
@@ -87,6 +94,7 @@ class Sonnen:
         self._powermeter_data = []
         self._powermeter_production = {}
         self._powermeter_consumption = {}
+        self._configurations_data = {}
 
     def fetch_latest_details(self) -> bool:
         """Fetches latest details api
@@ -104,6 +112,23 @@ class Sonnen:
                 return True
         except requests.ConnectionError as conn_error:
             print('Connection error to battery system - ', conn_error)
+        return False
+
+    def fetch_configurations(self) -> bool:
+        """Fetches configurations api
+            Returns:
+                True if fetch was successful, else False
+        """
+        try:
+            response = requests.get(
+                self.configurations_api_endpoint,
+                headers=self.header, timeout=self.TIMEOUT
+            )
+            if response.status_code == 200:
+                self._configurations_data = response.json()
+                return True
+        except requests.ConnectionError as conn_error:
+            print('Connection error to sonnenBatterie - ', conn_error)
         return False
 
     def fetch_status(self) -> bool:
@@ -137,7 +162,7 @@ class Sonnen:
             if response.status_code == 200:
                 self._powermeter_data = response.json()
                 self._powermeter_production = self._powermeter_data[0]
-                self._powermeter_consumption = self._powermeter_data[2]
+                self._powermeter_consumption = self._powermeter_data[1]
 
                 print(self._powermeter_data)
                 return True
@@ -244,11 +269,19 @@ class Sonnen:
 
     @get_item(int)
     def u_soc(self) -> int:
-        """User state of charge
+        """User state of charge (usable charge)
             Returns:
                 User SoC in percent
         """
         return self._latest_details_data[self.USOC_KEY]
+
+    @get_item(int)
+    def u_roc(self) -> int:
+        """Relative state of charge (actual charge)
+            Returns:
+                Integer Percent
+        """
+        return self._latest_details_data[self.RSOC_KEY]
 
     @get_item(float)
     def remaining_capacity_wh(self) -> int:
@@ -352,7 +385,7 @@ class Sonnen:
         """
         return self._battery_status[self.BATTERY_CYCLE_COUNT]
 
-    @get_item
+    @get_item(float)
     def battery_full_charge_capacity(self) -> float:
         """Fullcharge capacity
             Returns:
@@ -471,3 +504,61 @@ class Sonnen:
                 Voltage in Volt
         """
         return self._battery_status[self.BATTERY_SYSTEM_VOLTAGE]
+
+    @get_item(int)
+    def configuration_em_operatingmode(self) -> int:
+        """Operating Mode
+            Returns:
+                Mode Integer
+                "1": Manual
+                "2": Automatic - Self Consumption
+                "6": Battery-Module-Extension (30%)
+                "10": Time-Of-Use
+        """
+        if self._configurations_data == {}:
+            self.fetch_configurations(self)
+
+        return self._configurations_data[self.CONFIGURATION_EM_OPERATINGMODE]
+
+    @get_item(int)
+    def configuration_em_usoc(self) -> int:
+        """User State Of Charge - BackupBuffer value (includes 6% unusable reserve)
+            Returns:
+                Integer Percent
+        """
+        if self._configurations_data == {}:
+            self.fetch_configurations(self)
+
+        return self._configurations_data[self.CONFIGURATION_EM_USOC]
+
+    def state_core_control_module(self) -> str:
+        """State of control module: config, ongrid, ...
+            Returns:
+                String
+        """
+        return self._latest_details_data[self.STATE_KEY]
+
+    def configuration_de_software(self) -> str:
+        """Software version
+            Returns:
+                String
+        """
+        if self._configurations_data == {}:
+            self.fetch_configurations(self)
+
+        return self._configurations_data[self.CONFIGURATION_DE_SOFTWARE]
+
+    def ic_eclipse_led(self) -> str:
+        """System-Status:
+                "Eclipse Led":{
+                    "Blinking Red":false,
+                    "Brightness":100,
+                    "Pulsing Green":false,
+                    "Pulsing Orange":false,
+                    "Pulsing White":true,
+                    "Solid Red":false
+                }
+            Returns:
+                JSON String
+        """
+        return self._latest_details_data[self.IC_STATUS][self.IC_ECLIPSE_LED]

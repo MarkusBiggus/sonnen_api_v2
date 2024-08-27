@@ -164,7 +164,7 @@ class Sonnen:
                 self._powermeter_production = self._powermeter_data[0]
                 self._powermeter_consumption = self._powermeter_data[1]
 
-                print(self._powermeter_data)
+            #    print(self._powermeter_data)
                 return True
         except requests.ConnectionError as conn_error:
             print('Connection error to battery system - ', conn_error)
@@ -536,7 +536,7 @@ class Sonnen:
             Returns:
                 String
         """
-        return self._latest_details_data[self.STATE_KEY]
+        return self._latest_details_data[self.IC_STATUS][self.STATE_KEY]
 
     def configuration_de_software(self) -> str:
         """Software version

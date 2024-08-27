@@ -17,6 +17,7 @@ class TestBatterie(unittest.TestCase):
 
     battery_live.update()
     battery_live.fetch_configurations()
+    print ('Live Battery Online!')
 
     def test_configuration_de_software(self):
         version = self.battery_live.configuration_de_software()
@@ -48,5 +49,5 @@ class TestBatterie(unittest.TestCase):
 
     def test_eclipse_led(self):
         eclipse_led = self.battery_live.ic_eclipse_led()
-        print(json.dumps(eclipse_led, indent=2))
+        print('EclipseLEDs: ' + json.dumps(eclipse_led, indent=2))
         self.assertEqual(0, 0)

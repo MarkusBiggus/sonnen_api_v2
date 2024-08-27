@@ -4,6 +4,7 @@ from functools import wraps
 
 import datetime
 from idlelib.pyparse import trans
+import json
 
 import requests
 
@@ -33,20 +34,34 @@ class Sonnen:
     IC_STATUS = 'ic_status'
 
     # API Item keys
-    CONSUMPTION_KEY = 'Consumption_W'
-    PRODUCTION_KEY = 'Production_W'
-    GRID_FEED_IN_WATT_KEY = 'GridFeedIn_W'
+    STATUS_CONSUMPTION_W = 'Consumption_W'
+    STATUS_CONSUMPTION_AVG = 'Consumption_Avg'
+    STATUS_PRODUCTION_W = 'Production_W'
+    STATUS_BACKUPBUFFER = "BackupBuffer"
+    STATUS_GRIDFEEDIN_W = 'GridFeedIn_W'
+    STATUS_BATTERY_CHARGING = 'BatteryCharging'
+    STATUS_BATTERY_DISCHARGING = 'BatteryDischarging'
+    STATUS_REMAININGCAPACITY_WH = 'RemainingCapacity_Wh'
+    STATUS_FLOW_CONSUMPTION_BATTERY = 'FlowConsumptionBattery'
+    STATUS_FLOW_CONSUMPTION_GRID = 'FlowConsumptionGrid'
+    STATUS_FLOW_CONSUMPTION_PRODUCTION = 'FlowConsumptionProduction'
+    STATUS_FLOW_GRID_BATTERY = 'FlowGridBattery'
+    STATUS_FLOW_PRODUCTION_BATTERY = 'FlowProductionBattery'
+    STATUS_FLOW_PRODUCTION_GRID = 'FlowProductionGrid'
+    STATUS_GRID_FEED_IN_W = 'GridFeedIn_W'
+    STATUS_APPARENT_OUTPUT = 'Apparent_output'
+    STATUS_PAC_TOTAL_W = 'Pac_total_W'
+    STATUS_MODULES_INSTALLED = 'nrbatterymodules'
     USOC_KEY = 'USOC'
     RSOC_KEY = 'RSOC'
-    BATTERY_CHARGE_OUTPUT_KEY = 'Apparent_output'
-    REM_CON_WH_KEY = 'RemainingCapacity_Wh'
-    PAC_KEY = 'Pac_total_W'
-    SECONDS_SINCE_FULL_KEY = 'secondssincefullcharge'
-    MODULES_INSTALLED_KEY = 'nrbatterymodules'
-    CONSUMPTION_AVG_KEY = 'Consumption_Avg'
-    FULL_CHARGE_CAPACITY_KEY = 'FullChargeCapacity'
+    DETAIL_FULL_CHARGE_CAPACITY = 'FullChargeCapacity'
+    DETAIL_STATE_CORECONTROL_MODULE = "statecorecontrolmodule"
+    DETAIL_PAC_TOTAL_W = 'Pac_total_W'
+    DETAIL_PRODUCTION_W = 'Production_W'
+    DETAIL_SECONDS_SINCE_FULLCHARGE = 'secondssincefullcharge'
     BATTERY_CYCLE_COUNT = 'cyclecount'
     BATTERY_FULL_CHARGE_CAPACITY = 'fullchargecapacity'
+    BATTERY_REMAINING_CAPACITY = 'remainingcapacity'
     BATTERY_MAX_CELL_TEMP = 'maximumcelltemperature'
     BATTERY_MAX_CELL_VOLTAGE = 'maximumcellvoltage'
     BATTERY_MAX_MODULE_CURRENT = 'maximummodulecurrent'
@@ -58,13 +73,11 @@ class Sonnen:
     BATTERY_MIN_MODULE_VOLTAGE = 'minimummoduledcvoltage'
     BATTERY_MIN_MODULE_TEMP = 'minimummoduletemperature'
     BATTERY_RSOC = 'relativestateofcharge'
-    BATTERY_REMAINING_CAPACITY = 'remainingcapacity'
+    BATTERY_USABLE_REMAINING_CAPACITY = 'usableremainingcapacity'
     BATTERY_SYSTEM_CURRENT = 'systemcurrent'
     BATTERY_SYSTEM_VOLTAGE = 'systemdcvoltage'
     POWERMETER_KWH_CONSUMED = 'kwh_imported'
     POWERMETER_KWH_PRODUCED = 'kwh_imported'
-    STATE_KEY = "statecorecontrolmodule"
-    STATUS_BACKUPBUFFER = "BackupBuffer"
     CONFIGURATION_EM_OPERATINGMODE = "EM_OperatingMode"
     CONFIGURATION_EM_USOC = "EM_USOC"
     CONFIGURATION_DE_SOFTWARE = "DE_Software"
@@ -214,7 +227,7 @@ class Sonnen:
             Returns:
                 house consumption in Watt
         """
-        return self._latest_details_data[self.CONSUMPTION_KEY]
+        return self._latest_details_data[self.STATUS_CONSUMPTION_W]
 
     @get_item(int)
     def consumption_average(self) -> int:
@@ -223,7 +236,7 @@ class Sonnen:
                average consumption in watt
         """
 
-        return self._status_data[self.CONSUMPTION_AVG_KEY]
+        return self._status_data[self.STATUS_CONSUMPTION_AVG]
 
     @get_item(int)
     def production(self) -> int:
@@ -231,7 +244,7 @@ class Sonnen:
             Returns:
                 house production in Watt
         """
-        return self._latest_details_data[self.PRODUCTION_KEY]
+        return self._latest_details_data[self.STATUS_PRODUCTION_W]
 
     def seconds_to_empty(self) -> int:
         """Time until battery discharged
@@ -257,7 +270,7 @@ class Sonnen:
             Returns:
                 seconds as integer
         """
-        return self._latest_details_data[self.IC_STATUS][self.SECONDS_SINCE_FULL_KEY]
+        return self._latest_details_data[self.IC_STATUS][self.DETAIL_SECONDS_SINCE_FULLCHARGE]
 
     @get_item(int)
     def installed_modules(self) -> int:
@@ -265,7 +278,7 @@ class Sonnen:
             Returns:
                 Number of modules
         """
-        return self._ic_status[self.MODULES_INSTALLED_KEY]
+        return self._ic_status[self.STATUS_MODULES_INSTALLED]
 
     @get_item(int)
     def u_soc(self) -> int:
@@ -283,22 +296,24 @@ class Sonnen:
         """
         return self._latest_details_data[self.RSOC_KEY]
 
-    @get_item(float)
+    @get_item(int)
     def remaining_capacity_wh(self) -> int:
         """ Remaining capacity in watt-hours
-            IMPORTANT NOTE: Why is this double as high as it should be???
+         IMPORTANT NOTE: Why is this double as high as it should be???
             Returns:
                  Remaining USABLE capacity of the battery in Wh
         """
-        return self._status_data[self.REM_CON_WH_KEY] - 22000
+    #    print('Remaining USABLE: ' + json.dumps(self._status_data, indent=2))
 
-    @get_item(float)
+        return self._status_data[self.STATUS_REMAININGCAPACITY_WH] // 2
+
+    @get_item(int)
     def full_charge_capacity(self) -> int:
         """Full charge capacity of the battery system
             Returns:
                 Capacity in Wh
         """
-        return self._latest_details_data[self.FULL_CHARGE_CAPACITY_KEY]
+        return self._latest_details_data[self.DETAIL_FULL_CHARGE_CAPACITY]
 
     def time_since_full(self) -> datetime.timedelta:
         """Calculates time since full charge.
@@ -334,7 +349,7 @@ class Sonnen:
             Returns:
                   Inverter load value in watt
         """
-        return self._latest_details_data.get(self.PAC_KEY)
+        return self._latest_details_data.get(self.STATUS_PAC_TOTAL_W)
 
     @get_item(int)
     def charging(self) -> int:
@@ -362,8 +377,8 @@ class Sonnen:
             Returns:
                 Value in watt
         """
-        if self._status_data[self.GRID_FEED_IN_WATT_KEY] > 0:
-            return self._status_data[self.GRID_FEED_IN_WATT_KEY]
+        if self._status_data[self.STATUS_GRIDFEEDIN_W] > 0:
+            return self._status_data[self.STATUS_GRIDFEEDIN_W]
         return 0
 
     @get_item(int)
@@ -373,8 +388,8 @@ class Sonnen:
                 Value in watt
         """
 
-        if self._status_data[self.GRID_FEED_IN_WATT_KEY] < 0:
-            return abs(self._status_data[self.GRID_FEED_IN_WATT_KEY])
+        if self._status_data[self.STATUS_GRIDFEEDIN_W] < 0:
+            return abs(self._status_data[self.STATUS_GRIDFEEDIN_W])
         return 0
 
     @get_item(int)
@@ -490,6 +505,14 @@ class Sonnen:
         return self._battery_status[self.BATTERY_REMAINING_CAPACITY]
 
     @get_item(float)
+    def battery_usable_remaining_capacity(self) -> float:
+        """Usable Remaining capacity
+            Returns:
+                Usable Remaining capacity in Ah
+        """
+        return self._battery_status[self.BATTERY_USABLE_REMAINING_CAPACITY]
+
+    @get_item(float)
     def battery_system_current(self) -> float:
         """System current
             Returns:
@@ -516,7 +539,7 @@ class Sonnen:
                 "10": Time-Of-Use
         """
         if self._configurations_data == {}:
-            self.fetch_configurations(self)
+            self.fetch_configurations()
 
         return self._configurations_data[self.CONFIGURATION_EM_OPERATINGMODE]
 
@@ -527,16 +550,62 @@ class Sonnen:
                 Integer Percent
         """
         if self._configurations_data == {}:
-            self.fetch_configurations(self)
+            self.fetch_configurations()
 
         return self._configurations_data[self.CONFIGURATION_EM_USOC]
+
+    @get_item(int)
+    def status_backup_buffer(self) -> int:
+        """BackupBuffer value from Status api
+            Returns:
+                Integer Percent
+        """
+        return self._status_data[self.STATUS_BACKUPBUFFER]
+
+    @get_item(bool)
+    def status_battery_charging(self) -> bool:
+        """BatteryCharging
+            Returns:
+                Bool
+        """
+        return self._status_data[self.STATUS_BATTERY_CHARGING]
+
+    @get_item(bool)
+    def status_battery_discharging(self) -> bool:
+        """BatteryDischarging
+            Returns:
+                Bool
+        """
+        return self._status_data[self.STATUS_BATTERY_DISCHARGING]
+
+    def status_flows(self) -> dict:
+        """Status flows: production -> grid , battery
+            Returns:
+                dict of name:bool
+        """
+        flows = {"FlowConsumptionBattery":self._status_data[self.STATUS_FLOW_CONSUMPTION_BATTERY],
+                 "FlowConsumptionGrid":self._status_data[self.STATUS_FLOW_CONSUMPTION_GRID],
+                 "FlowConsumptionProduction":self._status_data[self.STATUS_FLOW_CONSUMPTION_PRODUCTION],
+                 "FlowGridBattery":self._status_data[self.STATUS_FLOW_CONSUMPTION_BATTERY],
+                 "FlowProductionBattery":self._status_data[self.STATUS_FLOW_PRODUCTION_BATTERY],
+                 "FlowProductionGrid":self._status_data[self.STATUS_FLOW_PRODUCTION_GRID],
+                }
+        return flows
+
+    @get_item(float)
+    def status_grid_feed_in(self) -> float:
+        """GridFeedIn_W
+            Returns:
+                Float watts (actually int with zero decimal part)
+        """
+        return self._status_data[self.STATUS_GRID_FEED_IN_W]
 
     def state_core_control_module(self) -> str:
         """State of control module: config, ongrid, ...
             Returns:
                 String
         """
-        return self._latest_details_data[self.IC_STATUS][self.STATE_KEY]
+        return self._latest_details_data[self.IC_STATUS][self.DETAIL_STATE_CORECONTROL_MODULE]
 
     def configuration_de_software(self) -> str:
         """Software version
@@ -544,7 +613,7 @@ class Sonnen:
                 String
         """
         if self._configurations_data == {}:
-            self.fetch_configurations(self)
+            self.fetch_configurations()
 
         return self._configurations_data[self.CONFIGURATION_DE_SOFTWARE]
 

@@ -5,7 +5,12 @@ import responses
 import logging
 from freezegun import freeze_time
 from sonnen_api_v2 import Sonnen
+from dotenv import load_dotenv
 
+load_dotenv()
+
+BATTERIE_HOST = os.getenv('BATTERIE_HOST')
+API_READ_TOKEN = os.getenv('API_READ_TOKEN')
 
 class TestSonnen(unittest.TestCase):
 
@@ -319,21 +324,21 @@ class TestSonnen(unittest.TestCase):
 
         battery1_powermeter_data = responses.Response(
             method='GET',
-            url='http://192.168.188.11/api/v2/powermeter',
+            url='http://' + BATTERIE_HOST + '/api/v2/powermeter',
             status=200,
             json=test_data_powermeter
         )
 
         battery1_latest_data = responses.Response(
             method='GET',
-            url='http://192.168.188.11/api/v2/latestdata',
+            url='http://' + BATTERIE_HOST + '/api/v2/latestdata',
             status=200,
             json=test_data_latest_charging
         )
 
         battery1_status = responses.Response(
             method='GET',
-            url='http://192.168.188.11/api/v2/status',
+            url='http://' + BATTERIE_HOST + '/api/v2/status',
             status=200,
             json=test_data_status_charging
         )
@@ -392,16 +397,17 @@ class TestSonnen(unittest.TestCase):
         responses.add(battery3_status)
         responses.add(battery3_powermeter_data)
 
-        token = os.getenv('AUTH_TOKEN')
-        self.battery_charging_working = Sonnen(token, '192.168.188.11')  # Working and charging
-        self.battery_discharging_working = Sonnen(token, '192.168.188.12')  # Working and discharging
-        self.battery_unreachable = Sonnen('xyZio', '155.156.19.5')  # Not Reachable
-        self.battery_wrong_token_charging = Sonnen('notWorkingToken', '155.547.4.57')  # Wrong Token
+    #    API_READ_TOKEN = os.getenv('AUTH_TOKEN')
+
+        self.battery_charging_working = Sonnen(API_READ_TOKEN, BATTERIE_HOST)  # Working and charging
+        self.battery_discharging_working = Sonnen(API_READ_TOKEN, '192.168.188.12')  # Working and discharging
+        self.battery_unreachable = Sonnen(API_READ_TOKEN, '155.156.19.5')  # Not Reachable
+        self.battery_wrong_token_charging = Sonnen('notWorkingToken', BATTERIE_HOST)  # Wrong Token
 
         self.battery_charging_working.update()
+        self.battery_discharging_working.update()
         self.battery_unreachable.update()
         self.battery_wrong_token_charging.update()
-        self.battery_discharging_working.update()
 
     @responses.activate
     def test_consumption_average(self):

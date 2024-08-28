@@ -9,8 +9,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-BATTERIE_HOST = os.getenv('BATTERIE_HOST')
-API_READ_TOKEN = os.getenv('API_READ_TOKEN')
+BATTERIE_1_HOST = os.getenv('BATTERIE_1_HOST')
+API_READ_TOKEN_1 = os.getenv('API_READ_TOKEN_1')
+BATTERIE_2_HOST = os.getenv('BATTERIE_2_HOST')
+API_READ_TOKEN_2 = os.getenv('API_READ_TOKEN_2')
 
 class TestSonnen(unittest.TestCase):
 
@@ -388,84 +390,84 @@ class TestSonnen(unittest.TestCase):
 
         battery1_powermeter_data = responses.Response(
             method='GET',
-            url='http://' + BATTERIE_HOST + '/api/v2/powermeter',
+            url='http://' + BATTERIE_1_HOST + '/api/v2/powermeter',
             status=200,
             json=test_data_powermeter
         )
 
         battery1_latest_data = responses.Response(
             method='GET',
-            url='http://' + BATTERIE_HOST + '/api/v2/latestdata',
+            url='http://' + BATTERIE_1_HOST + '/api/v2/latestdata',
             status=200,
             json=test_data_latest_charging
         )
 
         battery1_status = responses.Response(
             method='GET',
-            url='http://' + BATTERIE_HOST + '/api/v2/status',
+            url='http://' + BATTERIE_1_HOST + '/api/v2/status',
             status=200,
             json=test_data_status_charging
         )
 
         battery1_battery_data = responses.Response(
             method='GET',
-            url='http://' + BATTERIE_HOST + '/api/v2/battery',
+            url='http://' + BATTERIE_1_HOST + '/api/v2/battery',
             status=200,
             json=test_data_battery
         )
 
         battery2_powermeter_data = responses.Response(
             method='GET',
-            url='http://192.168.188.12/api/v2/powermeter',
+            url='http://' + BATTERIE_2_HOST + '/api/v2/powermeter',
             status=200,
             json=test_data_powermeter
         )
 
         battery2_latest_data = responses.Response(
             method='GET',
-            url='http://192.168.188.12/api/v2/latestdata',
+            url='http://' + BATTERIE_2_HOST + '/api/v2/latestdata',
             status=200,
             json=test_data_latest_discharging
         )
 
         battery2_status = responses.Response(
             method='GET',
-            url='http://192.168.188.12/api/v2/status',
+            url='http://' + BATTERIE_2_HOST + '/api/v2/status',
             status=200,
             json=test_data_status_discharging
         )
 
         battery2_battery_data = responses.Response(
             method='GET',
-            url='http://192.168.188.12/api/v2/battery',
+            url='http://' + BATTERIE_2_HOST + '/api/v2/battery',
             status=200,
             json=test_data_battery
         )
 
         battery3_powermeter_data = responses.Response(
             method='GET',
-            url='http://' + BATTERIE_HOST + '/api/v2/powermeter',
+            url='http://' + BATTERIE_1_HOST + '/api/v2/powermeter',
             status=401,
             json={"error":"Unauthorized"}
         )
 
         battery3_latest_data = responses.Response(
             method='GET',
-            url='http://' + BATTERIE_HOST + '/api/v2/latestdata',
+            url='http://' + BATTERIE_1_HOST + '/api/v2/latestdata',
             status=401,
             json={"error":"Unauthorized"}
         )
 
         battery3_status = responses.Response(
             method='GET',
-            url='http://' + BATTERIE_HOST + '/api/v2/status',
+            url='http://' + BATTERIE_1_HOST + '/api/v2/status',
             status=401,
             json={"error":"Unauthorized"}
         )
 
         battery3_battery_data = responses.Response(
             method='GET',
-            url='http://' + BATTERIE_HOST + '/api/v2/battery',
+            url='http://' + BATTERIE_1_HOST + '/api/v2/battery',
             status=401,
             json={"error":"Unauthorized"}
         )
@@ -485,12 +487,12 @@ class TestSonnen(unittest.TestCase):
         responses.add(battery3_powermeter_data)
         responses.add(battery3_battery_data)
 
-    #    API_READ_TOKEN = os.getenv('AUTH_TOKEN')
+    #    API_READ_TOKEN_1 = os.getenv('AUTH_TOKEN')
 
-        self.battery_charging_working = Sonnen(API_READ_TOKEN, BATTERIE_HOST)  # Working and charging
-        self.battery_discharging_working = Sonnen(API_READ_TOKEN, '192.168.188.12')  # Working and discharging
-    #    self.battery_unreachable = Sonnen(API_READ_TOKEN, '155.156.19.5')  # Not Reachable
-        self.battery_wrong_token_charging = Sonnen('notWorkingToken', BATTERIE_HOST)  # Wrong Token
+        self.battery_charging_working = Sonnen(API_READ_TOKEN_1, BATTERIE_1_HOST)  # Working and charging
+        self.battery_discharging_working = Sonnen(API_READ_TOKEN_2, '' + BATTERIE_2_HOST + '')  # Working and discharging
+    #    self.battery_unreachable = Sonnen('notWorkingToken', '155.156.19.5')  # Not Reachable
+        self.battery_wrong_token_charging = Sonnen('notWorkingToken', BATTERIE_1_HOST)  # Wrong Token
 
         self.battery_charging_working.update()
         self.battery_discharging_working.update()

@@ -6,8 +6,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-BATTERIE_HOST = os.getenv('BATTERIE_HOST')
-API_READ_TOKEN = os.getenv('API_READ_TOKEN')
+BATTERIE_HOST = os.getenv('BATTERIE_1_HOST')
+API_READ_TOKEN = os.getenv('API_READ_TOKEN_1')
+BACKUP_BUFFER_USOC = int(os.getenv('BACKUP_BUFFER_USOC'))
+OPERATING_MODE = int(os.getenv('OPERATING_MODE'))
 
 class TestBatterie(unittest.TestCase):
 
@@ -24,11 +26,16 @@ class TestBatterie(unittest.TestCase):
 
     def test_configuration_em_usoc(self):
         usoc = self.battery_live.configuration_em_usoc()
-        self.assertEqual(usoc, 20) # config BackupBuffer value
+        self.assertEqual(usoc, BACKUP_BUFFER_USOC) # config BackupBuffer value
 
-    def test_status_backup_buffer(self):
-        usoc = self.battery_live.status_backup_buffer()
-        print(f'Backup Buffer: {usoc:2}%')
+    def test_seconds_to_empty(self):
+        if self.battery_live.status_battery_discharging():
+            seconds = self.battery_live.seconds_to_empty()
+            print(f'Seconds to empty: {seconds:,}')
+        else:
+            usoc = self.battery_live.u_soc()
+            if usoc == self.battery_live.configuration_em_usoc():
+                print(f'Battery at Backup Reserve: {rsoc:,}')
         self.assertEqual(True, True)
 
     def test_state_core_control_module(self):
@@ -38,16 +45,25 @@ class TestBatterie(unittest.TestCase):
 
     def test_configuration_em_operatingmode(self):
         OpMode = self.battery_live.configuration_em_operatingmode()
-        self.assertEqual(OpMode, 2) # config Operating Mode: Automatic - Self Consumption
+        self.assertEqual(OpMode, OPERATING_MODE) # config Operating Mode: 2 = Automatic - Self Consumption
 
     def test_battery_remaining_capacity(self):
         capacity = self.battery_live.battery_remaining_capacity()
-        print(f'Remaining capacity: {capacity:.2f}Ah')
+        usable_capacity = self.battery_live.battery_usable_remaining_capacity()
+        print(f'Remaining capacity: {capacity:.2f}Ah  Usable: {usable_capacity:.2f}Ah')
         self.assertEqual(True, True)
 
     def test_battery_rsoc(self):
         rsoc = self.battery_live.battery_rsoc()
-        print(f'Relative State of Charge: {rsoc:.2f}%')
+        print(f'Battery Relative State of Charge: {rsoc:.0f}%')
+        self.assertEqual(True, True)
+
+    def test_data_socs(self):
+        usoc = self.battery_live.u_soc()
+        rsoc = self.battery_live.u_roc()
+        print(f'Useable State of Charge: {usoc}%  Actual SOC: {rsoc}%')
+        usoc = self.battery_live.status_backup_buffer()
+        print(f'Backup Buffer: {usoc:2}%')
         self.assertEqual(True, True)
 
     def test_battery_cycle_count(self):
@@ -58,8 +74,20 @@ class TestBatterie(unittest.TestCase):
     def test_battery_charging(self):
         charging = self.battery_live.status_battery_charging()
         discharging = self.battery_live.status_battery_discharging()
-    #    print(f'Battery: Charging {charging:%s} Discharging {discharging:%s}')
-        print(f'Battery: Charging {charging} Discharging {discharging}')
+        print(f'Battery: Charging: {charging} Discharging: {discharging}')
+        charging = self.battery_live.charging()
+        discharging = self.battery_live.discharging()
+        production = self.battery_live.production()
+        consumption = self.battery_live.consumption()
+        feedin = self.battery_live.status_grid_feed_in()
+        if charging != 0:
+            print(f'Battery Charging: {charging:,}W  Production: {production:,}W  Consumption: {consumption:,}W  Grid Export: {feedin:,}W ')
+        else:
+            flow = 'import' if feedin > 0 else 'export'
+            if discharging != 0:
+                print(f'Battery Discharging: {discharging:,}W  Production: {production:,}W  Consumption: {consumption:,}W')
+            else:
+                print(f'Battery Idle. Grid {flow}: {abs(feedin):,}W  Production: {production:,}W  Consumption: {consumption:,}W')
         self.assertEqual(True, True)
 
     def test_status_flows(self):
@@ -76,13 +104,37 @@ class TestBatterie(unittest.TestCase):
             print(f'Grid Feed In: {feedin:,.0f}W')
         self.assertEqual(True, True)
 
+    def test_last_time_full(self):
+        charged = self.battery_live.last_time_full()
+        print('Battery Last Full at: ' + charged.strftime('%d-%b-%Y %H:%M'))
+        self.assertEqual(True, True)
+
+    def test_fully_charged_at(self):
+        charged = self.battery_live.fully_charged_at()
+        if charged != 0:
+            next_full = charged.strftime('%d-%b-%Y %H:%M')
+        else:
+            next_full = '*not charging*'
+        print('Battery Next Full at: ' + next_full)
+        self.assertEqual(True, True)
+
+    def test_backup_reserve_at(self):
+        reserve_time = self.battery_live.backup_reserve_at()
+        if reserve_time != 0:
+            print('Battery will Discharge to Reserve at: ' + reserve_time.strftime('%d-%b-%Y %H:%M'))
+        usable_reserve = self.battery_live.backup_buffer_usable_capacity_wh()
+        print(f'Battery Usable Reserve: {usable_reserve:,}Wh')
+        self.assertEqual(True, True)
+
     def test_remaining_capacity(self):
         batteryCapacity = self.battery_live.battery_full_charge_capacity()
+        batteryCapacityWh = self.battery_live.battery_full_charge_capacity_wh()
         capacity = self.battery_live.full_charge_capacity()
         remaining = self.battery_live.battery_remaining_capacity()
-        usable_remaining = self.battery_live.battery_usable_remaining_capacity()
-        remaining_wh = self.battery_live.remaining_capacity_wh()
-        print(f'Capacity(battery): {batteryCapacity:,}kWh Capacity(data): {capacity:,}Wh  Remaining(battery): {remaining:.2f}Wh  Usable(battery): {usable_remaining:.2f}Wh  Remaining(status): {remaining_wh}Wh')
+        usableRemaining = self.battery_live.battery_usable_remaining_capacity()
+        remainingWh = self.battery_live.remaining_capacity_wh()
+        print(f'Capacity(data): {capacity:,}Wh  Remaining(battery): {remaining:.3f}Ah  Usable(battery): {usableRemaining:.3f}Ah  Remaining(status): {remainingWh}Wh')
+        print(f'Capacity(battery): {batteryCapacity:,.3f}Ah Capacity(battery): {batteryCapacityWh:,.3f}Wh')
         self.assertEqual(True, True)
 
     def test_eclipse_led(self):

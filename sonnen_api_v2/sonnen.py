@@ -60,7 +60,8 @@ class Sonnen:
     DETAIL_PRODUCTION_W = 'Production_W'
     DETAIL_SECONDS_SINCE_FULLCHARGE = 'secondssincefullcharge'
     BATTERY_CYCLE_COUNT = 'cyclecount'
-    BATTERY_FULL_CHARGE_CAPACITY = 'fullchargecapacity'
+    BATTERY_FULL_CHARGE_CAPACITY_AH = 'fullchargecapacity'
+    BATTERY_FULL_CHARGE_CAPACITY_WH = 'fullchargecapacitywh'
     BATTERY_REMAINING_CAPACITY = 'remainingcapacity'
     BATTERY_MAX_CELL_TEMP = 'maximumcelltemperature'
     BATTERY_MAX_CELL_VOLTAGE = 'maximumcellvoltage'
@@ -240,9 +241,9 @@ class Sonnen:
 
     @get_item(int)
     def production(self) -> int:
-        """Power production of the household
+        """Power production of PV
             Returns:
-                house production in Watt
+                PV production in Watts
         """
         return self._latest_details_data[self.STATUS_PRODUCTION_W]
 
@@ -255,14 +256,29 @@ class Sonnen:
 
         return seconds
 
+    def seconds_to_reserve(self) -> int:
+        """Time until battery at backup reserve
+            Returns:
+                Time in seconds
+        """
+        capacity_until_reserve = self.remaining_capacity_wh() - self.backup_buffer_capacity_wh()
+        seconds = int((capacity_until_reserve / self.discharging()) * 3600) if self.discharging() else 0
+
+        return seconds
+
     def fully_discharged_at(self) -> datetime:
         """Future time of battery fully discharged
             Returns:
                 Future time
         """
-        if self.discharging():
-            return (datetime.datetime.now() + datetime.timedelta(seconds=self.seconds_to_empty())).strftime('%d.%B %H:%M')
-        return '00:00'
+        return (datetime.datetime.now() + datetime.timedelta(seconds=self.seconds_to_empty())) if self.discharging() else 0
+
+    def backup_reserve_at(self) -> datetime:
+        """Future time of battery discharged to backup reserve
+            Returns:
+                Future time
+        """
+        return (datetime.datetime.now() + datetime.timedelta(seconds=self.seconds_to_reserve())) if self.discharging() else 0
 
     @get_item(int)
     def seconds_since_full(self) -> int:
@@ -309,7 +325,7 @@ class Sonnen:
 
     @get_item(int)
     def full_charge_capacity(self) -> int:
-        """Full charge capacity of the battery system
+        """Full charge capacity of the battery
             Returns:
                 Capacity in Wh
         """
@@ -322,6 +338,13 @@ class Sonnen:
         """
         return datetime.timedelta(seconds=self.seconds_since_full())
 
+    def last_time_full(self) -> datetime:
+        """Calculates last time at full charge.
+           Returns:
+               DateTime
+        """
+        return datetime.datetime.now() - self.time_since_full()
+
     @get_item(int)
     def seconds_remaining_to_fully_charged(self) -> int:
         """Time remaining until fully charged
@@ -329,15 +352,17 @@ class Sonnen:
                 Time in seconds
         """
         remaining_charge = self.full_charge_capacity() - self.remaining_capacity_wh()
-        if self.charging():
-            return int(remaining_charge / self.charging()) * 3600
-        return 0
+    #    if self.charging():
+    #        return int(remaining_charge / self.charging()) * 3600
+        seconds = int(remaining_charge / self.charging()) * 3600 if self.charging() else 0
+        return seconds
 
     def fully_charged_at(self) -> datetime:
         """ Calculating time until fully charged """
         if self.charging():
             final_time = (datetime.datetime.now() + datetime.timedelta(seconds=self.seconds_remaining_to_fully_charged()))
-            return final_time.strftime('%d.%B.%Y %H:%M')
+        #    return final_time.strftime('%d.%B.%Y %H:%M')
+            return final_time
         return 0
 
     @property
@@ -406,7 +431,15 @@ class Sonnen:
             Returns:
                 Fullcharge capacity in Ah
         """
-        return self._battery_status[self.BATTERY_FULL_CHARGE_CAPACITY]
+        return self._battery_status[self.BATTERY_FULL_CHARGE_CAPACITY_AH]
+
+    @get_item(float)
+    def battery_full_charge_capacity_wh(self) -> float:
+        """Full charge capacity
+            Returns:
+                Fullcharge capacity in Wh
+        """
+        return self._battery_status[self.BATTERY_FULL_CHARGE_CAPACITY_WH]
 
     @get_item(float)
     def battery_max_cell_temp(self) -> float:
@@ -592,13 +625,35 @@ class Sonnen:
                 }
         return flows
 
-    @get_item(float)
-    def status_grid_feed_in(self) -> float:
+    @get_item(int)
+    def status_grid_feed_in(self) -> int:
         """GridFeedIn_W
             Returns:
-                Float watts (actually int with zero decimal part)
+                Feed watts, -ve is export (actually float with zero decimal part)
         """
-        return self._status_data[self.STATUS_GRID_FEED_IN_W]
+        return int(self._status_data[self.STATUS_GRID_FEED_IN_W])
+
+    @get_item(int)
+    def backup_buffer_capacity_wh(self) -> int:
+        """Backup Buffer capacity (includes 6% unusable)
+            Returns:
+                Backup Buffer in Wh
+        """
+        buffer_percent = self.configuration_em_usoc()
+        full_charge = self.battery_full_charge_capacity_wh()
+
+        return int(full_charge * buffer_percent / 100)
+
+    @get_item(int)
+    def backup_buffer_usable_capacity_wh(self) -> int:
+        """Backup Buffer usable capacity (excludes 6% unusable)
+            Returns:
+                Usable Backup Buffer in Wh
+        """
+        buffer_percent = self.configuration_em_usoc()
+        full_charge = self.battery_full_charge_capacity_wh()
+
+        return int(full_charge * (buffer_percent - 6) / 100) if buffer_percent > 6 else 0
 
     def state_core_control_module(self) -> str:
         """State of control module: config, ongrid, ...

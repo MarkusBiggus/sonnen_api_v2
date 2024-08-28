@@ -21,7 +21,8 @@ class TestBatterie(unittest.TestCase):
 
     def test_configuration_de_software(self):
         version = self.battery_live.configuration_de_software()
-        print('Software Version: ' + version)
+        cycles = self.battery_live.battery_cycle_count()
+        print(f'Software Version: {version}   Battery Cycles: {cycles:,}')
         self.assertEqual(True, True)
 
     def test_configuration_em_usoc(self):
@@ -64,11 +65,6 @@ class TestBatterie(unittest.TestCase):
         print(f'Useable State of Charge: {usoc}%  Actual SOC: {rsoc}%')
         usoc = self.battery_live.status_backup_buffer()
         print(f'Backup Buffer: {usoc:2}%')
-        self.assertEqual(True, True)
-
-    def test_battery_cycle_count(self):
-        cycles = self.battery_live.battery_cycle_count()
-        print(f'Battery Cycle Count: {cycles:,}')
         self.assertEqual(True, True)
 
     def test_battery_charging(self):

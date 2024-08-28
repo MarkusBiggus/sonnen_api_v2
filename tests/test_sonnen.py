@@ -18,12 +18,45 @@ class TestSonnen(unittest.TestCase):
 
     @responses.activate
     def setUp(self) -> None:
+        test_data_status_charging = {
+            'Apparent_output': 98,
+            'BackupBuffer': '0',
+            'BatteryCharging': True,
+            'BatteryDischarging': False,
+            'Consumption_Avg': 486,
+            'Consumption_W': 403,
+            'Fac': 50.05781555175781,
+            'FlowConsumptionBattery': False,
+            'FlowConsumptionGrid': False,
+            'FlowConsumptionProduction': True,
+            'FlowGridBattery': False,
+            'FlowProductionBattery': True,
+            'FlowProductionGrid': True,
+            'GridFeedIn_W': 54,
+            'IsSystemInstalled': 1,
+            'OperatingMode': '2',
+            'Pac_total_W': -95,
+            'Production_W': 578,
+            'RSOC': 98,
+            'RemainingCapacity_Wh': 68781,
+            'Sac1': 98,
+            'Sac2': None,
+            'Sac3': None,
+            'SystemStatus': 'OnGrid',
+            'Timestamp': '2022-04-30 17:00:58',
+            'USOC': 98,
+            'Uac': 245,
+            'Ubat': 212,
+            'dischargeNotAllowed': False,
+            'generator_autostart': False
+        }
+
         test_data_latest_charging = {
             'Consumption_W': 403,
-            'FullChargeCapacity': 19531,
+            'FullChargeCapacity': 40683.490,
             'GridFeedIn_W': 0,
-            'Pac_total_W': -94,
-            'Production_W': 578,
+            'Pac_total_W': -1394,
+            'Production_W': 2972,
             'RSOC': 98,
             'SetPoint_W': -145,
             'Timestamp': '2022-04-30 17:00:58',
@@ -134,7 +167,7 @@ class TestSonnen(unittest.TestCase):
             'Pac_total_W': 438,
             'Production_W': 102,
             'RSOC': 99,
-            "RemainingCapacity_Wh":19027,
+            'RemainingCapacity_Wh': 40181,
             'Sac1': 438,
             'Sac2': None,
             'Sac3': None,
@@ -146,42 +179,10 @@ class TestSonnen(unittest.TestCase):
             'dischargeNotAllowed': False,
             'generator_autostart': False
         }
-        status = {
-            "Apparent_output":None,
-            "BackupBuffer":"20",
-            "BatteryCharging":False,
-            "BatteryDischarging":False,
-            "Consumption_Avg":2070,
-            "Consumption_W":2074,
-            "Fac":49.975,
-            "FlowConsumptionBattery":False,
-            "FlowConsumptionGrid":True,
-            "FlowConsumptionProduction":True,
-            "FlowGridBattery":False,
-            "FlowProductionBattery":False,
-            "FlowProductionGrid":False,
-            "GridFeedIn_W":-1794.0,
-            "IsSystemInstalled":1,
-            "OperatingMode":"2",
-            "Pac_total_W":-21,
-            "Production_W":300,
-            "RSOC":26,
-            "RemainingCapacity_Wh":5289,
-            "Sac1":None,
-            "Sac2":None,
-            "Sac3":None,
-            "SystemStatus":"OnGrid",
-            "Timestamp":"2024-08-14 15:15:16",
-            "USOC":20,
-            "Uac":231.0,
-            "Ubat":205.0,
-            "dischargeNotAllowed":False,
-            "generator_autostart":False
-        }
 
         test_data_latest_discharging = {
             'Consumption_W': 541,
-            'FullChargeCapacity': 19531,
+            'FullChargeCapacity': 40683.490,
             'GridFeedIn_W': 0,
             'Pac_total_W': 439,
             'Production_W': 102,
@@ -275,39 +276,6 @@ class TestSonnen(unittest.TestCase):
             }
         }
 
-        test_data_status_charging = {
-            'Apparent_output': 98,
-            'BackupBuffer': '0',
-            'BatteryCharging': True,
-            'BatteryDischarging': False,
-            'Consumption_Avg': 486,
-            'Consumption_W': 403,
-            'Fac': 50.05781555175781,
-            'FlowConsumptionBattery': False,
-            'FlowConsumptionGrid': False,
-            'FlowConsumptionProduction': True,
-            'FlowGridBattery': False,
-            'FlowProductionBattery': True,
-            'FlowProductionGrid': True,
-            'GridFeedIn_W': 54,
-            'IsSystemInstalled': 1,
-            'OperatingMode': '2',
-            'Pac_total_W': -95,
-            'Production_W': 578,
-            'RSOC': 98,
-            'RemainingCapacity_Wh': 18781,
-            'Sac1': 98,
-            'Sac2': None,
-            'Sac3': None,
-            'SystemStatus': 'OnGrid',
-            'Timestamp': '2022-04-30 17:00:58',
-            'USOC': 98,
-            'Uac': 245,
-            'Ubat': 212,
-            'dischargeNotAllowed': False,
-            'generator_autostart': False
-        }
-
         test_data_powermeter = [
             {
                 'a_l1': 2.4730000495910645, 'a_l2': 0,
@@ -355,38 +323,37 @@ class TestSonnen(unittest.TestCase):
                 'w_total': 59.29999923706055
             }
         ]
-        test_data_battery = [
-            {
-                "balancechargerequest":0.0,
-                "chargecurrentlimit":39.97,
-                "cyclecount":30.0,
-                "dischargecurrentlimit":39.97,
-                "fullchargecapacity":97.656,
-                "fullchargecapacitywh":9999.974,
-                "maximumcelltemperature":19.95,
-                "maximumcellvoltage":3.257,
-                "maximumcellvoltagenum":0.0,
-                "maximummodulecurrent":0.0,
-                "maximummoduledcvoltage":104.15,
-                "maximummoduletemperature":-273.15,
-                "minimumcelltemperature":18.95,
-                "minimumcellvoltage":3.251,
-                "minimumcellvoltagenum":0.0,
-                "minimummodulecurrent":0.0,
-                "minimummoduledcvoltage":104.15,
-                "minimummoduletemperature":-273.15,
-                "nominalmoduledcvoltage":102.4,
-                "relativestateofcharge":26.0,
-                "remainingcapacity":25.39,
-                "systemalarm":0.0,
-                "systemcurrent":0.0,
-                "systemdcvoltage":208.3,
-                "systemstatus":49.0,
-                "systemtime":0.0,
-                "systemwarning":0.0,
-                "usableremainingcapacity":17.578
-            }
-        ]
+
+        test_data_battery = {
+            "balancechargerequest":0.0,
+            "chargecurrentlimit":39.97,
+            "cyclecount":30.0,
+            "dischargecurrentlimit":39.97,
+            "fullchargecapacity":195.312,
+            "fullchargecapacitywh":40683.490,
+            "maximumcelltemperature":19.95,
+            "maximumcellvoltage":3.257,
+            "maximumcellvoltagenum":0.0,
+            "maximummodulecurrent":0.0,
+            "maximummoduledcvoltage":104.15,
+            "maximummoduletemperature":-273.15,
+            "minimumcelltemperature":18.95,
+            "minimumcellvoltage":3.251,
+            "minimumcellvoltagenum":0.0,
+            "minimummodulecurrent":0.0,
+            "minimummoduledcvoltage":104.15,
+            "minimummoduletemperature":-273.15,
+            "nominalmoduledcvoltage":102.4,
+            "relativestateofcharge":26.0,
+            "remainingcapacity":25.39,
+            "systemalarm":0.0,
+            "systemcurrent":0.0,
+            "systemdcvoltage":208.3,
+            "systemstatus":49.0,
+            "systemtime":0.0,
+            "systemwarning":0.0,
+            "usableremainingcapacity":17.578
+        }
 
         battery1_powermeter_data = responses.Response(
             method='GET',
@@ -543,10 +510,10 @@ class TestSonnen(unittest.TestCase):
     #    self.assertEqual(result2, 0)
     #    self.assertEqual(result3, None)
         self.assertEqual(result4, 439)
-        result1_pac = self.battery_charging_working.pac_total
-    #    result2_pac = self.battery_unreachable.pac_total
-    #    result3_pac = self.battery_wrong_token_charging.pac_total
-        result4_pac = self.battery_discharging_working.pac_total
+        result1_pac = self.battery_charging_working.pac_total()
+    #    result2_pac = self.battery_unreachable.pac_total()
+    #    result3_pac = self.battery_wrong_token_charging.pac_total()
+        result4_pac = self.battery_discharging_working.pac_total()
         self.assertLessEqual(result1_pac, 0)
     #    self.assertEqual(result2_pac, 0)
     #    self.assertLessEqual(result3_pac, None)
@@ -558,7 +525,7 @@ class TestSonnen(unittest.TestCase):
     #    result2 = self.battery_unreachable.charging()
     #    result3 = self.battery_wrong_token_charging.charging()
         result4 = self.battery_discharging_working.charging()
-        self.assertEqual(result1, 94)
+        self.assertEqual(result1, 1394)
     #    self.assertEqual(result2, 0)
     #    self.assertEqual(result3, 0)
         self.assertEqual(result4, 0)
@@ -591,7 +558,7 @@ class TestSonnen(unittest.TestCase):
     #    result2 = self.battery_unreachable.production()
         result3 = self.battery_wrong_token_charging.production()
         result4 = self.battery_discharging_working.production()
-        self.assertEqual(result1, 578)
+        self.assertEqual(result1, 2972)
     #    self.assertEqual(result2, 0)
         self.assertEqual(result3, None)
         self.assertEqual(result4, 102)
@@ -616,7 +583,7 @@ class TestSonnen(unittest.TestCase):
         self.assertEqual(result1, 0)
     #    self.assertEqual(result2, 0)
     #    self.assertEqual(result3, None)
-        self.assertEqual(result4, 156030)
+        self.assertEqual(result4, 164747)
 
     @responses.activate
     @freeze_time("24-05-2022 15:38:23")
@@ -625,10 +592,10 @@ class TestSonnen(unittest.TestCase):
     #    result2 = self.battery_unreachable.fully_discharged_at()
     #    result3 = self.battery_wrong_token_charging.fully_discharged_at()
         result4 = self.battery_discharging_working.fully_discharged_at()
-        self.assertEqual(result1, '00:00')
+        self.assertEqual(result1, 0)
     #    self.assertEqual(result2, '00:00')
     #    self.assertEqual(result3, None)
-        self.assertEqual(result4, '26.May 10:58')
+        self.assertEqual(result4.strftime('%d.%B.%Y %H:%M'), '26.May.2022 13:24')
 
     @responses.activate
     @freeze_time("24-04-2022 15:38:23")
@@ -648,10 +615,10 @@ class TestSonnen(unittest.TestCase):
     #    result2 = self.battery_unreachable.full_charge_capacity()
         result3 = self.battery_wrong_token_charging.full_charge_capacity()
         result4 = self.battery_discharging_working.full_charge_capacity()
-        self.assertEqual(result1, 19531)
+        self.assertEqual(result1, 40683)
     #    self.assertEqual(result2, 0)
         self.assertEqual(result3, None)
-        self.assertEqual(result4, 19531)
+        self.assertEqual(result4, 40683)
 
     @responses.activate
     @freeze_time('24-04-2022 15:38:23')
@@ -667,12 +634,12 @@ class TestSonnen(unittest.TestCase):
 
     @responses.activate
     @freeze_time('24-04-2022 15:38:23')
-    def test_time_remaining_to_fully_charged(self):
-        result1 = self.battery_charging_working.seconds_remaining_to_fully_charged()
-    #    result2 = self.battery_unreachable.seconds_remaining_to_fully_charged()
-    #    result3 = self.battery_wrong_token_charging.seconds_remaining_to_fully_charged()
-        result4 = self.battery_discharging_working.seconds_remaining_to_fully_charged()
-        self.assertEqual(result1, 25200)
+    def test_seconds_until_fully_charged(self):
+        result1 = self.battery_charging_working.seconds_until_fully_charged()
+    #    result2 = self.battery_unreachable.seconds_until_fully_charged()
+    #    result3 = self.battery_wrong_token_charging.seconds_until_fully_charged()
+        result4 = self.battery_discharging_working.seconds_until_fully_charged()
+        self.assertEqual(result1, 14400)
     #    self.assertEqual(result2, 0)
     #    self.assertEqual(result3, 0)
         self.assertEqual(result4, 0)
@@ -684,7 +651,7 @@ class TestSonnen(unittest.TestCase):
     #    result2 = self.battery_unreachable.fully_charged_at()
     #    result3 = self.battery_wrong_token_charging.fully_charged_at()
         result4 = self.battery_discharging_working.fully_charged_at()
-        self.assertEqual(result1, '24.April.2022 22:38')
+        self.assertEqual(result1.strftime('%d.%B.%Y %H:%M'), '24.April.2022 19:38')
     #    self.assertEqual(result2, 0)
     #    self.assertEqual(result3, None)
         self.assertEqual(result4, 0)

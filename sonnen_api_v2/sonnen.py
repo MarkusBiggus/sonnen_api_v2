@@ -319,8 +319,6 @@ class Sonnen:
             Returns:
                  Remaining USABLE capacity of the battery in Wh
         """
-    #    print('Remaining USABLE: ' + json.dumps(self._status_data, indent=2))
-
         return self._status_data[self.STATUS_REMAININGCAPACITY_WH] // 2
 
     @get_item(int)
@@ -346,26 +344,21 @@ class Sonnen:
         return datetime.datetime.now() - self.time_since_full()
 
     @get_item(int)
-    def seconds_remaining_to_fully_charged(self) -> int:
+    def seconds_until_fully_charged(self) -> int:
         """Time remaining until fully charged
             Returns:
                 Time in seconds
         """
-        remaining_charge = self.full_charge_capacity() - self.remaining_capacity_wh()
-    #    if self.charging():
-    #        return int(remaining_charge / self.charging()) * 3600
+        remaining_charge = self.battery_full_charge_capacity_wh() - self.remaining_capacity_wh()
         seconds = int(remaining_charge / self.charging()) * 3600 if self.charging() else 0
+
         return seconds
 
     def fully_charged_at(self) -> datetime:
         """ Calculating time until fully charged """
-        if self.charging():
-            final_time = (datetime.datetime.now() + datetime.timedelta(seconds=self.seconds_remaining_to_fully_charged()))
         #    return final_time.strftime('%d.%B.%Y %H:%M')
-            return final_time
-        return 0
+        return (datetime.datetime.now() + datetime.timedelta(seconds=self.seconds_until_fully_charged())) if self.charging() else 0
 
-    @property
     @get_item(int)
     def pac_total(self) -> int:
         """ Battery inverter load
@@ -374,7 +367,7 @@ class Sonnen:
             Returns:
                   Inverter load value in watt
         """
-        return self._latest_details_data.get(self.STATUS_PAC_TOTAL_W)
+        return self._latest_details_data[self.DETAIL_PAC_TOTAL_W]
 
     @get_item(int)
     def charging(self) -> int:
@@ -382,9 +375,9 @@ class Sonnen:
             Returns:
                 Charging value in watt
         """
-        if self.pac_total < 0:
-            return abs(self.pac_total)
-        return 0
+        charge = self.pac_total()
+
+        return abs(charge) if charge < 0 else 0
 
     @get_item(int)
     def discharging(self) -> int:
@@ -392,9 +385,9 @@ class Sonnen:
             Returns:
                 Discharging value in watt
         """
-        if self.pac_total > 0:
-            return self.pac_total
-        return 0
+        charge = self.pac_total()
+
+        return charge if charge > 0 else 0
 
     @get_item(int)
     def grid_in(self) -> int:
@@ -432,14 +425,6 @@ class Sonnen:
                 Fullcharge capacity in Ah
         """
         return self._battery_status[self.BATTERY_FULL_CHARGE_CAPACITY_AH]
-
-    @get_item(float)
-    def battery_full_charge_capacity_wh(self) -> float:
-        """Full charge capacity
-            Returns:
-                Fullcharge capacity in Wh
-        """
-        return self._battery_status[self.BATTERY_FULL_CHARGE_CAPACITY_WH]
 
     @get_item(float)
     def battery_max_cell_temp(self) -> float:
@@ -530,12 +515,38 @@ class Sonnen:
         return self._battery_status[self.BATTERY_RSOC]
 
     @get_item(float)
+    def battery_full_charge_capacity_wh(self) -> float:
+        """Full charge capacity
+            Returns:
+                Fullcharge capacity in Wh
+        """
+        return self._battery_status[self.BATTERY_FULL_CHARGE_CAPACITY_WH]
+
+    @get_item(float)
     def battery_remaining_capacity(self) -> float:
         """Remaining capacity
             Returns:
                 Remaining capacity in Ah
         """
         return self._battery_status[self.BATTERY_REMAINING_CAPACITY]
+
+    @get_item(float)
+    def battery_system_dc_voltage(self) -> float:
+        """System battery voltage
+            Returns:
+                Voltage in Volt
+        """
+        return self._battery_status[self.BATTERY_SYSTEM_VOLTAGE]
+
+    @get_item(float)
+    def battery_remaining_capacity_wh(self) -> float:
+        """Remaining capacity Wh calculated from Ah
+            Returns:
+                Remaining capacity in Wh
+        """
+        capacity_ah = self.battery_remaining_capacity()
+
+        return capacity_ah * self.battery_system_dc_voltage()
 
     @get_item(float)
     def battery_usable_remaining_capacity(self) -> float:
@@ -552,14 +563,6 @@ class Sonnen:
                 System current in Ampere
         """
         return self._battery_status[self.BATTERY_SYSTEM_CURRENT]
-
-    @get_item(float)
-    def battery_system_dc_voltage(self) -> float:
-        """System battery voltage
-            Returns:
-                Voltage in Volt
-        """
-        return self._battery_status[self.BATTERY_SYSTEM_VOLTAGE]
 
     @get_item(int)
     def configuration_em_operatingmode(self) -> int:

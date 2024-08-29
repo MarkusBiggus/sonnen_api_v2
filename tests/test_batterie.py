@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-BATTERIE_HOST = os.getenv('BATTERIE_1_HOST')
+BATTERIE_HOST = os.getenv('BATTERIE_1_HOST','X')
 API_READ_TOKEN = os.getenv('API_READ_TOKEN_1')
 BACKUP_BUFFER_USOC = int(os.getenv('BACKUP_BUFFER_USOC'))
 OPERATING_MODE = int(os.getenv('OPERATING_MODE'))
@@ -16,6 +16,9 @@ class TestBatterie(unittest.TestCase):
     battery_live = Sonnen(API_READ_TOKEN, BATTERIE_HOST)  # Batterie online
 
     battery_live.update()
+
+    if BATTERIE_HOST == 'X':
+        raise ValueError('Set BATTERIE_HOST & API_READ_TOKEN in .env')
 
     print ('Live Battery Online!')
 

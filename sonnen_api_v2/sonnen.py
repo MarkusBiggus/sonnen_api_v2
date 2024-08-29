@@ -167,7 +167,6 @@ class Sonnen:
             Returns:
                 True if fetch was successful, else False
         """
-
         try:
             response = requests.get(
                 self.powermeter_api_endpoint,
@@ -236,7 +235,6 @@ class Sonnen:
            Returns:
                average consumption in watt
         """
-
         return self._status_data[self.STATUS_CONSUMPTION_AVG]
 
     @get_item(int)
@@ -247,6 +245,7 @@ class Sonnen:
         """
         return self._latest_details_data[self.STATUS_PRODUCTION_W]
 
+    @get_item(int)
     def seconds_to_empty(self) -> int:
         """Time until battery discharged
             Returns:
@@ -256,6 +255,7 @@ class Sonnen:
 
         return seconds
 
+    @get_item(int)
     def seconds_to_reserve(self) -> int:
         """Time until battery at backup reserve
             Returns:
@@ -395,9 +395,7 @@ class Sonnen:
             Returns:
                 Value in watt
         """
-        if self._status_data[self.STATUS_GRIDFEEDIN_W] > 0:
-            return self._status_data[self.STATUS_GRIDFEEDIN_W]
-        return 0
+        return self._status_data[self.STATUS_GRIDFEEDIN_W] if self._status_data[self.STATUS_GRIDFEEDIN_W] > 0 else 0
 
     @get_item(int)
     def grid_out(self) -> int:
@@ -405,10 +403,7 @@ class Sonnen:
             Returns:
                 Value in watt
         """
-
-        if self._status_data[self.STATUS_GRIDFEEDIN_W] < 0:
-            return abs(self._status_data[self.STATUS_GRIDFEEDIN_W])
-        return 0
+        return abs(self._status_data[self.STATUS_GRIDFEEDIN_W]) if self._status_data[self.STATUS_GRIDFEEDIN_W] < 0 else 0
 
     @get_item(int)
     def battery_cycle_count(self) -> int:
@@ -614,18 +609,20 @@ class Sonnen:
         """
         return self._status_data[self.STATUS_BATTERY_DISCHARGING]
 
+    @get_item(dict)
     def status_flows(self) -> dict:
         """Status flows: production -> grid , battery
             Returns:
                 dict of name:bool
         """
-        flows = {"FlowConsumptionBattery":self._status_data[self.STATUS_FLOW_CONSUMPTION_BATTERY],
-                 "FlowConsumptionGrid":self._status_data[self.STATUS_FLOW_CONSUMPTION_GRID],
-                 "FlowConsumptionProduction":self._status_data[self.STATUS_FLOW_CONSUMPTION_PRODUCTION],
-                 "FlowGridBattery":self._status_data[self.STATUS_FLOW_CONSUMPTION_BATTERY],
-                 "FlowProductionBattery":self._status_data[self.STATUS_FLOW_PRODUCTION_BATTERY],
-                 "FlowProductionGrid":self._status_data[self.STATUS_FLOW_PRODUCTION_GRID],
-                }
+        flows = {
+            "FlowConsumptionBattery":self._status_data[self.STATUS_FLOW_CONSUMPTION_BATTERY],
+            "FlowConsumptionGrid":self._status_data[self.STATUS_FLOW_CONSUMPTION_GRID],
+            "FlowConsumptionProduction":self._status_data[self.STATUS_FLOW_CONSUMPTION_PRODUCTION],
+            "FlowGridBattery":self._status_data[self.STATUS_FLOW_CONSUMPTION_BATTERY],
+            "FlowProductionBattery":self._status_data[self.STATUS_FLOW_PRODUCTION_BATTERY],
+            "FlowProductionGrid":self._status_data[self.STATUS_FLOW_PRODUCTION_GRID],
+        }
         return flows
 
     @get_item(int)

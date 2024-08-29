@@ -36,7 +36,7 @@ class TestBatterie(unittest.TestCase):
         else:
             usoc = self.battery_live.u_soc()
             if usoc == self.battery_live.configuration_em_usoc():
-                print(f'Battery at Backup Reserve: {rsoc:,}')
+                print(f'Battery at Backup Reserve: {usoc:,}')
         self.assertEqual(True, True)
 
     def test_state_core_control_module(self):
@@ -60,11 +60,22 @@ class TestBatterie(unittest.TestCase):
         self.assertEqual(True, True)
 
     def test_data_socs(self):
+        backup_buffer = self.battery_live.status_backup_buffer()
+        print(f'Backup Buffer: {backup_buffer:2}%')
         usoc = self.battery_live.u_soc()
         rsoc = self.battery_live.u_roc()
         print(f'Useable State of Charge: {usoc}%  Actual SOC: {rsoc}%')
-        usoc = self.battery_live.status_backup_buffer()
-        print(f'Backup Buffer: {usoc:2}%')
+        if usoc > backup_buffer:
+            reserve_time = self.battery_live.backup_reserve_at()
+            if reserve_time == 0:
+                print ('Battery above backup reserve, not discharging.')
+            else:
+                print('Battery Discharge to Reserve at: ' + reserve_time.strftime('%d-%b-%Y %H:%M'))
+        else:
+            discharged_at = self.battery_live.fully_discharged_at()
+            print(f'Backup Fully Discharged at: ' + discharged_at.strftime('%d-%b-%Y %H:%M'))
+        usable_reserve = self.battery_live.backup_buffer_usable_capacity_wh()
+        print(f'Backup Usable Reserve: {usable_reserve:,}Wh')
         self.assertEqual(True, True)
 
     def test_battery_charging(self):
@@ -114,12 +125,10 @@ class TestBatterie(unittest.TestCase):
         print('Battery Next Full at: ' + next_full)
         self.assertEqual(True, True)
 
-    def test_backup_reserve_at(self):
-        reserve_time = self.battery_live.backup_reserve_at()
-        if reserve_time != 0:
-            print('Battery will Discharge to Reserve at: ' + reserve_time.strftime('%d-%b-%Y %H:%M'))
-        usable_reserve = self.battery_live.backup_buffer_usable_capacity_wh()
-        print(f'Battery Usable Reserve: {usable_reserve:,}Wh')
+    def test_powermeter(self):
+        kwh_consumed = self.battery_live.kwh_consumed()
+        kwh_produced = self.battery_live.kwh_produced()
+        print(f'Power consumed: {kwh_consumed:,.1f}kWh  produced: {kwh_produced:,.1f}kWh')
         self.assertEqual(True, True)
 
     def test_remaining_capacity(self):

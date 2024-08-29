@@ -278,7 +278,11 @@ class Sonnen:
             Returns:
                 Future time
         """
-        return (datetime.datetime.now() + datetime.timedelta(seconds=self.seconds_to_reserve())) if self.discharging() else 0
+        seconds = self.seconds_to_reserve()
+        if seconds < 0:
+            return (datetime.datetime.now() - datetime.timedelta(seconds=abs(seconds))) if self.discharging() else 0
+        else:
+            return (datetime.datetime.now() + datetime.timedelta(seconds=seconds)) if self.discharging() else 0
 
     @get_item(int)
     def seconds_since_full(self) -> int:

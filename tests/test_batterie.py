@@ -31,12 +31,17 @@ class TestBatterie(unittest.TestCase):
 
     def test_seconds_to_empty(self):
         if self.battery_live.status_battery_discharging():
+            seconds = self.battery_live.seconds_to_reserve()
+            if seconds < 0:
+                print(f'Seconds since Reserve: {seconds:,}')
+            else:
+                print(f'Seconds to Reserve: {seconds:,}')
             seconds = self.battery_live.seconds_to_empty()
-            print(f'Seconds to empty: {seconds:,}')
+            print(f'Seconds to Empty: {seconds:,}')
         else:
             usoc = self.battery_live.u_soc()
             if usoc == self.battery_live.configuration_em_usoc():
-                print(f'Battery at Backup Reserve: {usoc:,}')
+                print(f'Battery at Backup Reserve: {usoc}')
         self.assertEqual(True, True)
 
     def test_state_core_control_module(self):
@@ -138,7 +143,7 @@ class TestBatterie(unittest.TestCase):
         remaining = self.battery_live.battery_remaining_capacity()
         usableRemaining = self.battery_live.battery_usable_remaining_capacity()
         remainingWh = self.battery_live.remaining_capacity_wh()
-        print(f'Capacity(data): {capacity:,}Wh  Remaining(battery): {remaining:.3f}Ah  Usable(battery): {usableRemaining:.3f}Ah  Remaining(status): {remainingWh}Wh')
+        print(f'Capacity(data): {capacity:,}Wh  Remaining(battery): {remaining:,.3f}Ah  Usable(battery): {usableRemaining:,.3f}Ah  Remaining(status): {remainingWh:,}Wh')
         print(f'Capacity(battery): {batteryCapacity:,.3f}Ah Capacity(battery): {batteryCapacityWh:,.3f}Wh')
         self.assertEqual(True, True)
 

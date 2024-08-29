@@ -52,6 +52,7 @@ class Sonnen:
     STATUS_APPARENT_OUTPUT = 'Apparent_output'
     STATUS_PAC_TOTAL_W = 'Pac_total_W'
     STATUS_MODULES_INSTALLED = 'nrbatterymodules'
+    STATUS_DISCHARGE_NOT_ALLOWED = 'dischargeNotAllowed'
     USOC_KEY = 'USOC'
     RSOC_KEY = 'RSOC'
     DETAIL_FULL_CHARGE_CAPACITY = 'FullChargeCapacity'
@@ -84,6 +85,12 @@ class Sonnen:
     CONFIGURATION_DE_SOFTWARE = "DE_Software"
     IC_ECLIPSE_LED = "Eclipse Led"
 
+    _EM_OPERATINGMODE = {
+         "1": 'Manual',
+         "2": 'Automatic - Self Consumption',
+         "6": 'Battery-Module-Extension (30%)',
+        "10": 'Time-Of-Use'
+    }
     # default timeout
     TIMEOUT = 5
 
@@ -125,7 +132,7 @@ class Sonnen:
                 self._ic_status = self._latest_details_data[self.IC_STATUS]
                 return True
         except requests.ConnectionError as conn_error:
-            print('Connection error to battery system - ', conn_error)
+            print('Connection error to sonnenBatterie - ', conn_error)
         return False
 
     def fetch_configurations(self) -> bool:
@@ -159,7 +166,7 @@ class Sonnen:
                 self._status_data = response.json()
                 return True
         except requests.ConnectionError as conn_error:
-            print('Connection error to battery system - ', conn_error)
+            print('Connection error to sonnenBatterie - ', conn_error)
         return False
 
     def fetch_powermeter(self) -> bool:
@@ -180,7 +187,7 @@ class Sonnen:
             #    print(self._powermeter_data)
                 return True
         except requests.ConnectionError as conn_error:
-            print('Connection error to battery system - ', conn_error)
+            print('Connection error to sonnenBatterie - ', conn_error)
         return False
 
     def fetch_battery_status(self) -> bool:
@@ -196,7 +203,7 @@ class Sonnen:
                 self._battery_status = response.json()
                 return True
         except requests.ConnectionError as conn_err:
-            print('Connection error to battery system - ', conn_err)
+            print('Connection error to sonnenBatterie - ', conn_err)
         return False
 
     def update(self) -> bool:
@@ -567,16 +574,22 @@ class Sonnen:
     def configuration_em_operatingmode(self) -> int:
         """Operating Mode
             Returns:
-                Mode Integer
-                "1": Manual
-                "2": Automatic - Self Consumption
-                "6": Battery-Module-Extension (30%)
-                "10": Time-Of-Use
+                Integer code
         """
         if self._configurations_data == {}:
             self.fetch_configurations()
 
         return self._configurations_data[self.CONFIGURATION_EM_OPERATINGMODE]
+
+    def str_em_operatingmode(self) -> str:
+        """Operating Mode code translated
+            Returns:
+                string
+        """
+        if self._configurations_data == {}:
+            self.fetch_configurations()
+
+        return self._EM_OPERATINGMODE[self._configurations_data[self.CONFIGURATION_EM_OPERATINGMODE]]
 
     @get_item(int)
     def configuration_em_usoc(self) -> int:
@@ -637,6 +650,14 @@ class Sonnen:
         """
         return int(self._status_data[self.STATUS_GRID_FEED_IN_W])
 
+    @get_item(bool)
+    def status_discharge_not_allowed(self) -> bool:
+        """dischargeNotAllowed - Surplus Fullchage feature in progress
+            Returns:
+                Bool
+        """
+        return self._status_data[self.STATUS_DISCHARGE_NOT_ALLOWED]
+
     @get_item(int)
     def backup_buffer_capacity_wh(self) -> int:
         """Backup Buffer capacity (includes 6% unusable)
@@ -660,7 +681,7 @@ class Sonnen:
         return int(full_charge * (buffer_percent - 6) / 100) if buffer_percent > 6 else 0
 
     def state_core_control_module(self) -> str:
-        """State of control module: config, ongrid, ...
+        """State of control module: config, ongrid, off-grid, ...
             Returns:
                 String
         """

@@ -9,12 +9,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-BATTERIE_1_HOST = os.getenv('BATTERIE_1_HOST')
+BATTERIE_1_HOST = os.getenv('BATTERIE_1_HOST','X')
 API_READ_TOKEN_1 = os.getenv('API_READ_TOKEN_1')
 BATTERIE_2_HOST = os.getenv('BATTERIE_2_HOST')
 API_READ_TOKEN_2 = os.getenv('API_READ_TOKEN_2')
 
 class TestSonnen(unittest.TestCase):
+
+    if BATTERIE_1_HOST == 'X':
+        raise ValueError('Set BATTERIE_1_HOST & API_READ_TOKEN_1 in .env See example.env')
 
     @responses.activate
     def setUp(self) -> None:

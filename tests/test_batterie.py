@@ -8,19 +8,20 @@ load_dotenv()
 
 BATTERIE_HOST = os.getenv('BATTERIE_1_HOST','X')
 API_READ_TOKEN = os.getenv('API_READ_TOKEN_1')
+# SonnenBatterie config parameters
 BACKUP_BUFFER_USOC = int(os.getenv('BACKUP_BUFFER_USOC'))
 OPERATING_MODE = int(os.getenv('OPERATING_MODE'))
 
 class TestBatterie(unittest.TestCase):
 
+    if BATTERIE_HOST == 'X':
+        raise ValueError('Set BATTERIE_HOST & API_READ_TOKEN in .env See example.env')
+
+    print ('Live Battery Online!')
+
     battery_live = Sonnen(API_READ_TOKEN, BATTERIE_HOST)  # Batterie online
 
     battery_live.update()
-
-    if BATTERIE_HOST == 'X':
-        raise ValueError('Set BATTERIE_HOST & API_READ_TOKEN in .env')
-
-    print ('Live Battery Online!')
 
     def test_configuration_de_software(self):
         version = self.battery_live.configuration_de_software()
@@ -49,12 +50,15 @@ class TestBatterie(unittest.TestCase):
 
     def test_state_core_control_module(self):
         state = self.battery_live.state_core_control_module()
-        print ('Current Control State: ' + state)
+        print (f'Current Control State: {state}')
         self.assertEqual(state, 'ongrid')
 
     def test_configuration_em_operatingmode(self):
         OpMode = self.battery_live.configuration_em_operatingmode()
-        self.assertEqual(OpMode, OPERATING_MODE) # config Operating Mode: 2 = Automatic - Self Consumption
+        OperatingMode = self.battery_live.str_em_operatingmode()
+        DischargeAllowed = not(self.battery_live.status_discharge_not_allowed())
+        print (f'Operating Mode: "{OperatingMode}"  Discharge Allowed: {DischargeAllowed}')
+        self.assertEqual(OpMode, OPERATING_MODE)
 
     def test_battery_remaining_capacity(self):
         capacity = self.battery_live.battery_remaining_capacity()
@@ -69,7 +73,8 @@ class TestBatterie(unittest.TestCase):
 
     def test_data_socs(self):
         backup_buffer = self.battery_live.status_backup_buffer()
-        print(f'Backup Buffer: {backup_buffer:2}%')
+        usable_reserve = self.battery_live.backup_buffer_usable_capacity_wh()
+        print(f'Backup Buffer: {backup_buffer:2}%  Usable Reserve: {usable_reserve:,}Wh')
         usoc = self.battery_live.u_soc()
         rsoc = self.battery_live.u_roc()
         print(f'Useable State of Charge: {usoc}%  Actual SOC: {rsoc}%')
@@ -82,8 +87,6 @@ class TestBatterie(unittest.TestCase):
         else:
             discharged_at = self.battery_live.fully_discharged_at()
             print(f'Backup Fully Discharged at: ' + discharged_at.strftime('%d-%b-%Y %H:%M'))
-        usable_reserve = self.battery_live.backup_buffer_usable_capacity_wh()
-        print(f'Backup Usable Reserve: {usable_reserve:,}Wh')
         self.assertEqual(True, True)
 
     def test_battery_charging(self):

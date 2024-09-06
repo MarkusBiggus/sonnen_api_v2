@@ -1,6 +1,6 @@
 pytest
 pytest-cov
 responses~=0.20.0
-setuptools>=62.0.0
+setuptools>=73.0.0
 requests>=2.27.1
 freezegun~=1.2.1

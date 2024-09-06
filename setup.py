@@ -27,6 +27,6 @@ setup(
     author_email='katamave@gmail.com',
     description=read_file('README.md'),
     install_requires=[
-        'requests~=2.27.1',
+        'requests~=2.31',
     ]
 )

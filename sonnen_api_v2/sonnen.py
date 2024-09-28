@@ -3,8 +3,8 @@
 from functools import wraps
 
 import datetime
-from idlelib.pyparse import trans
-import json
+#from idlelib.pyparse import trans
+#import json
 
 import requests
 

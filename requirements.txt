@@ -1,7 +1,7 @@
 pytest
 pytest-cov
 responses~=0.20.0
-setuptools>=62.0.0
-requests>=2.27.1
+requests~=2.31
+setuptools==65.5.1
 freezegun~=1.2.1
 dotenv>=1.0.1

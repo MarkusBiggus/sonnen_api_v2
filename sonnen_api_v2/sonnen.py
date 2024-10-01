@@ -6,6 +6,10 @@ import datetime
 from idlelib.pyparse import trans
 import json
 
+import aiohttp
+import asyncio
+
+import logging
 import requests
 from .const import *
 
@@ -32,7 +36,7 @@ def get_item(_type):
 class Sonnen:
     """Class for managing Sonnen API data"""
 
-    def __init__(self, auth_token: str, ip_address: str) -> None:
+    def __init__(self, auth_token: str, ip_address: str, logger: logging.Logger = None) -> None:
         self.ip_address = ip_address
         self.auth_token = auth_token
         self.url = f'http://{ip_address}'
@@ -55,6 +59,12 @@ class Sonnen:
         self._powermeter_production = {}
         self._powermeter_consumption = {}
         self._configurations_data = {}
+
+    def _log_error(self, msg):
+        if self.logger:
+            self.logger.error(msg)
+        else:
+            print(msg)
 
 # timeout support functions for sonnenbatterie_api_v2 wrapper
 
@@ -85,7 +95,7 @@ class Sonnen:
                 self._ic_status = self._latest_details_data[IC_STATUS]
                 return True
         except requests.ConnectionError as conn_error:
-            print('Connection error to sonnenBatterie - ', conn_error)
+            self._log_error(f'Connection error to sonnenBatterie - {conn_error}')
         return False
 
     def fetch_configurations(self) -> bool:
@@ -102,7 +112,7 @@ class Sonnen:
                 self._configurations_data = response.json()
                 return True
         except requests.ConnectionError as conn_error:
-            print('Connection error to sonnenBatterie - ', conn_error)
+            self._log_error(f'Connection error to sonnenBatterie - {conn_error}')
         return False
 
     def fetch_status(self) -> bool:
@@ -119,7 +129,7 @@ class Sonnen:
                 self._status_data = response.json()
                 return True
         except requests.ConnectionError as conn_error:
-            print('Connection error to sonnenBatterie - ', conn_error)
+            self._log_error(f'Connection error to sonnenBatterie - {conn_error}')
         return False
 
     def fetch_powermeter(self) -> bool:
@@ -140,7 +150,7 @@ class Sonnen:
             #    print(self._powermeter_data)
                 return True
         except requests.ConnectionError as conn_error:
-            print('Connection error to sonnenBatterie - ', conn_error)
+            self._log_error(f'Connection error to sonnenBatterie - {conn_error}')
         return False
 
     def fetch_battery_status(self) -> bool:
@@ -157,7 +167,7 @@ class Sonnen:
                 self._battery_status = response.json()
                 return True
         except requests.ConnectionError as conn_err:
-            print('Connection error to sonnenBatterie - ', conn_err)
+            self._log_error(f'Connection error to sonnenBatterie - {conn_error}')
         return False
 
     def update(self) -> bool:

@@ -1,4 +1,4 @@
-""" SonnenBatterie module """
+""" SonnenBatterie API V2 module """
 from .sonnen import Sonnen
 
-__version__ = '0.1.5'
+__version__ = '0.5.11'

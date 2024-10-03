@@ -14,13 +14,18 @@ API_READ_TOKEN_1 = os.getenv('API_READ_TOKEN_1')
 BATTERIE_2_HOST = os.getenv('BATTERIE_2_HOST')
 API_READ_TOKEN_2 = os.getenv('API_READ_TOKEN_2')
 
+LOGGER_NAME = "sonnenapiv2"
+
 class TestSonnen(unittest.TestCase):
 
     if BATTERIE_1_HOST == 'X':
-        raise ValueError('Set BATTERIE_1_HOST & API_READ_TOKEN_1 in .env See example.env')
+        raise ValueError('Set BATTERIE_1_HOST & API_READ_TOKEN_1 in .env See env.example')
 
     @responses.activate
     def setUp(self) -> None:
+        logging.basicConfig(filename="logs/sonnenapiv2.log'", level=logging.DEBUG, maxBytes=52428800)
+        self.logger = logging.getLogger(LOGGER_NAME)
+        self.logger.info('Sonnen Test suite started.')
         test_data_status_charging = {
             'Apparent_output': 98,
             'BackupBuffer': '0',
@@ -459,64 +464,63 @@ class TestSonnen(unittest.TestCase):
 
     #    API_READ_TOKEN_1 = os.getenv('AUTH_TOKEN')
 
-        self.battery_charging_working = Sonnen(API_READ_TOKEN_1, BATTERIE_1_HOST)  # Working and charging
-        self.battery_discharging_working = Sonnen(API_READ_TOKEN_2, '' + BATTERIE_2_HOST + '')  # Working and discharging
-    #    self.battery_unreachable = Sonnen('notWorkingToken', '155.156.19.5')  # Not Reachable
-        self.battery_wrong_token_charging = Sonnen('notWorkingToken', BATTERIE_1_HOST)  # Wrong Token
+        self.battery_charging_working = Sonnen(API_READ_TOKEN_1, BATTERIE_1_HOST, LOGGER_NAME)  # Working and charging
+        self.battery_discharging_working = Sonnen(API_READ_TOKEN_2, BATTERIE_2_HOST)  # Working and discharging - no logging
+    #    self.battery_unreachable = Sonnen('notWorkingToken', '155.156.19.5', LOGGER_NAME)  # Not Reachable
+        self.battery_wrong_token_charging = Sonnen('notWorkingToken', BATTERIE_1_HOST, LOGGER_NAME)  # Wrong Token
 
-        self.battery_charging_working.update()
-        self.battery_discharging_working.update()
-    #    self.battery_unreachable.update()
-        self.battery_wrong_token_charging.update()
+        success = self.battery_charging_working.update()
+        self.assertTrue(success)
+        success = self.battery_discharging_working.update()
+        self.assertTrue(success)
+    #   success = self.battery_unreachable.update()
+        success = self.battery_wrong_token_charging.update()
+        self.assertFalse(success)
 
     @responses.activate
     def test_consumption_average(self):
 
-        result1 = self.battery_charging_working.consumption_average()
-    #    result2 = self.battery_unreachable.consumption_average()
-        result3 = self.battery_wrong_token_charging.consumption_average()
+        result1 = self.battery_charging_working.consumption_average
+        result2 = self.battery_discharging_working.consumption_average
+    #    result3 = self.battery_wrong_token_charging.consumption_average
         self.assertEqual(result1, 486)
-    #    self.assertEqual(result2, 0)
-        self.assertEqual(result3, None)
+        self.assertEqual(result2, 563)
+    #    self.assertEqual(result3, None)
 
     @responses.activate
     def test_consumption(self):
-        self.battery_charging_working.update()
-    #    self.battery_unreachable.update()
-        self.battery_wrong_token_charging.update()
-        result1 = self.battery_charging_working.consumption()
-    #    result2 = self.battery_unreachable.consumption()
-        result3 = self.battery_wrong_token_charging.consumption()
+        result1 = self.battery_charging_working.consumption
+        result2 = self.battery_discharging_working.consumption
+    #    result3 = self.battery_wrong_token_charging.consumption
         self.assertEqual(result1, 403)
-    #    self.assertEqual(result2, 0)
-        self.assertEqual(result3, None)
+        self.assertEqual(result2, 541)
+    #    self.assertEqual(result3, None)
 
     @responses.activate
     def test_installed_modules(self):
-        self.battery_charging_working.update()
-    #    self.battery_unreachable.update()
-        self.battery_wrong_token_charging.update()
-        result1 = self.battery_charging_working.installed_modules()
-    #    result2 = self.battery_unreachable.installed_modules()
-        result3 = self.battery_wrong_token_charging.installed_modules()
+        result1 = self.battery_charging_working.installed_modules
+    #    result2 = self.battery_unreachable.installed_modules
+    #    result3 = self.battery_wrong_token_charging.installed_modules
+        result4 = self.battery_discharging_working.installed_modules
         self.assertEqual(result1, 4)
     #    self.assertEqual(result2, 0)
-        self.assertEqual(result3, None)
+    #    self.assertEqual(result3, None)
+        self.assertEqual(result4, 4)
 
     @responses.activate
     def test_discharging(self):
-        result1 = self.battery_charging_working.discharging()
-    #    result2 = self.battery_unreachable.discharging()
-    #    result3 = self.battery_wrong_token_charging.discharging()
-        result4 = self.battery_discharging_working.discharging()
+        result1 = self.battery_charging_working.discharging
+    #    result2 = self.battery_unreachable.discharging
+    #    result3 = self.battery_wrong_token_charging.discharging
+        result4 = self.battery_discharging_working.discharging
         self.assertEqual(result1, 0)
     #    self.assertEqual(result2, 0)
     #    self.assertEqual(result3, None)
         self.assertEqual(result4, 439)
-        result1_pac = self.battery_charging_working.pac_total()
-    #    result2_pac = self.battery_unreachable.pac_total()
-    #    result3_pac = self.battery_wrong_token_charging.pac_total()
-        result4_pac = self.battery_discharging_working.pac_total()
+        result1_pac = self.battery_charging_working.pac_total
+    #    result2_pac = self.battery_unreachable.pac_total
+    #    result3_pac = self.battery_wrong_token_charging.pac_total
+        result4_pac = self.battery_discharging_working.pac_total
         self.assertLessEqual(result1_pac, 0)
     #    self.assertEqual(result2_pac, 0)
     #    self.assertLessEqual(result3_pac, None)
@@ -524,10 +528,10 @@ class TestSonnen(unittest.TestCase):
 
     @responses.activate
     def test_charging(self):
-        result1 = self.battery_charging_working.charging()
-    #    result2 = self.battery_unreachable.charging()
-    #    result3 = self.battery_wrong_token_charging.charging()
-        result4 = self.battery_discharging_working.charging()
+        result1 = self.battery_charging_working.charging
+    #    result2 = self.battery_unreachable.charging
+    #    result3 = self.battery_wrong_token_charging.charging
+        result4 = self.battery_discharging_working.charging
         self.assertEqual(result1, 1394)
     #    self.assertEqual(result2, 0)
     #    self.assertEqual(result3, 0)
@@ -535,54 +539,54 @@ class TestSonnen(unittest.TestCase):
 
     @responses.activate
     def test_grid_in(self):
-        result1 = self.battery_charging_working.grid_in()
-    #    result2 = self.battery_unreachable.grid_in()
-        result3 = self.battery_wrong_token_charging.grid_in()
-        result4 = self.battery_discharging_working.grid_in()
+        result1 = self.battery_charging_working.grid_in
+    #    result2 = self.battery_unreachable.grid_in
+    #    result3 = self.battery_wrong_token_charging.grid_in
+        result4 = self.battery_discharging_working.grid_in
         self.assertEqual(result1, 54)
     #    self.assertEqual(result2, 0)
-        self.assertEqual(result3, None)
+    #    self.assertEqual(result3, None)
         self.assertEqual(result4, 0)
 
     @responses.activate
     def test_grid_out(self):
-        result1 = self.battery_charging_working.grid_out()
-    #    result2 = self.battery_unreachable.grid_out()
-        result3 = self.battery_wrong_token_charging.grid_out()
-        result4 = self.battery_discharging_working.grid_out()
+        result1 = self.battery_charging_working.grid_out
+    #    result2 = self.battery_unreachable.grid_out
+    #    result3 = self.battery_wrong_token_charging.grid_out
+        result4 = self.battery_discharging_working.grid_out
         self.assertGreaterEqual(result1, 0)
     #    self.assertGreaterEqual(result2, 0)
-        self.assertEqual(result3, None)
+    #    self.assertEqual(result3, None)
         self.assertEqual(result4, 20)
 
     @responses.activate
     def test_production(self):
-        result1 = self.battery_charging_working.production()
-    #    result2 = self.battery_unreachable.production()
-        result3 = self.battery_wrong_token_charging.production()
-        result4 = self.battery_discharging_working.production()
+        result1 = self.battery_charging_working.production
+    #    result2 = self.battery_unreachable.production
+    #    result3 = self.battery_wrong_token_charging.production
+        result4 = self.battery_discharging_working.production
         self.assertEqual(result1, 2972)
     #    self.assertEqual(result2, 0)
-        self.assertEqual(result3, None)
+    #    self.assertEqual(result3, None)
         self.assertEqual(result4, 102)
 
     @responses.activate
     def test_usoc(self):
-        result1 = self.battery_charging_working.u_soc()
-    #    result2 = self.battery_unreachable.u_soc()
-        result3 = self.battery_wrong_token_charging.u_soc()
-        result4 = self.battery_discharging_working.u_soc()
+        result1 = self.battery_charging_working.u_soc
+    #    result2 = self.battery_unreachable.u_soc
+    #    result3 = self.battery_wrong_token_charging.u_soc
+        result4 = self.battery_discharging_working.u_soc
         self.assertEqual(result1, 98)
     #    self.assertEqual(result2, 0)
-        self.assertEqual(result3, None)
+    #    self.assertEqual(result3, None)
         self.assertEqual(result4, 99)
 
     @responses.activate
     def test_seconds_to_empty(self):
-        result1 = self.battery_charging_working.seconds_to_empty()
-    #    result2 = self.battery_unreachable.seconds_to_empty()
-    #    result3 = self.battery_wrong_token_charging.seconds_to_empty()
-        result4 = self.battery_discharging_working.seconds_to_empty()
+        result1 = self.battery_charging_working.seconds_to_empty
+    #    result2 = self.battery_unreachable.seconds_to_empty
+    #    result3 = self.battery_wrong_token_charging.seconds_to_empty
+        result4 = self.battery_discharging_working.seconds_to_empty
         self.assertEqual(result1, 0)
     #    self.assertEqual(result2, 0)
     #    self.assertEqual(result3, None)
@@ -591,10 +595,10 @@ class TestSonnen(unittest.TestCase):
     @responses.activate
     @freeze_time("24-05-2022 15:38:23")
     def test_fully_discharged_at(self):
-        result1 = self.battery_charging_working.fully_discharged_at()
-    #    result2 = self.battery_unreachable.fully_discharged_at()
-    #    result3 = self.battery_wrong_token_charging.fully_discharged_at()
-        result4 = self.battery_discharging_working.fully_discharged_at()
+        result1 = self.battery_charging_working.fully_discharged_at
+    #    result2 = self.battery_unreachable.fully_discharged_at
+    #    result3 = self.battery_wrong_token_charging.fully_discharged_at
+        result4 = self.battery_discharging_working.fully_discharged_at
         self.assertEqual(result1, 0)
     #    self.assertEqual(result2, '00:00')
     #    self.assertEqual(result3, None)
@@ -603,45 +607,45 @@ class TestSonnen(unittest.TestCase):
     @responses.activate
     @freeze_time("24-04-2022 15:38:23")
     def test_seconds_since_full(self):
-        result1 = self.battery_charging_working.seconds_since_full()
-    #    result2 = self.battery_unreachable.seconds_since_full()
-        result3 = self.battery_wrong_token_charging.seconds_since_full()
-        result4 = self.battery_charging_working.seconds_since_full()
+        result1 = self.battery_charging_working.seconds_since_full
+    #    result2 = self.battery_unreachable.seconds_since_full
+    #    result3 = self.battery_wrong_token_charging.seconds_since_full
+        result4 = self.battery_charging_working.seconds_since_full
         self.assertEqual(result1, 3720)
     #    self.assertEqual(result2, 0)
-        self.assertEqual(result3, None)
+    #    self.assertEqual(result3, None)
         self.assertEqual(result4, 3720)
 
     @responses.activate
     def test_full_charge_capacity(self):
-        result1 = self.battery_charging_working.full_charge_capacity()
-    #    result2 = self.battery_unreachable.full_charge_capacity()
-        result3 = self.battery_wrong_token_charging.full_charge_capacity()
-        result4 = self.battery_discharging_working.full_charge_capacity()
+        result1 = self.battery_charging_working.full_charge_capacity
+    #    result2 = self.battery_unreachable.full_charge_capacity
+    #    result3 = self.battery_wrong_token_charging.full_charge_capacity
+        result4 = self.battery_discharging_working.full_charge_capacity
         self.assertEqual(result1, 40683)
     #    self.assertEqual(result2, 0)
-        self.assertEqual(result3, None)
+    #    self.assertEqual(result3, None)
         self.assertEqual(result4, 40683)
 
     @responses.activate
     @freeze_time('24-04-2022 15:38:23')
     def test_time_since_full(self):
-        result1 = self.battery_charging_working.time_since_full()
-    #    result2 = self.battery_unreachable.time_since_full()
-    #    result3 = self.battery_wrong_token_charging.time_since_full()
-        result4 = self.battery_charging_working.time_since_full()
+        result1 = self.battery_charging_working.time_since_full
+    #    result2 = self.battery_unreachable.time_since_full
+    #    result3 = self.battery_wrong_token_charging.time_since_full
+        result4 = self.battery_discharging_working.time_since_full
         self.assertEqual(result1, datetime.timedelta(seconds=3720))
     #    self.assertEqual(result2, datetime.timedelta(seconds=0))
     #    self.assertEqual(result3, datetime.timedelta(seconds=0))
-        self.assertEqual(result4, datetime.timedelta(seconds=3720))
+        self.assertEqual(result4, datetime.timedelta(seconds=574))
 
     @responses.activate
     @freeze_time('24-04-2022 15:38:23')
     def test_seconds_until_fully_charged(self):
-        result1 = self.battery_charging_working.seconds_until_fully_charged()
-    #    result2 = self.battery_unreachable.seconds_until_fully_charged()
-    #    result3 = self.battery_wrong_token_charging.seconds_until_fully_charged()
-        result4 = self.battery_discharging_working.seconds_until_fully_charged()
+        result1 = self.battery_charging_working.seconds_until_fully_charged
+    #    result2 = self.battery_unreachable.seconds_until_fully_charged
+    #    result3 = self.battery_wrong_token_charging.seconds_until_fully_charged
+        result4 = self.battery_discharging_working.seconds_until_fully_charged
         self.assertEqual(result1, 14400)
     #    self.assertEqual(result2, 0)
     #    self.assertEqual(result3, 0)
@@ -650,10 +654,10 @@ class TestSonnen(unittest.TestCase):
     @responses.activate
     @freeze_time('24-04-2022 15:38:23')
     def test_fully_charged_at(self):
-        result1 = self.battery_charging_working.fully_charged_at()
-    #    result2 = self.battery_unreachable.fully_charged_at()
-    #    result3 = self.battery_wrong_token_charging.fully_charged_at()
-        result4 = self.battery_discharging_working.fully_charged_at()
+        result1 = self.battery_charging_working.fully_charged_at
+    #    result2 = self.battery_unreachable.fully_charged_at
+    #    result3 = self.battery_wrong_token_charging.fully_charged_at
+        result4 = self.battery_discharging_working.fully_charged_at
         self.assertEqual(result1.strftime('%d.%B.%Y %H:%M'), '24.April.2022 19:38')
     #    self.assertEqual(result2, 0)
     #    self.assertEqual(result3, None)

@@ -133,3 +133,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+#ignore files parked in folder
+*-x.py

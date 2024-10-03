@@ -53,12 +53,6 @@ CONFIGURATION_EM_USOC = "EM_USOC"
 CONFIGURATION_DE_SOFTWARE = "DE_Software"
 IC_ECLIPSE_LED = "Eclipse Led"
 
-_EM_OPERATINGMODE = {
-     "1": 'Manual',
-     "2": 'Automatic - Self Consumption',
-     "6": 'Battery-Module-Extension (30%)',
-    "10": 'Time-Of-Use'
-}
 # default timeout
 TIMEOUT = 20
 TIMEOUT_CONNECT=0

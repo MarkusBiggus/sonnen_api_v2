@@ -67,19 +67,9 @@ class Sonnen:
         else:
             print(msg)
 
-# timeout support functions for sonnenbatterie_api_v2 wrapper
-
-    def set_request_connect_timeout(self, timeout:int = 20):
-        self.request_timeouts = (timeout, self.request_timeouts[TIMEOUT_REQUEST])
-
-    def get_request_connect_timeout(self) -> int:
-        return self.request_timeouts[TIMEOUT_CONNECT]
-
-    def set_request_read_timeout(self, timeout:int = 20):
-        self.request_timeouts = (self.request_timeouts[TIMEOUT_CONNECT], timeout)
-
-    def get_request_read_timeout(self) -> int:
-        return self.request_timeouts[TIMEOUT_REQUEST]
+# timeout support  for sonnenbatterie_api_v2 wrapper
+    def set_request_connect_timeout(self, request_timeouts):
+        self.request_timeouts = request_timeouts
 
     def fetch_latest_details(self) -> bool:
         """Fetches latest details api

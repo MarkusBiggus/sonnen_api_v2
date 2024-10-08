@@ -28,6 +28,6 @@ setup(
     description=read_file('README.md'),
     install_requires=[
         'requests~=2.32',
-        'dotenv>=1.0.1',
+        'python-dotenv>=1.0.1'
     ]
 )

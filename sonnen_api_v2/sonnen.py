@@ -11,6 +11,7 @@ import asyncio
 import logging
 import requests
 from .const import *
+from .wrapped import *
 
 def get_item(_type):
     """Decorator factory for getting data from the api dictionary and casting
@@ -49,6 +50,7 @@ class Sonnen:
         self.battery_api_endpoint = f'{self.url}/api/v2/battery'
         self.powermeter_api_endpoint = f'{self.url}/api/v2/powermeter'
         self.configurations_api_endpoint = f'{self.url}/api/v2/configurations'
+        self.inverter_api_endpoint = f'{self.url}/api/v2/inverter'
 
         # api data
         self._latest_details_data = {}
@@ -59,26 +61,13 @@ class Sonnen:
         self._powermeter_production = {}
         self._powermeter_consumption = {}
         self._configurations_data = {}
+        self._inverter_data = {}
 
     def _log_error(self, msg):
         if self.logger:
             self.logger.error(msg)
         else:
             print(msg)
-
-# timeout support functions for sonnenbatterie_api_v2 wrapper
-
-    def set_request_connect_timeout(self, timeout:int = 20):
-        self.request_timeouts = (timeout, self.request_timeouts[TIMEOUT_REQUEST])
-
-    def get_request_connect_timeout(self) -> int:
-        return self.request_timeouts[TIMEOUT_CONNECT]
-
-    def set_request_read_timeout(self, timeout:int = 20):
-        self.request_timeouts = (self.request_timeouts[TIMEOUT_CONNECT], timeout)
-
-    def get_request_read_timeout(self) -> int:
-        return self.request_timeouts[TIMEOUT_REQUEST]
 
     def fetch_latest_details(self) -> bool:
         """Fetches latest details api
@@ -165,6 +154,23 @@ class Sonnen:
             )
             if response.status_code == 200:
                 self._battery_status = response.json()
+                return True
+        except requests.ConnectionError as conn_error:
+            self._log_error(f'Connection error to sonnenBatterie - {conn_error}')
+        return False
+
+    def fetch_inverter_data(self) -> bool:
+        """Fetches inverter data api
+            Returns:
+                True if fetch was successful, else False
+        """
+        try:
+            response = requests.get(
+                self.inverter_api_endpoint,
+                headers=self.header, timeout=self.request_timeouts
+            )
+            if response.status_code == 200:
+                self._inverter_data = response.json()
                 return True
         except requests.ConnectionError as conn_error:
             self._log_error(f'Connection error to sonnenBatterie - {conn_error}')
@@ -769,7 +775,7 @@ class Sonnen:
     @property
     @get_item(int)
     def backup_buffer_capacity_wh(self) -> int:
-        """Backup Buffer capacity (includes 6% unusable)
+        """Backup Buffer capacity (includes 7% unusable)
             Returns:
                 Backup Buffer in Wh
         """
@@ -781,14 +787,14 @@ class Sonnen:
     @property
     @get_item(int)
     def backup_buffer_usable_capacity_wh(self) -> int:
-        """Backup Buffer usable capacity (excludes 6% unusable)
+        """Backup Buffer usable capacity (excludes 7% unusable)
             Returns:
                 Usable Backup Buffer in Wh
         """
         buffer_percent = self.configuration_em_usoc
         full_charge = self.battery_full_charge_capacity_wh
 
-        return int(full_charge * (buffer_percent - 6) / 100) if buffer_percent > 6 else 0
+        return int(full_charge * (buffer_percent - 7) / 100) if buffer_percent > 6 else 0
 
     @property
     def state_core_control_module(self) -> str:

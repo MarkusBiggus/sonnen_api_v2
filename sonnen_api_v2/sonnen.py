@@ -1,11 +1,10 @@
 """ SonnenAPI v2 module """
 
 from functools import wraps
+from typing import Optional, Union
+from math import floor
 
 import datetime
-from idlelib.pyparse import trans
-import json
-
 import logging
 import requests
 from .const import *
@@ -31,7 +30,7 @@ def get_item(_type):
 
 
 class Sonnen:
-    """Class for managing Sonnen API data"""
+    """Class for managing Sonnen API V2 data"""
 
     def __init__(self, auth_token: str, ip_address: str, logger_name: str = None) -> None:
         self.last_updated = None
@@ -187,12 +186,12 @@ class Sonnen:
         return success
 
     @property
-    def last_updated(self) -> datetime:
+    def last_updated(self) -> Optional[datetime.datetime]:
         """Last time data fetched from batterie"""
         return self._last_updated
 
     @last_updated.setter
-    def last_updated(self, last_updated):
+    def last_updated(self, last_updated: datetime.datetime=None):
         """Last time data fetched from batterie"""
         self._last_updated = last_updated
 
@@ -242,19 +241,32 @@ class Sonnen:
             Returns:
                 Time in seconds
         """
-        seconds = int((self.remaining_capacity_wh / self.discharging) * 3600) if self.discharging else 0
+        seconds = int((self.battery_remaining_capacity_wh / self.discharging) * 3600) if self.discharging else 0
 
         return seconds
 
     @property
     @get_item(int)
-    def seconds_to_reserve(self) -> int:
-        """Time until battery at backup reserve
+    def seconds_to_reserve(self) -> Union[int, None]:
+        """Time until battery capacity at backup reserve
+            Above reserve:
+                Charging - None
+                Discharging - seconds to reserve
+            Below Reserve
+                Charging - seconds to reserve
+                Discharging - negative seconds since reserve
+                Standby - None
             Returns:
-                Time in seconds - negative means we're using reserve now
+                Time in seconds
         """
-        capacity_until_reserve = self.remaining_capacity_wh - self.backup_buffer_capacity_wh
-        seconds = int((capacity_until_reserve / self.discharging) * 3600) if self.discharging else 0
+        capacity_until_reserve = self.battery_remaining_capacity_wh - self.backup_buffer_capacity_wh
+        if capacity_until_reserve > 0:
+            seconds = int((capacity_until_reserve / self.discharging) * 3600) if self.discharging else None
+        else:
+            if self.charging:
+                seconds = int((abs(capacity_until_reserve) / self.charging) * 3600)
+            else:
+                seconds = int((capacity_until_reserve / self.discharging) * 3600) if self.discharging else None
 
         return seconds
 
@@ -268,24 +280,24 @@ class Sonnen:
         return self.seconds_to_reserve < 0
 
     @property
-    def fully_discharged_at(self) -> datetime:
+    def fully_discharged_at(self) -> Optional[datetime.datetime]:
         """Future time of battery fully discharged
             Returns:
-                Future time
+                Datetime discharged or None when not discharging
         """
-        return (datetime.datetime.now() + datetime.timedelta(seconds=self.seconds_to_empty)) if self.discharging else 0
+        return (datetime.datetime.now() + datetime.timedelta(seconds=self.seconds_to_empty)) if self.discharging else None
 
     @property
-    def backup_reserve_at(self) -> datetime:
-        """Time battery discharged to backup reserve
+    def backup_reserve_at(self) -> Optional[datetime.datetime]:
+        """Time battery charged/discharged to backup reserve
             Returns:
-                Time
+                Datetime charged/discharged to reserve or None when not charging/discharging
         """
         seconds = self.seconds_to_reserve
         if seconds < 0:
-            return (datetime.datetime.now() - datetime.timedelta(seconds=abs(seconds))) if self.discharging else 0
+            return (datetime.datetime.now() - datetime.timedelta(seconds=abs(seconds))) if self.discharging else None
         else:
-            return (datetime.datetime.now() + datetime.timedelta(seconds=seconds)) if self.discharging else 0
+            return (datetime.datetime.now() + datetime.timedelta(seconds=seconds)) if self.discharging else None
 
     @property
     @get_item(int)
@@ -327,11 +339,12 @@ class Sonnen:
     @get_item(int)
     def remaining_capacity_wh(self) -> int:
         """ Remaining capacity in watt-hours
-         IMPORTANT NOTE: Why is this double as high as it should be???
+        IMPORTANT NOTE: Why is this double as high as it should be???
+            use battery_remaining_capacity_wh for calculated value
             Returns:
-                 Remaining USABLE capacity of the battery in Wh
+                Remaining USABLE capacity of the battery in Wh
         """
-        return self._status_data[STATUS_REMAININGCAPACITY_WH] // 2
+        return self._status_data[STATUS_REMAININGCAPACITY_WH]
 
     @property
     @get_item(int)
@@ -351,7 +364,7 @@ class Sonnen:
         return datetime.timedelta(seconds=self.seconds_since_full)
 
     @property
-    def last_time_full(self) -> datetime:
+    def last_time_full(self) -> datetime.datetime:
         """Calculates last time at full charge.
            Returns:
                DateTime
@@ -360,21 +373,24 @@ class Sonnen:
 
     @property
     @get_item(int)
-    def seconds_until_fully_charged(self) -> int:
+    def seconds_until_fully_charged(self) -> Union[int, None]:
         """Time remaining until fully charged
             Returns:
-                Time in seconds
+                Time in seconds - None when not charging, zero when fully charged
         """
-        remaining_charge = self.battery_full_charge_capacity_wh - self.remaining_capacity_wh
-        seconds = int(remaining_charge / self.charging) * 3600 if self.charging else 0
+        remaining_charge = self.battery_full_charge_capacity_wh - self.battery_remaining_capacity_wh
+        seconds = int(remaining_charge / self.charging) * 3600 if self.charging else None
 
-        return seconds
+        return seconds if remaining_charge != 0 else 0
 
     @property
-    def fully_charged_at(self) -> datetime:
-        """ Calculating time until fully charged """
+    def fully_charged_at(self) -> Optional[datetime.datetime]:
+        """ Calculate time until fully charged
+            Returns:
+                Datetime or None when not charging
+        """
         #    return final_time.strftime('%d.%B.%Y %H:%M')
-        return (datetime.datetime.now() + datetime.timedelta(seconds=self.seconds_until_fully_charged)) if self.charging else 0
+        return (datetime.datetime.now() + datetime.timedelta(seconds=self.seconds_until_fully_charged)) if self.charging else None
 
     @property
     @get_item(int)
@@ -394,9 +410,7 @@ class Sonnen:
             Returns:
                 Charging value in watt
         """
-        charge = self.pac_total
-
-        return abs(charge) if charge < 0 else 0
+        return abs(self.pac_total) if self.pac_total < 0 else 0
 
     @property
     @get_item(int)
@@ -405,9 +419,7 @@ class Sonnen:
             Returns:
                 Discharging value in watt
         """
-        charge = self.pac_total
-
-        return charge if charge > 0 else 0
+        return self.pac_total if self.pac_total > 0 else 0
 
     @property
     @get_item(int)
@@ -572,15 +584,15 @@ class Sonnen:
         return self._battery_status[BATTERY_SYSTEM_VOLTAGE]
 
     @property
-    @get_item(float)
-    def battery_remaining_capacity_wh(self) -> float:
+    @get_item(int)
+    def battery_remaining_capacity_wh(self) -> int:
         """Remaining capacity Wh calculated from Ah
             Returns:
-                Remaining capacity in Wh
+                Floor Int Wh
         """
         capacity_ah = self.battery_remaining_capacity
 
-        return capacity_ah * self.battery_system_dc_voltage
+        return floor(capacity_ah * self.battery_system_dc_voltage)
 
     @property
     @get_item(float)

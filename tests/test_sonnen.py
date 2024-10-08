@@ -661,4 +661,4 @@ class TestSonnen(unittest.TestCase):
         self.assertEqual(result1.strftime('%d.%B.%Y %H:%M'), '24.April.2022 19:38')
     #    self.assertEqual(result2, 0)
     #    self.assertEqual(result3, None)
-        self.assertEqual(result4, 0)
+        self.assertEqual(result4, None)

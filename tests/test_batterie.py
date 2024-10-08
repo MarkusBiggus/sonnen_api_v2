@@ -141,10 +141,10 @@ class TestBatterie(unittest.TestCase):
 
     def test_fully_charged_at(self):
         charged = self.battery_live.fully_charged_at
-        if charged != 0:
-            next_full = charged.strftime('%d-%b-%Y %H:%M')
-        else:
+        if charged is None:
             next_full = '*not charging*'
+        else:
+            next_full = charged.strftime('%d-%b-%Y %H:%M')
         print('Battery Next Full at: ' + next_full)
         self.assertEqual(True, True)
 

@@ -4,10 +4,9 @@ from functools import wraps
 
 import datetime
 from idlelib.pyparse import trans
-import json
 
-#import aiohttp
-#import asyncio
+import aiohttp
+import asyncio
 
 import logging
 import requests
@@ -183,6 +182,64 @@ class Sonnen:
         self.last_updated = datetime.datetime.now() if success else None
         return success
 
+    async def _async_fetch_data(self, url: str) -> dict:
+        """Fetches data from the API endpoint with asyncio"""
+        try:
+            async with aiohttp.ClientSession(headers=self.header) as session:
+                resp = await session.get(url)
+                data = resp.json()
+                return await data
+        except aiohttp.ClientError as error:
+            self._log_error(f'Battery: {self.ip_address} is offline!')
+        except asyncio.TimeoutError as error:
+            self._log_error(f'Timeout error while accessing: {url}')
+        except Exception as error:
+            self._log_error(f'Error while data parsing {error}')
+            return {}
+
+    async def async_fetch_latest_details(self) -> bool:
+        """Fetches latest details api as coroutine"""
+        try:
+            self._latest_details_data = await self._async_fetch_data(
+                self.latest_details_api_endpoint
+            )
+            self._ic_status = self._latest_details_data[self.IC_STATUS]
+            return True
+        except Exception as error:
+            self._log_error(f'Error occurred while data parsing latest details:{error}')
+            return False
+
+    async def async_fetch_status(self) -> bool:
+        """Fetches status api as coroutine"""
+        try:
+            self._status_data = await self._async_fetch_data(
+                self.status_api_endpoint
+            )
+            return True
+        except Exception as error:
+            self._log_error(f'Error occurred while data parsing status:{error}')
+            return False
+
+    async def async_fetch_battery_status(self) -> bool:
+        """Fetches battery details api as coroutine"""
+        try:
+            self._battery_status = await self._async_fetch_data(
+                self.battery_api_endpoint
+            )
+            return True
+        except Exception as error:
+            self._log_error(f'Error occurred while data parsing battery status:{error}')
+        return False
+
+
+    async def async_update(self) -> bool:
+        """Updates data from apis of the sonnenBatterie as coroutine"""
+        success = await self.async_fetch_latest_details()
+        success = success and await self.async_fetch_status()
+        success = success and await self.async_fetch_battery_status()
+        self.last_updated = datetime.datetime.now()
+        return success
+
     @property
     def last_updated(self) -> datetime:
         """Last time data fetched from batterie"""
@@ -307,9 +364,9 @@ class Sonnen:
     def u_soc(self) -> int:
         """User state of charge (usable charge)
             Returns:
-                User SoC in percent
+                Integer Percent
         """
-        return self._latest_details_data[USOC_KEY]
+        return self._latest_details_data[DETAIL_USOC]
 
     @property
     @get_item(int)
@@ -318,7 +375,7 @@ class Sonnen:
             Returns:
                 Integer Percent
         """
-        return self._latest_details_data[RSOC_KEY]
+        return self._latest_details_data[DETAIL_RSOC]
 
     @property
     @get_item(int)
@@ -598,6 +655,15 @@ class Sonnen:
         return self._battery_status[BATTERY_SYSTEM_CURRENT]
 
     @property
+    @get_item(float)
+    def battery_system_dc_voltage(self) -> float:
+        """System battery voltage
+            Returns:
+                Voltage in Volt
+        """
+        return self._battery_status[BATTERY_SYSTEM_VOLTAGE]
+
+    @property
     @get_item(int)
     def configuration_em_operatingmode(self) -> int:
         """Operating Mode
@@ -726,7 +792,7 @@ class Sonnen:
 
     @property
     def state_core_control_module(self) -> str:
-        """State of control module: config, ongrid, off-grid, ...
+        """State of control module: Config, OnGrid, OffGrid, Critical Error, ...
             Returns:
                 String
         """

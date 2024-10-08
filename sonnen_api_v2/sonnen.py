@@ -755,7 +755,7 @@ class Sonnen:
             Returns:
                 Feed watts, -ve is export (actually float with zero decimal part)
         """
-        return int(self._status_data[STATUS_GRID_FEED_IN_W])
+        return int(self._status_data[STATUS_GRIDFEEDIN_W])
 
     @property
     @get_item(bool)

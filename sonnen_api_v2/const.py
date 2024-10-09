@@ -52,6 +52,7 @@ STATUS_MODULES_INSTALLED = 'nrbatterymodules'
 STATUS_PAC_TOTAL_W = 'Pac_total_W'
 STATUS_PRODUCTION_W = 'Production_W'
 STATUS_REMAININGCAPACITY_WH = 'RemainingCapacity_Wh'
+STATUS_SYSTEMSTATUS = 'SystemStatus'
 STATUS_TIMESTAMP = 'Timestamp'
 
 # default timeout

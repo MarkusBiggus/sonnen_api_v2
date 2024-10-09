@@ -21,6 +21,8 @@ def get_item(_type):
     def decorator(fn):
         @wraps(fn)
         def inner(*args):
+            if fn(*args) is None:
+                return None
             try:
                 result = _type(fn(*args))
             except KeyError:
@@ -323,6 +325,7 @@ class Sonnen:
                 Time in seconds
         """
         capacity_until_reserve = self.battery_remaining_capacity_wh - self.backup_buffer_capacity_wh
+        print(f'capacity_until_reserve: {capacity_until_reserve}')
         if capacity_until_reserve > 0:
             seconds = int((capacity_until_reserve / self.discharging) * 3600) if self.discharging else None
         else:
@@ -331,6 +334,7 @@ class Sonnen:
             else:
                 seconds = int((capacity_until_reserve / self.discharging) * 3600) if self.discharging else None
 
+        print(f'capacity_until_reserve: {capacity_until_reserve}  Seconds: {seconds}  DischargeW: {self.discharging}')
         return seconds
 
     @property
@@ -340,7 +344,8 @@ class Sonnen:
             Returns:
                 Bool - true when reserve in use
         """
-        return self.seconds_to_reserve < 0
+        capacity_until_reserve = self.battery_remaining_capacity_wh - self.backup_buffer_capacity_wh
+        return capacity_until_reserve < 0
 
     @property
     def fully_discharged_at(self) -> Optional[datetime.datetime]:
@@ -357,6 +362,9 @@ class Sonnen:
                 Datetime charged/discharged to reserve or None when not charging/discharging
         """
         seconds = self.seconds_to_reserve
+        if seconds is None:
+            return None
+
         if seconds < 0:
             return (datetime.datetime.now() - datetime.timedelta(seconds=abs(seconds))) if self.discharging else None
         else:
@@ -391,7 +399,7 @@ class Sonnen:
 
     @property
     @get_item(int)
-    def u_roc(self) -> int:
+    def r_soc(self) -> int:
         """Relative state of charge (actual charge)
             Returns:
                 Integer Percent
@@ -462,14 +470,15 @@ class Sonnen:
             Negative if charging
             Positive if discharging
             Returns:
-                  Inverter load value in watt
+                Inverter load in watt
         """
+#        print (f'DETAIL_PAC_TOTAL_W: {self._latest_details_data[DETAIL_PAC_TOTAL_W]}')
         return self._latest_details_data[DETAIL_PAC_TOTAL_W]
 
     @property
     @get_item(int)
     def charging(self) -> int:
-        """Actual battery charging value
+        """Actual battery charging value is negative
             Returns:
                 Charging value in watt
         """
@@ -482,6 +491,7 @@ class Sonnen:
             Returns:
                 Discharging value in watt
         """
+#        print (f'self.pac_total: {self.pac_total}')
         return self.pac_total if self.pac_total > 0 else 0
 
     @property
@@ -813,11 +823,37 @@ class Sonnen:
 
     @property
     def state_core_control_module(self) -> str:
-        """State of control module: Config, OnGrid, OffGrid, Critical Error, ...
+        """State of control module: config, ongrid, offgrid, critical error, ...
             Returns:
                 String
         """
         return self._latest_details_data[IC_STATUS][DETAIL_STATE_CORECONTROL_MODULE]
+
+    @property
+    def system_status(self) -> str:
+        """System Status: Config, OnGrid, OffGrid, Critical Error, ...
+            Returns:
+                String
+        """
+        return self._status_data[STATUS_SYSTEMSTATUS]
+
+    @property
+    def system_status_timestamp(self) -> datetime.datetime:
+        """Timestamp: "2024-10-09 14:00:07"
+            Returns:
+                datetime
+        """
+        print (f'{self._status_data[STATUS_TIMESTAMP]}')
+        return  datetime.datetime.fromisoformat(self._status_data[STATUS_TIMESTAMP])
+
+    @property
+    def validation_timestamp(self) -> datetime.datetime:
+        """Timestamp: "Wed Sep 18 12:26:06 2024"
+            Returns:
+                datetime
+        """
+        print (f'{self._latest_details_data[IC_STATUS]["timestamp"]}')
+        return  datetime.datetime.strptime(self._latest_details_data[IC_STATUS]["timestamp"], '%a %b %d %H:%M:%S %Y')
 
     @property
     def configuration_de_software(self) -> str:

@@ -60,11 +60,11 @@ class TestSonnen(unittest.TestCase):
         }
 
         test_data_latest_charging = {
-            'Consumption_W': 403,
-            'FullChargeCapacity': 40683.490,
+            'FullChargeCapacity': 20683.490,
             'GridFeedIn_W': 0,
-            'Pac_total_W': -1394,
             'Production_W': 2972,
+            'Consumption_W': 1578,
+            'Pac_total_W': -1394,
             'RSOC': 98,
             'SetPoint_W': -145,
             'Timestamp': '2022-04-30 17:00:58',
@@ -189,10 +189,10 @@ class TestSonnen(unittest.TestCase):
         }
 
         test_data_latest_discharging = {
-            'Consumption_W': 541,
-            'FullChargeCapacity': 40683.490,
+            'FullChargeCapacity': 20683.490,
             'GridFeedIn_W': 0,
-            'Pac_total_W': 439,
+            'Pac_total_W': 1439,
+            'Consumption_W': 1541,
             'Production_W': 102,
             'RSOC': 99,
             'SetPoint_W': 439,
@@ -337,8 +337,8 @@ class TestSonnen(unittest.TestCase):
             "chargecurrentlimit":39.97,
             "cyclecount":30.0,
             "dischargecurrentlimit":39.97,
-            "fullchargecapacity":195.312,
-            "fullchargecapacitywh":40683.490,
+            "fullchargecapacity":99.297,
+            "fullchargecapacitywh":20683.490,
             "maximumcelltemperature":19.95,
             "maximumcellvoltage":3.257,
             "maximumcellvoltagenum":0.0,
@@ -353,7 +353,7 @@ class TestSonnen(unittest.TestCase):
             "minimummoduletemperature":-273.15,
             "nominalmoduledcvoltage":102.4,
             "relativestateofcharge":26.0,
-            "remainingcapacity":25.39,
+            "remainingcapacity":75.39,
             "systemalarm":0.0,
             "systemcurrent":0.0,
             "systemdcvoltage":208.3,
@@ -492,8 +492,8 @@ class TestSonnen(unittest.TestCase):
         result1 = self.battery_charging_working.consumption
         result2 = self.battery_discharging_working.consumption
     #    result3 = self.battery_wrong_token_charging.consumption
-        self.assertEqual(result1, 403)
-        self.assertEqual(result2, 541)
+        self.assertEqual(result1, 1578)
+        self.assertEqual(result2, 1541)
     #    self.assertEqual(result3, None)
 
     @responses.activate
@@ -516,7 +516,7 @@ class TestSonnen(unittest.TestCase):
         self.assertEqual(result1, 0)
     #    self.assertEqual(result2, 0)
     #    self.assertEqual(result3, None)
-        self.assertEqual(result4, 439)
+        self.assertEqual(result4, 1439)
         result1_pac = self.battery_charging_working.pac_total
     #    result2_pac = self.battery_unreachable.pac_total
     #    result3_pac = self.battery_wrong_token_charging.pac_total
@@ -590,7 +590,7 @@ class TestSonnen(unittest.TestCase):
         self.assertEqual(result1, 0)
     #    self.assertEqual(result2, 0)
     #    self.assertEqual(result3, None)
-        self.assertEqual(result4, 164747)
+        self.assertEqual(result4, 39284)
 
     @responses.activate
     @freeze_time("24-05-2022 15:38:23")
@@ -599,10 +599,10 @@ class TestSonnen(unittest.TestCase):
     #    result2 = self.battery_unreachable.fully_discharged_at
     #    result3 = self.battery_wrong_token_charging.fully_discharged_at
         result4 = self.battery_discharging_working.fully_discharged_at
-        self.assertEqual(result1, 0)
+        self.assertEqual(result1, None)
     #    self.assertEqual(result2, '00:00')
     #    self.assertEqual(result3, None)
-        self.assertEqual(result4.strftime('%d.%B.%Y %H:%M'), '26.May.2022 13:24')
+        self.assertEqual(result4.strftime('%d.%B.%Y %H:%M'), '25.May.2022 02:33')
 
     @responses.activate
     @freeze_time("24-04-2022 15:38:23")
@@ -622,10 +622,10 @@ class TestSonnen(unittest.TestCase):
     #    result2 = self.battery_unreachable.full_charge_capacity
     #    result3 = self.battery_wrong_token_charging.full_charge_capacity
         result4 = self.battery_discharging_working.full_charge_capacity
-        self.assertEqual(result1, 40683)
+        self.assertEqual(result1, 20683)
     #    self.assertEqual(result2, 0)
     #    self.assertEqual(result3, None)
-        self.assertEqual(result4, 40683)
+        self.assertEqual(result4, 20683)
 
     @responses.activate
     @freeze_time('24-04-2022 15:38:23')
@@ -646,10 +646,10 @@ class TestSonnen(unittest.TestCase):
     #    result2 = self.battery_unreachable.seconds_until_fully_charged
     #    result3 = self.battery_wrong_token_charging.seconds_until_fully_charged
         result4 = self.battery_discharging_working.seconds_until_fully_charged
-        self.assertEqual(result1, 14400)
+        self.assertEqual(result1, 10800)
     #    self.assertEqual(result2, 0)
     #    self.assertEqual(result3, 0)
-        self.assertEqual(result4, 0)
+        self.assertEqual(result4, None)
 
     @responses.activate
     @freeze_time('24-04-2022 15:38:23')
@@ -658,7 +658,7 @@ class TestSonnen(unittest.TestCase):
     #    result2 = self.battery_unreachable.fully_charged_at
     #    result3 = self.battery_wrong_token_charging.fully_charged_at
         result4 = self.battery_discharging_working.fully_charged_at
-        self.assertEqual(result1.strftime('%d.%B.%Y %H:%M'), '24.April.2022 19:38')
+        self.assertEqual(result1.strftime('%d.%B.%Y %H:%M'), '24.April.2022 18:38')
     #    self.assertEqual(result2, 0)
     #    self.assertEqual(result3, None)
         self.assertEqual(result4, None)

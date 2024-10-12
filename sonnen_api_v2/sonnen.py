@@ -819,7 +819,7 @@ class Sonnen:
         buffer_percent = self.configuration_em_usoc
         full_charge = self.battery_full_charge_capacity_wh
 
-        return int(full_charge * (buffer_percent - 7) / 100) if buffer_percent > 6 else 0
+        return int(full_charge * (buffer_percent - 7) / 100) if buffer_percent > 7 else 0
 
     @property
     def state_core_control_module(self) -> str:

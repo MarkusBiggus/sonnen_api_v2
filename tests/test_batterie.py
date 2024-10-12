@@ -44,25 +44,36 @@ class TestBatterie(unittest.TestCase):
         usoc = self.battery_live.configuration_em_usoc
         self.assertEqual(usoc, BACKUP_BUFFER_USOC) # config BackupBuffer value
 
-    def test_seconds_to_empty(self):
+    def test_seconds_to_reserve(self):
+        seconds = self.battery_live.seconds_to_reserve
         if self.battery_live.status_battery_discharging:
-            seconds = self.battery_live.seconds_to_reserve
             if seconds < 0:
                 print(f'Seconds since Reserve: {seconds:,}')
             else:
-                print(f'Seconds to Reserve: {seconds:,}')
+                print(f'Seconds to Reserve: {seconds:,} (discharging)')
             seconds = self.battery_live.seconds_to_empty
             print(f'Seconds to Empty: {seconds:,}')
         else:
-            usoc = self.battery_live.u_soc
-            if usoc == self.battery_live.configuration_em_usoc:
-                print(f'Battery at Backup Reserve: {usoc}')
+            if seconds is None:
+                print(f'Seconds to reserve: Battery charging above reserve')
+            else:
+                print(f'Seconds to Reserve: {seconds:,} (charging)')
+                usoc = self.battery_live.u_soc
+                if usoc == self.battery_live.configuration_em_usoc:
+                    print(f'Battery at Backup Reserve: {usoc}')
         self.assertEqual(True, True)
 
-    def test_state_core_control_module(self):
+    def test_system_status(self):
         state = self.battery_live.state_core_control_module
-        print (f'Current Control State: {state}')
+        print (f'Core Control State: {state}')
+        status = self.battery_live.system_status
+        print (f'System Status: {status}')
+        status_timestamp = self.battery_live.system_status_timestamp
+        print (f'Status time: {status_timestamp.strftime("%d-%b-%Y %H:%M:%S")}')
+        validation_timestamp = self.battery_live.validation_timestamp
+        print (f'Validation time: {validation_timestamp.strftime("%d-%b-%Y %H:%M:%S")}')
         self.assertEqual(state, 'ongrid')
+        self.assertEqual(status, 'OnGrid')
 
     def test_configuration_em_operatingmode(self):
         OpMode = self.battery_live.configuration_em_operatingmode
@@ -87,17 +98,18 @@ class TestBatterie(unittest.TestCase):
         usable_reserve = self.battery_live.backup_buffer_usable_capacity_wh
         print(f'Backup Buffer: {backup_buffer:2}%  Usable Reserve: {usable_reserve:,}Wh')
         usoc = self.battery_live.u_soc
-        rsoc = self.battery_live.u_roc
-        print(f'Useable State of Charge: {usoc}%  Actual SOC: {rsoc}%')
+        rsoc = self.battery_live.r_soc
+        seconds_to_reserve = self.battery_live.seconds_to_reserve
+        print(f'Useable State of Charge: {usoc}%  Actual SOC: {rsoc}%  Seconds to reserve: {seconds_to_reserve}')
         if usoc > backup_buffer:
             reserve_time = self.battery_live.backup_reserve_at
-            if reserve_time == 0:
+            if reserve_time is None:
                 print ('Battery above backup reserve, not discharging.')
             else:
-                print('Battery Discharge to Reserve at: ' + reserve_time.strftime('%d-%b-%Y %H:%M'))
+                print('Battery Discharge to Reserve at: ' + reserve_time.strftime('%d-%b-%Y %H:%M:%S'))
         else:
             discharged_at = self.battery_live.fully_discharged_at
-            print(f'Backup Fully Discharged at: ' + discharged_at.strftime('%d-%b-%Y %H:%M'))
+            print(f'Backup Fully Discharged at: ' + discharged_at.strftime('%d-%b-%Y %H:%M:%S'))
         self.assertEqual(True, True)
 
     def test_battery_charging(self):
@@ -129,9 +141,9 @@ class TestBatterie(unittest.TestCase):
     def test_status_grid_feed_in(self):
         feedin = self.battery_live.status_grid_feed_in
         if feedin < 0:
-            print(f'Grid Draw Out: {abs(feedin):,.0f}W')
+            print(f'Grid Import: {abs(feedin):,.0f}W')
         else:
-            print(f'Grid Feed In: {feedin:,.0f}W')
+            print(f'Grid Export: {feedin:,.0f}W')
         self.assertEqual(True, True)
 
     def test_last_time_full(self):
@@ -141,10 +153,10 @@ class TestBatterie(unittest.TestCase):
 
     def test_fully_charged_at(self):
         charged = self.battery_live.fully_charged_at
-        if charged != 0:
-            next_full = charged.strftime('%d-%b-%Y %H:%M')
-        else:
+        if charged is None:
             next_full = '*not charging*'
+        else:
+            next_full = charged.strftime('%d-%b-%Y %H:%M')
         print('Battery Next Full at: ' + next_full)
         self.assertEqual(True, True)
 

@@ -181,3 +181,7 @@ class TestBatterie(unittest.TestCase):
         eclipse_led = self.battery_live.ic_eclipse_led
         print('EclipseLEDs: ' + json.dumps(eclipse_led, indent=2))
         self.assertEqual(0, 0)
+
+    def test_wrapped(self):
+        request_timeouts = self.battery_live.get_request_connect_timeouts()
+        print(f'request_timeouts: {request_timeouts}')

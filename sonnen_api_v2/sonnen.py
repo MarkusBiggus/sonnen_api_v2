@@ -13,7 +13,7 @@ import asyncio
 import logging
 import requests
 from .const import *
-from .wrapped import *
+from .wrapped import wrapped
 
 def get_item(_type):
     """Decorator factory for getting data from the api dictionary and casting
@@ -39,15 +39,17 @@ def get_item(_type):
 class Sonnen:
     """Class for managing Sonnen API V2 data"""
 
+
     def __init__(self, auth_token: str, ip_address: str, logger_name: str = None) -> None:
+        wrapped.__init__(self)
         self.last_updated = None
         self.logger = logging.getLogger(logger_name) if logger_name is not None else None
         self.ip_address = ip_address
         self.auth_token = auth_token
         self.url = f'http://{ip_address}'
         self.header = {'Auth-Token': self.auth_token}
-        self.request_timeouts = (TIMEOUT, TIMEOUT)
-
+    #    self.request_timeouts = (TIMEOUT, TIMEOUT)
+        self.set_request_connect_timeouts( (TIMEOUT, TIMEOUT) )
         # read api endpoints
         self.status_api_endpoint = f'{self.url}/api/v2/status'
         self.latest_details_api_endpoint = f'{self.url}/api/v2/latestdata'

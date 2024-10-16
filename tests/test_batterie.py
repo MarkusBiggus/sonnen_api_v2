@@ -2,10 +2,9 @@ import os
 import unittest
 import json
 import logging
+from math import floor
 from sonnen_api_v2 import Sonnen
 from dotenv import load_dotenv
-#from inspect import getmembers
-#from pprint import pprint
 
 load_dotenv()
 
@@ -85,7 +84,7 @@ class TestBatterie(unittest.TestCase):
     def test_battery_remaining_capacity(self):
         capacity = self.battery_live.battery_remaining_capacity
         usable_capacity = self.battery_live.battery_usable_remaining_capacity
-        print(f'Remaining capacity: {capacity:.2f}Ah  Usable: {usable_capacity:.2f}Ah')
+        print(f'RemainingAh capacity: {capacity:.2f}Ah  UsableAh: {usable_capacity:.2f}Ah')
         self.assertEqual(True, True)
 
     def test_battery_rsoc(self):
@@ -173,8 +172,8 @@ class TestBatterie(unittest.TestCase):
         remaining = self.battery_live.battery_remaining_capacity
         usableRemaining = self.battery_live.battery_usable_remaining_capacity
         remainingWh = self.battery_live.remaining_capacity_wh
-        print(f'Capacity(data): {capacity:,}Wh  Remaining(battery): {remaining:,.3f}Ah  Usable(battery): {usableRemaining:,.3f}Ah  Remaining(status): {remainingWh:,}Wh')
-        print(f'Capacity(battery): {batteryCapacity:,.3f}Ah Capacity(battery): {batteryCapacityWh:,.3f}Wh')
+        print(f'CapacityWh(data): {capacity:,}Wh  RemainingWh(status): {remainingWh:,}Wh  RemainingAh(battery): {remaining:,.3f}Ah  UsableAh(battery): {usableRemaining:,.3f}Ah')
+        print(f'CapacityAh(battery): {batteryCapacity:,.3f}Ah CapacityWh(battery): {batteryCapacityWh:,.3f}Wh')
         self.assertEqual(True, True)
 
     def test_eclipse_led(self):
@@ -185,3 +184,12 @@ class TestBatterie(unittest.TestCase):
     def test_wrapped(self):
         request_timeouts = self.battery_live.get_request_connect_timeouts()
         print(f'request_timeouts: {request_timeouts}')
+        self.assertEqual((20, 20), request_timeouts)
+        battery_status = self.battery_live.get_battery()
+        print('battery_status: ' + json.dumps(battery_status, indent=2))
+        remaining = self.battery_live.battery_remaining_capacity
+        usableRemaining = self.battery_live.battery_usable_remaining_capacity
+        remainingWh = self.battery_live.remaining_capacity_wh
+        usableWh = floor(usableRemaining * self.battery_live.battery_system_dc_voltage)
+        print(f'RemainingAh: {remaining:,.3f}Ah  RemainingWh: {remainingWh:,}Wh')
+        print(f'UsableAh: {usableRemaining:,.3f}Ah  UsableWh: {usableWh:,}Wh')

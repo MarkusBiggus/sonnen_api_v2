@@ -1,7 +1,21 @@
-""" sonnenbatterie_api_v2 wrapper support functions """
+__all__ = [
+    "set_request_connect_timeouts",
+    "get_request_connect_timeouts",
+    "get_latest_data",
+    "get_configurations",
+    "get_status"
+    ]
+#class wrapped:
+#    """ sonnenbatterie_api_v2 wrapper support functions """
+
+#    def __init__(self) -> None:
+#        return
 
 def set_request_connect_timeouts(self, request_timeouts: tuple[int, int]):
     self.request_timeouts = request_timeouts
+
+def get_request_connect_timeouts(self) -> tuple[int, int]:
+    return self.request_timeouts
 
 def get_latest_data(self):
     """Latest details for sonnenbatterie wrapper

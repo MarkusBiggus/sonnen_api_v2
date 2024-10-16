@@ -13,7 +13,6 @@ import asyncio
 import logging
 import requests
 from .const import *
-from .wrapped import *
 
 def get_item(_type):
     """Decorator factory for getting data from the api dictionary and casting
@@ -38,16 +37,19 @@ def get_item(_type):
 
 class Sonnen:
     """Class for managing Sonnen API V2 data"""
+    from .wrapped import set_request_connect_timeouts, get_request_connect_timeouts
+    from .wrapped import get_latest_data, get_configurations, get_status, get_powermeter, get_battery, get_inverter
 
     def __init__(self, auth_token: str, ip_address: str, logger_name: str = None) -> None:
+#        wrapped.__init__(self)
         self.last_updated = None
         self.logger = logging.getLogger(logger_name) if logger_name is not None else None
         self.ip_address = ip_address
         self.auth_token = auth_token
         self.url = f'http://{ip_address}'
         self.header = {'Auth-Token': self.auth_token}
-        self.request_timeouts = (TIMEOUT, TIMEOUT)
-
+    #    self.request_timeouts = (TIMEOUT, TIMEOUT)
+        self.set_request_connect_timeouts( (TIMEOUT, TIMEOUT) )
         # read api endpoints
         self.status_api_endpoint = f'{self.url}/api/v2/status'
         self.latest_details_api_endpoint = f'{self.url}/api/v2/latestdata'
@@ -325,7 +327,6 @@ class Sonnen:
                 Time in seconds
         """
         capacity_until_reserve = self.battery_remaining_capacity_wh - self.backup_buffer_capacity_wh
-        print(f'capacity_until_reserve: {capacity_until_reserve}')
         if capacity_until_reserve > 0:
             seconds = int((capacity_until_reserve / self.discharging) * 3600) if self.discharging else None
         else:
@@ -334,7 +335,7 @@ class Sonnen:
             else:
                 seconds = int((capacity_until_reserve / self.discharging) * 3600) if self.discharging else None
 
-        print(f'capacity_until_reserve: {capacity_until_reserve}  Seconds: {seconds}  DischargeW: {self.discharging}')
+    #    print(f'capacity_until_reserve: {capacity_until_reserve}  Seconds: {seconds}  DischargeW: {self.discharging}')
         return seconds
 
     @property

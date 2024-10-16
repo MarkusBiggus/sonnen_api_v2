@@ -40,7 +40,6 @@ class Sonnen:
     from .wrapped import set_request_connect_timeouts, get_request_connect_timeouts
     from .wrapped import get_latest_data, get_configurations, get_status, get_powermeter, get_battery, get_inverter
 
-
     def __init__(self, auth_token: str, ip_address: str, logger_name: str = None) -> None:
 #        wrapped.__init__(self)
         self.last_updated = None

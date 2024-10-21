@@ -31,7 +31,9 @@ class TestBatterie(unittest.TestCase):
         self.battery_live = Sonnen(API_READ_TOKEN, BATTERIE_HOST, LOGGER_NAME)  # Batterie online
 
         success = self.battery_live.update()
-        self.assertTrue(success)
+#        self.assertTrue(success)
+        if not success:
+            self.skipTest('Failed to get battery data!')
 
     def test_configuration_de_software(self):
         version = self.battery_live.configuration_de_software

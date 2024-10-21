@@ -20,6 +20,7 @@ def get_request_connect_timeouts(self) -> tuple[int, int]:
     return self.request_timeouts
 
 def get_latest_data(self)-> Union[str, bool]:
+
     """Latest details for sonnenbatterie wrapper
         Returns:
             json response

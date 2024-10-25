@@ -13,7 +13,7 @@ import asyncio
 #import aiohttp_fast_zlib
 
 import logging
-import requests
+import json
 from .const import *
 
 def get_item(_type):
@@ -205,6 +205,8 @@ class Sonnen:
             success = await self.fetch_battery_status()
         if success:
             success = await self.fetch_powermeter()
+        if success:
+            success = await self.fetch_inverter_data()
         self.last_updated = datetime.datetime.now() if success else None
         return success
 
@@ -288,8 +290,8 @@ class Sonnen:
 
     async def fetch_inverter_data(self) -> Optional[str]:
         self._inverter_data = None
-        self.inverter_api_endpoint = await self._async_fetch_api_endpoint(
-            self._inverter_data
+        self._inverter_data = await self._async_fetch_api_endpoint(
+            self.inverter_api_endpoint
         )
         return (self._inverter_data is not None)
 
@@ -879,6 +881,15 @@ class Sonnen:
         """
         print (f'{self._status_data[STATUS_TIMESTAMP]}')
         return  datetime.datetime.fromisoformat(self._status_data[STATUS_TIMESTAMP])
+
+    @property
+    @get_item(float)
+    def inverter_pac_total(self) -> float:
+        """Inverter PAC total"
+            Returns:
+                float
+        """
+        return  self._inverter_data[INVERTER_PAC_TOTAL]
 
     @property
     def validation_timestamp(self) -> datetime.datetime:

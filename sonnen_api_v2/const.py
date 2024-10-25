@@ -65,6 +65,7 @@ STATUS_PRODUCTION_W = 'Production_W'
 STATUS_REMAININGCAPACITY_WH = 'RemainingCapacity_Wh'
 STATUS_SYSTEMSTATUS = 'SystemStatus'
 STATUS_TIMESTAMP = 'Timestamp'
+INVERTER_PAC_TOTAL = 'pac_total'
 
 # default timeout
 TIMEOUT = 20

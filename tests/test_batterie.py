@@ -1,4 +1,4 @@
-import os
+import os, sys
 import unittest
 import json
 import logging
@@ -25,7 +25,18 @@ class TestBatterie(unittest.TestCase):
     def setUp(self) -> None:
         logging.basicConfig(filename="logs/sonnenapiv2.log'", level=logging.DEBUG, maxBytes=52428800)
         self.logger = logging.getLogger(LOGGER_NAME)
-        self.logger.info('Sonnen Live Batterie Test suite started.')
+        os.makedirs(os.path.dirname('logs/'+LOGGER_NAME+'.log'), exist_ok=True)
+        self.logger = logging.getLogger(LOGGER_NAME)
+        self.logger.setLevel(logging.DEBUG)
+        # create file handler which logs debug messages
+        fh = logging.FileHandler(filename='logs/'+LOGGER_NAME+'.log', mode='a')
+        fh.setLevel(logging.DEBUG)
+        # console handler display logs messages to console
+        ch = logging.StreamHandler(sys.stdout)
+        ch.setLevel(logging.DEBUG)
+        self.logger.addHandler(fh)
+        self.logger.addHandler(ch)
+    #    self.logger.info('Sonnen Live Batterie Test suite started.')
 
 
         self.battery_live = Sonnen(API_READ_TOKEN, BATTERIE_HOST, LOGGER_NAME)  # Batterie online
@@ -188,7 +199,7 @@ class TestBatterie(unittest.TestCase):
         print(f'request_timeouts: {request_timeouts}')
         self.assertEqual((20, 20), request_timeouts)
         battery_status = self.battery_live.get_battery()
-        print('battery_status: ' + json.dumps(battery_status, indent=2))
+    #    print('battery_status: ' + json.dumps(battery_status, indent=2))
         remaining = self.battery_live.battery_remaining_capacity
         usableRemaining = self.battery_live.battery_usable_remaining_capacity
         remainingWh = self.battery_live.remaining_capacity_wh

@@ -10,6 +10,8 @@ from idlelib.pyparse import trans
 import aiohttp
 import asyncio
 
+#import aiohttp_fast_zlib
+
 import logging
 import requests
 from .const import *
@@ -43,13 +45,18 @@ class Sonnen:
     def __init__(self, auth_token: str, ip_address: str, logger_name: str = None) -> None:
 #        wrapped.__init__(self)
         self.last_updated = None
-        self.logger = logging.getLogger(logger_name) if logger_name is not None else None
+        self.logger = None
+        if logger_name is not None:
+            logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            self.logger = logging.getLogger(logger_name)
+
         self.ip_address = ip_address
         self.auth_token = auth_token
         self.url = f'http://{ip_address}'
         self.header = {'Auth-Token': self.auth_token}
-    #    self.request_timeouts = (TIMEOUT, TIMEOUT)
-        self.set_request_connect_timeouts( (TIMEOUT, TIMEOUT) )
+        self.request_timeouts = (TIMEOUT, TIMEOUT)
+        self.client_timeouts = aiohttp.ClientTimeout(connect=TIMEOUT, sock_read=TIMEOUT)
+    #    self.set_request_connect_timeouts( (TIMEOUT, TIMEOUT) )
         # read api endpoints
         self.status_api_endpoint = f'{self.url}/api/v2/status'
         self.latest_details_api_endpoint = f'{self.url}/api/v2/latestdata'
@@ -68,6 +75,8 @@ class Sonnen:
         self._powermeter_consumption = {}
         self._configurations_data = {}
         self._inverter_data = {}
+        # isal is preferred over zlib_ng if it is available
+#        aiohttp_fast_zlib.enable()
 
     def _log_error(self, msg):
         if self.logger:
@@ -75,182 +84,214 @@ class Sonnen:
         else:
             print(msg)
 
-    def fetch_latest_details(self) -> bool:
-        """Fetches latest details api
-            Returns:
-                True if fetch was successful, else False
-        """
-        try:
-            response = requests.get(
-                self.latest_details_api_endpoint,
-                headers=self.header, timeout=self.request_timeouts
-            )
-            if response.status_code == 200:
-                self._latest_details_data = response.json()
-                self._ic_status = self._latest_details_data[IC_STATUS]
-                return True
-        except requests.ConnectionError as conn_error:
-            self._log_error(f'Connection error to sonnenBatterie - {conn_error}')
-        return False
+    # def fetch_latest_details(self) -> bool:
+    #     """Fetches latest details api
+    #         Returns:
+    #             True if fetch was successful, else False
+    #     """
+    #     try:
+    #         response = requests.get(
+    #             self.latest_details_api_endpoint,
+    #             headers=self.header, timeout=self.request_timeouts
+    #         )
+    #         if response.status_code == 200:
+    #             self._latest_details_data = response.json()
+    #             self._ic_status = self._latest_details_data[IC_STATUS]
+    #             return True
+    #     except requests.ConnectionError as conn_error:
+    #         self._log_error(f'Connection error to sonnenBatterie - {conn_error}')
+    #     return False
 
-    def fetch_configurations(self) -> bool:
-        """Fetches configurations api
-            Returns:
-                True if fetch was successful, else False
-        """
-        try:
-            response = requests.get(
-                self.configurations_api_endpoint,
-                headers=self.header, timeout=self.request_timeouts
-            )
-            if response.status_code == 200:
-                self._configurations_data = response.json()
-                return True
-        except requests.ConnectionError as conn_error:
-            self._log_error(f'Connection error to sonnenBatterie - {conn_error}')
-        return False
+    # def fetch_configurations(self) -> bool:
+    #     """Fetches configurations api
+    #         Returns:
+    #             True if fetch was successful, else False
+    #     """
+    #     try:
+    #         response = requests.get(
+    #             self.configurations_api_endpoint,
+    #             headers=self.header, timeout=self.request_timeouts
+    #         )
+    #         if response.status_code == 200:
+    #             self._configurations_data = response.json()
+    #             return True
+    #     except requests.ConnectionError as conn_error:
+    #         self._log_error(f'Connection error to sonnenBatterie - {conn_error}')
+    #     return False
 
-    def fetch_status(self) -> bool:
-        """Fetches status api
-            Returns:
-                True if fetch was successful, else False
-        """
-        try:
-            response = requests.get(
-                self.status_api_endpoint,
-                headers=self.header, timeout=self.request_timeouts
-            )
-            if response.status_code == 200:
-                self._status_data = response.json()
-                return True
-        except requests.ConnectionError as conn_error:
-            self._log_error(f'Connection error to sonnenBatterie - {conn_error}')
-        return False
+    # def fetch_status(self) -> bool:
+    #     """Fetches status api
+    #         Returns:
+    #             True if fetch was successful, else False
+    #     """
+    #     try:
+    #         response = requests.get(
+    #             self.status_api_endpoint,
+    #             headers=self.header, timeout=self.request_timeouts
+    #         )
+    #         if response.status_code == 200:
+    #             self._status_data = response.json()
+    #             return True
+    #     except requests.ConnectionError as conn_error:
+    #         self._log_error(f'Connection error to sonnenBatterie - {conn_error}')
+    #     return False
 
-    def fetch_powermeter(self) -> bool:
-        """Fetches powermeter api
-            Returns:
-                True if fetch was successful, else False
-        """
-        try:
-            response = requests.get(
-                self.powermeter_api_endpoint,
-                headers=self.header, timeout=self.request_timeouts
-            )
-            if response.status_code == 200:
-                self._powermeter_data = response.json()
-                self._powermeter_production = self._powermeter_data[0]
-                self._powermeter_consumption = self._powermeter_data[1]
+    # def fetch_powermeter(self) -> bool:
+    #     """Fetches powermeter api
+    #         Returns:
+    #             True if fetch was successful, else False
+    #     """
+    #     try:
+    #         response = requests.get(
+    #             self.powermeter_api_endpoint,
+    #             headers=self.header, timeout=self.request_timeouts
+    #         )
+    #         if response.status_code == 200:
+    #             self._powermeter_data = response.json()
+    #             self._powermeter_production = self._powermeter_data[0]
+    #             self._powermeter_consumption = self._powermeter_data[1]
 
-            #    print(self._powermeter_data)
-                return True
-        except requests.ConnectionError as conn_error:
-            self._log_error(f'Connection error to sonnenBatterie - {conn_error}')
-        return False
+    #         #    print(self._powermeter_data)
+    #             return True
+    #     except requests.ConnectionError as conn_error:
+    #         self._log_error(f'Connection error to sonnenBatterie - {conn_error}')
+    #     return False
 
-    def fetch_battery_status(self) -> bool:
-        """Fetches battery details api
-            Returns:
-                True if fetch was successful, else False
-        """
-        try:
-            response = requests.get(
-                self.battery_api_endpoint,
-                headers=self.header, timeout=self.request_timeouts
-            )
-            if response.status_code == 200:
-                self._battery_status = response.json()
-                return True
-        except requests.ConnectionError as conn_error:
-            self._log_error(f'Connection error to sonnenBatterie - {conn_error}')
-        return False
+    # def fetch_battery_status(self) -> bool:
+    #     """Fetches battery details api
+    #         Returns:
+    #             True if fetch was successful, else False
+    #     """
+    #     try:
+    #         response = requests.get(
+    #             self.battery_api_endpoint,
+    #             headers=self.header, timeout=self.request_timeouts
+    #         )
+    #         if response.status_code == 200:
+    #             self._battery_status = response.json()
+    #             return True
+    #     except requests.ConnectionError as conn_error:
+    #         self._log_error(f'Connection error to sonnenBatterie - {conn_error}')
+    #     return False
 
-    def fetch_inverter_data(self) -> bool:
-        """Fetches inverter data api
-            Returns:
-                True if fetch was successful, else False
-        """
-        try:
-            response = requests.get(
-                self.inverter_api_endpoint,
-                headers=self.header, timeout=self.request_timeouts
-            )
-            if response.status_code == 200:
-                self._inverter_data = response.json()
-                return True
-        except requests.ConnectionError as conn_error:
-            self._log_error(f'Connection error to sonnenBatterie - {conn_error}')
-        return False
+    # def fetch_inverter_data(self) -> bool:
+    #     """Fetches inverter data api
+    #         Returns:
+    #             True if fetch was successful, else False
+    #     """
+    #     try:
+    #         response = requests.get(
+    #             self.inverter_api_endpoint,
+    #             headers=self.header, timeout=self.request_timeouts
+    #         )
+    #         if response.status_code == 200:
+    #             self._inverter_data = response.json()
+    #             return True
+    #     except requests.ConnectionError as conn_error:
+    #         self._log_error(f'Connection error to sonnenBatterie - {conn_error}')
+    #     return False
 
-    def update(self) -> bool:
+    async def _update(self) -> bool:
         """Updates data from apis of the sonnenBatterie
             Returns:
-                True if all updates were successful, else False
+                True when all updates successful
         """
-        success = self.fetch_latest_details()
-        success = success and self.fetch_status()
-        success = success and self.fetch_battery_status()
-        success = success and self.fetch_powermeter()
+        success = await self.fetch_configurations()
+        if success:
+            success = await self.fetch_latest_details()
+        if success:
+            success = await self.fetch_status()
+        if success:
+            success = await self.fetch_battery_status()
+        if success:
+            success = await self.fetch_powermeter()
         self.last_updated = datetime.datetime.now() if success else None
         return success
 
-    async def _async_fetch_data(self, url: str) -> dict:
-        """Fetches data from the API endpoint with asyncio"""
+    def update(self) -> bool:
+        event_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(event_loop)
         try:
-            async with aiohttp.ClientSession(headers=self.header) as session:
-                resp = await session.get(url)
-                data = resp.json()
-                return await data
+            event_loop.run_until_complete(self._update())
+        finally:
+            event_loop.close()
+        return (self.last_updated is not None)
+
+    async def _async_fetch(self, session: aiohttp.ClientSession, url: str) -> Optional[str]:
+        """Fetch the API endpoint with asyncio"""
+        try:
+            async with session.get(url) as response:
+                json = response.json()
+                return await json
         except aiohttp.ClientError as error:
             self._log_error(f'Battery: {self.ip_address} is offline!')
         except asyncio.TimeoutError as error:
             self._log_error(f'Timeout error while accessing: {url}')
         except Exception as error:
-            self._log_error(f'Error while data parsing {error}')
-            return {}
+            self._log_error(f'Error fetching endpoint {url}: {error}')
+            return None
 
-    async def async_fetch_latest_details(self) -> bool:
-        """Fetches latest details api as coroutine"""
+    async def _async_fetch_api_endpoint(self, url: str) -> Optional[str]:
+        """Fetch api as coroutine"""
         try:
-            self._latest_details_data = await self._async_fetch_data(
+            async with aiohttp.ClientSession(headers=self.header, timeout=self.client_timeouts) as session:
+                json_data = await self._async_fetch(session, url)
+                return json_data
+        except Exception as error:
+            self._log_error(f'Error fetching coroutine {url}: {error}')
+            return None
+
+    async def fetch_latest_details(self) -> bool:
+        self._latest_details_data = None
+        self._latest_details_data = await self._async_fetch_api_endpoint(
                 self.latest_details_api_endpoint
             )
-            self._ic_status = self._latest_details_data[self.IC_STATUS]
-            return True
-        except Exception as error:
-            self._log_error(f'Error occurred while data parsing latest details:{error}')
-            return False
+        if self._latest_details_data is not None:
+            self._ic_status = self._latest_details_data[IC_STATUS]
 
-    async def async_fetch_status(self) -> bool:
-        """Fetches status api as coroutine"""
-        try:
-            self._status_data = await self._async_fetch_data(
-                self.status_api_endpoint
-            )
-            return True
-        except Exception as error:
-            self._log_error(f'Error occurred while data parsing status:{error}')
-            return False
+        return (self._latest_details_data is not None)
 
-    async def async_fetch_battery_status(self) -> bool:
-        """Fetches battery details api as coroutine"""
-        try:
-            self._battery_status = await self._async_fetch_data(
-                self.battery_api_endpoint
-            )
-            return True
-        except Exception as error:
-            self._log_error(f'Error occurred while data parsing battery status:{error}')
-        return False
+    async def fetch_configurations(self) -> Optional[str]:
+        self._configurations_data = None
+        self._configurations_data = await self._async_fetch_api_endpoint(
+            self.configurations_api_endpoint
+        )
+        return (self._configurations_data is not None)
 
+    async def fetch_status(self) -> Optional[str]:
+        self._status_data = None
+        self._status_data = await self._async_fetch_api_endpoint(
+            self.status_api_endpoint
+        )
+        return (self._status_data is not None)
 
-    async def async_update(self) -> bool:
-        """Updates data from apis of the sonnenBatterie as coroutine"""
-        success = await self.async_fetch_latest_details()
-        success = success and await self.async_fetch_status()
-        success = success and await self.async_fetch_battery_status()
-        self.last_updated = datetime.datetime.now()
-        return success
+    async def fetch_powermeter(self) -> Optional[str]:
+        self._powermeter_data = None
+        self._powermeter_data = await self._async_fetch_api_endpoint(
+            self.powermeter_api_endpoint
+        )
+        if self._powermeter_data is not None:
+            self._powermeter_production = self._powermeter_data[0]
+            self._powermeter_consumption = self._powermeter_data[1]
+        else:
+            self._powermeter_production = None
+            self._powermeter_consumption = None
+
+        return (self._powermeter_data is not None)
+
+    async def fetch_battery_status(self) -> Optional[str]:
+        self._battery_status = None
+        self._battery_status = await self._async_fetch_api_endpoint(
+            self.battery_api_endpoint
+        )
+        return (self._battery_status is not None)
+
+    async def fetch_inverter_data(self) -> Optional[str]:
+        self._inverter_data = None
+        self.inverter_api_endpoint = await self._async_fetch_api_endpoint(
+            self._inverter_data
+        )
+        return (self._inverter_data is not None)
 
     @property
     def last_updated(self) -> Optional[datetime.datetime]:
@@ -258,7 +299,7 @@ class Sonnen:
         return self._last_updated
 
     @last_updated.setter
-    def last_updated(self, last_updated: datetime.datetime=None):
+    def last_updated(self, last_updated: datetime.datetime = None):
         """Last time data fetched from batterie"""
         self._last_updated = last_updated
 
@@ -702,9 +743,6 @@ class Sonnen:
             Returns:
                 Integer code
         """
-        if self._configurations_data == {}:
-            self.fetch_configurations()
-
         return self._configurations_data[CONFIGURATION_EM_OPERATINGMODE]
 
     @property
@@ -719,8 +757,6 @@ class Sonnen:
             "6": 'Battery-Module-Extension (30%)',
             "10": 'Time-Of-Use'
         }
-        if self._configurations_data == {}:
-            self.fetch_configurations()
 
         return _EM_OPERATINGMODE[self._configurations_data[CONFIGURATION_EM_OPERATINGMODE]]
 
@@ -731,9 +767,6 @@ class Sonnen:
             Returns:
                 Integer Percent
         """
-        if self._configurations_data == {}:
-            self.fetch_configurations()
-
         return self._configurations_data[CONFIGURATION_EM_USOC]
 
     @property
@@ -862,9 +895,6 @@ class Sonnen:
             Returns:
                 String
         """
-        if self._configurations_data == {}:
-            self.fetch_configurations()
-
         return self._configurations_data[CONFIGURATION_DE_SOFTWARE]
 
     @property

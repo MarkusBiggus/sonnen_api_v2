@@ -213,5 +213,6 @@ class TestBatterie(unittest.TestCase):
         usableRemaining = self._battery.battery_usable_remaining_capacity
         remainingWh = self._battery.remaining_capacity_wh
         usableWh = floor(usableRemaining * self._battery.battery_system_dc_voltage)
+
         print(f'RemainingAh: {remaining:,.3f}Ah  RemainingWh: {remainingWh:,}Wh')
         print(f'UsableAh: {usableRemaining:,.3f}Ah  UsableWh: {usableWh:,}Wh')

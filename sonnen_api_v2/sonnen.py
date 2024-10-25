@@ -207,12 +207,14 @@ class Sonnen:
             success = await self.fetch_powermeter()
         if success:
             success = await self.fetch_inverter_data()
+
         self.last_updated = datetime.datetime.now() if success else None
         return success
 
     def update(self) -> bool:
         event_loop = asyncio.new_event_loop()
         asyncio.set_event_loop(event_loop)
+
         try:
             event_loop.run_until_complete(self._update())
         finally:

@@ -217,11 +217,7 @@ class Sonnen:
         # if event_loop is None:
         event_loop = asyncio.new_event_loop()
         asyncio.set_event_loop(event_loop)
-        # if event_loop.is_running():
-        #     task = Thread(target=asyncio.run, args=(self._update(),))
-        #     task.start()
-        #     task.join()
-        # else:
+
         try:
             event_loop.run_until_complete(self._update())
         finally:

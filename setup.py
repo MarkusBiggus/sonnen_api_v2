@@ -29,6 +29,8 @@ setup(
     install_requires=[
         'requests~=2.32',
         'aiohttp>=3.1.1',
-        'aiohttp-fast-zlib>=0.1.1'
+        'aiohttp-fast-zlib>=0.1.1',
+        'urllib3>=1.26.20',
+        'yarl==1.16.0'
     ]
 )

@@ -5,15 +5,13 @@ from typing import Optional, Union
 from math import floor
 
 import datetime
-from idlelib.pyparse import trans
 
 import aiohttp
 import asyncio
-
-#import aiohttp_fast_zlib
+import aiohttp_fast_zlib
 
 import logging
-import json
+
 from .const import *
 
 def get_item(_type):
@@ -43,7 +41,7 @@ class Sonnen:
     from .wrapped import get_latest_data, get_configurations, get_status, get_powermeter, get_battery, get_inverter
 
     def __init__(self, auth_token: str, ip_address: str, logger_name: str = None) -> None:
-#        wrapped.__init__(self)
+        aiohttp_fast_zlib.enable()
         self.last_updated = None
         self.logger = None
         if logger_name is not None:
@@ -54,8 +52,8 @@ class Sonnen:
         self.auth_token = auth_token
         self.url = f'http://{ip_address}'
         self.header = {'Auth-Token': self.auth_token}
-        self.request_timeouts = (TIMEOUT, TIMEOUT)
-        self.client_timeouts = aiohttp.ClientTimeout(connect=TIMEOUT, sock_read=TIMEOUT)
+        self.request_timeouts = (TIMEOUT, TIMEOUT)  # noqa: F405
+        self.client_timeouts = aiohttp.ClientTimeout(connect=TIMEOUT, sock_read=TIMEOUT)  # noqa: F405
     #    self.set_request_connect_timeouts( (TIMEOUT, TIMEOUT) )
         # read api endpoints
         self.status_api_endpoint = f'{self.url}/api/v2/status'
@@ -212,6 +210,8 @@ class Sonnen:
         return success
 
     def update(self) -> bool:
+        # event_loop = asyncio.get_event_loop()
+        # if event_loop is None:
         event_loop = asyncio.new_event_loop()
         asyncio.set_event_loop(event_loop)
 
@@ -228,8 +228,8 @@ class Sonnen:
                 json = response.json()
                 return await json
         except aiohttp.ClientError as error:
-            self._log_error(f'Battery: {self.ip_address} is offline!')
-        except asyncio.TimeoutError as error:
+            self._log_error(f'Battery: {self.ip_address} is offline? error: {error}')
+        except asyncio.TimeoutError:
             self._log_error(f'Timeout error while accessing: {url}')
         except Exception as error:
             self._log_error(f'Error fetching endpoint {url}: {error}')
@@ -251,7 +251,7 @@ class Sonnen:
                 self.latest_details_api_endpoint
             )
         if self._latest_details_data is not None:
-            self._ic_status = self._latest_details_data[IC_STATUS]
+            self._ic_status = self._latest_details_data[IC_STATUS]  # noqa: F405
 
         return (self._latest_details_data is not None)
 

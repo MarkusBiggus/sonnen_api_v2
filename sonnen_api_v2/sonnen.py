@@ -41,7 +41,7 @@ class Sonnen:
     from .wrapped import get_latest_data, get_configurations, get_status, get_powermeter, get_battery, get_inverter
 
     def __init__(self, auth_token: str, ip_address: str, logger_name: str = None) -> None:
-        aiohttp_fast_zlib.enable()
+#        aiohttp_fast_zlib.enable()
         self.last_updated = None
         self.logger = None
         if logger_name is not None:
@@ -75,6 +75,10 @@ class Sonnen:
         self._inverter_data = {}
         # isal is preferred over zlib_ng if it is available
 #        aiohttp_fast_zlib.enable()
+    @property
+    def status_api_url(self) -> str:
+        """self.status_api_endpoint url"""
+        return self.status_api_endpoint
 
     def _log_error(self, msg):
         if self.logger:

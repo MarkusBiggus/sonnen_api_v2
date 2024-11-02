@@ -1,18 +1,44 @@
 import datetime
 import os
+from typing import Coroutine, Generator, Union
 #import unittest
-#import responses
+from unittest.mock import patch
 import logging
-import pytest
+#import pytest
 #import aiohttp
 #from aiohttp.test_utils import AioHTTPTestCase
 from aiohttp import web
 import asyncio
-#from aioresponses import aioresponses
+
+from aioresponses.compat import AIOHTTP_VERSION, URL
+from aioresponses import CallbackResult, aioresponses
+
+from aiohttp import hdrs
+from aiohttp import http
+from aiohttp.client import ClientSession
+from aiohttp.client_reqrep import ClientResponse
 
 #from freezegun import freeze_time
 from sonnen_api_v2 import Sonnen
 from dotenv import load_dotenv
+from ddt import ddt, data
+from .base import fail_on, AsyncTestCase #, skipIf
+
+try:
+    from aiohttp.errors import (
+        ClientConnectionError,
+        ClientResponseError,
+        HttpProcessingError,
+    )
+except ImportError:
+    from aiohttp.client_exceptions import (
+        ClientConnectionError,
+        ClientResponseError,
+    )
+    from aiohttp.http_exceptions import HttpProcessingError
+
+from aioresponses.compat import AIOHTTP_VERSION, URL
+from aioresponses import CallbackResult, aioresponses
 
 load_dotenv()
 
@@ -23,15 +49,15 @@ API_READ_TOKEN_2 = os.getenv('API_READ_TOKEN_2')
 
 LOGGER_NAME = "sonnenapiv2"
 
-#class TestSonnen(unittest.TestCase):
-#class TestSonnen(AioHTTPTestCase):
 
 if BATTERIE_1_HOST == 'X':
     raise ValueError('Set BATTERIE_1_HOST & API_READ_TOKEN_1 in .env See env.example')
 
-#value = web.AppKey("value", str)
-#    @responses.activate
-#    @aioresponses()
+logging.getLogger("asyncio").setLevel(logging.WARNING)
+
+    #value = web.AppKey("value", str)
+    #    @responses.activate
+    #    @aioresponses()
 async def status_charging(request):
     test_data_status_charging = {
         'Apparent_output': 98,
@@ -69,21 +95,63 @@ async def status_charging(request):
         body = test_data_status_charging
     )
 
-@pytest.fixture
-async def cli(aiohttp_client):
-    app = web.Application()
-#    app.router.add_get('http://' + BATTERIE_1_HOST + '/api/v2/status', status_charging)
-    app.router.add_get('/api/v2/status', status_charging)
-    return await aiohttp_client(app)
+@ddt
+class AIOResponsesTestCase(AsyncTestCase):
+    async def setup(self):
+        self._battery = Sonnen(API_READ_TOKEN_1, BATTERIE_1_HOST, LOGGER_NAME)  # Working and charging
+        self.url = self._battery.status_api_url
+        self.session = ClientSession()
 
-async def test_get_value(cli):
-    battery = Sonnen(API_READ_TOKEN_1, BATTERIE_1_HOST, LOGGER_NAME)  # Working and charging
-    battery.update()
-    assert battery.grid_in == 54
-#    cli.server.app[value] = 'bar'
-    # resp = await cli.get('http://' + BATTERIE_1_HOST + '/api/v2/status')
-    # assert resp.status == 200
-    # assert await resp.text() == 'value: bar'
+    async def teardown(self):
+        close_result = self.session.close()
+        if close_result is not None:
+            await close_result
+
+    def run_async(self, coroutine: Union[Coroutine, Generator]):
+        return self.loop.run_until_complete(coroutine)
+
+    async def request(self, url: str):
+        return await self.session.get(url)
+
+    @data(
+        hdrs.METH_HEAD,
+        hdrs.METH_GET,
+        hdrs.METH_POST,
+        hdrs.METH_PUT,
+        hdrs.METH_PATCH,
+        hdrs.METH_DELETE,
+        hdrs.METH_OPTIONS,
+    )
+    @patch('aioresponses.aioresponses.add')
+    @fail_on(unused_loop=False)
+
+    # @pytest.fixture
+    # async def cli(aiohttp_client):
+    #     app = web.Application()
+    # #    app.router.add_get('http://' + BATTERIE_1_HOST + '/api/v2/status', status_charging)
+    #     app.router.add_get('/api/v2/status', status_charging)
+    #     return await aiohttp_client(app)
+
+    @aioresponses()
+    async def test_returned_response_headers(self, m):
+        m.get(self.url,
+            content_type='application/json',
+            headers={'Connection': 'keep-alive'})
+        response = await self.session.get(self.url)
+
+        self.assertEqual(response.headers['Connection'], 'keep-alive')
+        self.assertEqual(response.headers[hdrs.CONTENT_TYPE], 'application/json')
+
+    @aioresponses()
+    async def test_get_value(self):
+#        battery = Sonnen(API_READ_TOKEN_1, BATTERIE_1_HOST, LOGGER_NAME)  # Working and charging
+        self._battery.update()
+        self.assertEqual(self._battery.grid_in, 54)
+
+    #    cli.server.app[value] = 'bar'
+        # resp = await cli.get('http://' + BATTERIE_1_HOST + '/api/v2/status')
+        # assert resp.status == 200
+        # assert await resp.text() == 'value: bar'
 
         # battery1_status = responses.Response(
         #     method='GET',

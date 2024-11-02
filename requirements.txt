@@ -3,7 +3,8 @@ pytest-cov
 requests~=2.32
 setuptools==65.5.1
 freezegun~=1.2.1
-aiohttp>=3.1.1
+aiohttp>=3.3.0,<4.0.0
 aiohttp-fast-zlib>=0.1.1
 urllib3>=1.26.20
 yarl==1.16.0
+asynctest==0.13.0

@@ -24,18 +24,12 @@ from dotenv import load_dotenv
 from ddt import ddt, data
 from .base import fail_on, AsyncTestCase #, skipIf
 
-try:
-    from aiohttp.errors import (
-        ClientConnectionError,
-        ClientResponseError,
-        HttpProcessingError,
+
+from aiohttp.client_exceptions import (
+    ClientConnectionError,
+    ClientResponseError,
     )
-except ImportError:
-    from aiohttp.client_exceptions import (
-        ClientConnectionError,
-        ClientResponseError,
-    )
-    from aiohttp.http_exceptions import HttpProcessingError
+from aiohttp.http_exceptions import HttpProcessingError
 
 from aioresponses.compat import AIOHTTP_VERSION, URL
 from aioresponses import CallbackResult, aioresponses

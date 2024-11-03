@@ -10,4 +10,4 @@ aiohttp>=3.3.0,<4.0.0
 aiohttp-fast-zlib>=0.1.1
 urllib3>=1.26.20,<2.0.0
 yarl==1.16.0
-asyncmock>=0.4.2
+asyncmock>=0.4.

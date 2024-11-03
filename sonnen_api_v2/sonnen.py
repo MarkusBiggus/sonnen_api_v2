@@ -41,7 +41,8 @@ class Sonnen:
     from .wrapped import get_latest_data, get_configurations, get_status, get_powermeter, get_battery, get_inverter
 
     def __init__(self, auth_token: str, ip_address: str, logger_name: str = None) -> None:
-#        aiohttp_fast_zlib.enable()
+        aiohttp_fast_zlib.enable()
+
         self.last_updated = None
         self.logger = None
         if logger_name is not None:
@@ -163,7 +164,7 @@ class Sonnen:
                 self.latest_details_api_endpoint
             )
         if self._latest_details_data is not None:
-            self._ic_status = self._latest_details_data[IC_STATUS]
+            self._ic_status = self._latest_details_data[IC_STATUS]  # noqa: F405
 
         return (self._latest_details_data is not None)
 

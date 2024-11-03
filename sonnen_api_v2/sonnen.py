@@ -42,6 +42,7 @@ class Sonnen:
 
     def __init__(self, auth_token: str, ip_address: str, logger_name: str = None) -> None:
         aiohttp_fast_zlib.enable()
+
         self.last_updated = None
         self.logger = None
         if logger_name is not None:
@@ -74,7 +75,11 @@ class Sonnen:
         self._configurations_data = {}
         self._inverter_data = {}
         # isal is preferred over zlib_ng if it is available
-#        aiohttp_fast_zlib.enable()
+        aiohttp_fast_zlib.enable()
+    @property
+    def status_api_url(self) -> str:
+        """Return api_endpoint url"""
+        return self.status_api_endpoint
 
     def _log_error(self, msg):
         if self.logger:
@@ -82,117 +87,10 @@ class Sonnen:
         else:
             print(msg)
 
-    # def fetch_latest_details(self) -> bool:
-    #     """Fetches latest details api
-    #         Returns:
-    #             True if fetch was successful, else False
-    #     """
-    #     try:
-    #         response = requests.get(
-    #             self.latest_details_api_endpoint,
-    #             headers=self.header, timeout=self.request_timeouts
-    #         )
-    #         if response.status_code == 200:
-    #             self._latest_details_data = response.json()
-    #             self._ic_status = self._latest_details_data[IC_STATUS]
-    #             return True
-    #     except requests.ConnectionError as conn_error:
-    #         self._log_error(f'Connection error to sonnenBatterie - {conn_error}')
-    #     return False
-
-    # def fetch_configurations(self) -> bool:
-    #     """Fetches configurations api
-    #         Returns:
-    #             True if fetch was successful, else False
-    #     """
-    #     try:
-    #         response = requests.get(
-    #             self.configurations_api_endpoint,
-    #             headers=self.header, timeout=self.request_timeouts
-    #         )
-    #         if response.status_code == 200:
-    #             self._configurations_data = response.json()
-    #             return True
-    #     except requests.ConnectionError as conn_error:
-    #         self._log_error(f'Connection error to sonnenBatterie - {conn_error}')
-    #     return False
-
-    # def fetch_status(self) -> bool:
-    #     """Fetches status api
-    #         Returns:
-    #             True if fetch was successful, else False
-    #     """
-    #     try:
-    #         response = requests.get(
-    #             self.status_api_endpoint,
-    #             headers=self.header, timeout=self.request_timeouts
-    #         )
-    #         if response.status_code == 200:
-    #             self._status_data = response.json()
-    #             return True
-    #     except requests.ConnectionError as conn_error:
-    #         self._log_error(f'Connection error to sonnenBatterie - {conn_error}')
-    #     return False
-
-    # def fetch_powermeter(self) -> bool:
-    #     """Fetches powermeter api
-    #         Returns:
-    #             True if fetch was successful, else False
-    #     """
-    #     try:
-    #         response = requests.get(
-    #             self.powermeter_api_endpoint,
-    #             headers=self.header, timeout=self.request_timeouts
-    #         )
-    #         if response.status_code == 200:
-    #             self._powermeter_data = response.json()
-    #             self._powermeter_production = self._powermeter_data[0]
-    #             self._powermeter_consumption = self._powermeter_data[1]
-
-    #         #    print(self._powermeter_data)
-    #             return True
-    #     except requests.ConnectionError as conn_error:
-    #         self._log_error(f'Connection error to sonnenBatterie - {conn_error}')
-    #     return False
-
-    # def fetch_battery_status(self) -> bool:
-    #     """Fetches battery details api
-    #         Returns:
-    #             True if fetch was successful, else False
-    #     """
-    #     try:
-    #         response = requests.get(
-    #             self.battery_api_endpoint,
-    #             headers=self.header, timeout=self.request_timeouts
-    #         )
-    #         if response.status_code == 200:
-    #             self._battery_status = response.json()
-    #             return True
-    #     except requests.ConnectionError as conn_error:
-    #         self._log_error(f'Connection error to sonnenBatterie - {conn_error}')
-    #     return False
-
-    # def fetch_inverter_data(self) -> bool:
-    #     """Fetches inverter data api
-    #         Returns:
-    #             True if fetch was successful, else False
-    #     """
-    #     try:
-    #         response = requests.get(
-    #             self.inverter_api_endpoint,
-    #             headers=self.header, timeout=self.request_timeouts
-    #         )
-    #         if response.status_code == 200:
-    #             self._inverter_data = response.json()
-    #             return True
-    #     except requests.ConnectionError as conn_error:
-    #         self._log_error(f'Connection error to sonnenBatterie - {conn_error}')
-    #     return False
-
-    async def _update(self) -> bool:
-        """Updates data from apis of the sonnenBatterie
-            Returns:
-                True when all updates successful
+    async def async_update(self) -> bool:
+        """Update battery data from an aync caller
+        Returns:
+            True when all updates successful
         """
         success = await self.fetch_configurations()
         if success:
@@ -209,14 +107,29 @@ class Sonnen:
         self.last_updated = datetime.datetime.now() if success else None
         return success
 
+    async def status_update(self) -> bool:
+        """Updates data from status api of the sonnenBatterie
+            USED ONLY FOR TESTING with mock data by test_sonnen_asyncio
+            Returns:
+                True when update successful
+        """
+        success = await self.fetch_status()
+
+        self.last_updated = datetime.datetime.now() if success else None
+        return success
+
     def update(self) -> bool:
+        """Update battery details from a sequential caller"""
         # event_loop = asyncio.get_event_loop()
-        # if event_loop is None:
+        # if event_loop is not None:
+        #     self._log_error('Update called from active event loop! Call aysnc_update in your loop instead.')
+        #     raise ValueError('Update called from active event loop, call aysnc_update instead.')
+
         event_loop = asyncio.new_event_loop()
         asyncio.set_event_loop(event_loop)
 
         try:
-            event_loop.run_until_complete(self._update())
+            event_loop.run_until_complete(self.async_update())
         finally:
             event_loop.close()
         return (self.last_updated is not None)

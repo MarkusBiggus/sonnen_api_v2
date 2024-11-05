@@ -13,3 +13,6 @@ test-cov:
 
 test-cov-html:
 	$(PYTHON) -m pytest --cov=$(CORE) $(TESTS) --cov-report html
+
+run_tests:
+    python -m unittest discover . -c

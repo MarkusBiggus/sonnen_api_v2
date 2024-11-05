@@ -1,7 +1,9 @@
-"""pytest test_sonnen_asyncio.py -s -v -x
+"""pytest tests/test_sonnen_asyncio.py -s -v -x
 """
 import datetime
 import os
+import sys
+
 #from typing import Coroutine, Generator, Union
 import logging
 import pytest
@@ -23,13 +25,31 @@ API_READ_TOKEN_1 = os.getenv('API_READ_TOKEN_1')
 BATTERIE_2_HOST = os.getenv('BATTERIE_2_HOST')
 API_READ_TOKEN_2 = os.getenv('API_READ_TOKEN_2')
 
-LOGGER_NAME = "sonnenapiv2"
+LOGGER_NAME = None # "sonnenapiv2" #
 
 
 if BATTERIE_1_HOST == 'X':
     raise ValueError('Set BATTERIE_1_HOST & API_READ_TOKEN_1 in .env See env.example')
 
 logging.getLogger("asyncio").setLevel(logging.WARNING)
+
+if LOGGER_NAME is not None:
+    filename=f'tests/logs/{LOGGER_NAME}.log'
+    logging.basicConfig(filename=filename, level=logging.DEBUG)
+    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logger = logging.getLogger(LOGGER_NAME)
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    logger = logging.getLogger(LOGGER_NAME)
+    logger.setLevel(logging.DEBUG)
+    # create file handler which logs debug messages
+    fh = logging.FileHandler(filename=filename, mode='a')
+    fh.setLevel(logging.DEBUG)
+    # console handler display logs messages to console
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(logging.DEBUG)
+    logger.addHandler(fh)
+    logger.addHandler(ch)
+    logger.info ('Asyncio mock data tests')
 
 def status_charging()-> json:
     test_data_status_charging = {

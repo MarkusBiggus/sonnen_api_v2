@@ -1,3 +1,4 @@
+"""python -m unittest tests.test_batterie -c """
 import os, sys
 import unittest
 import json
@@ -13,36 +14,40 @@ API_READ_TOKEN = os.getenv('API_READ_TOKEN')
 # SonnenBatterie config parameters to check against
 BACKUP_BUFFER_USOC = int(os.getenv('BACKUP_BUFFER_USOC'))
 OPERATING_MODE = int(os.getenv('OPERATING_MODE'))
-LOGGER_NAME = "sonnenapiv2"
+LOGGER_NAME = "sonnenapiv2" # None #
 
 class TestBatterie(unittest.TestCase):
 
     if BATTERIE_HOST == 'X':
         raise ValueError('Set BATTERIE_HOST & API_READ_TOKEN in .env See env.example')
 
-    print ('Live Battery Online!')
-
-    def setUp(self) -> None:
-        logging.basicConfig(filename="logs/sonnenapiv2.log'", level=logging.DEBUG, maxBytes=52428800)
-        self.logger = logging.getLogger(LOGGER_NAME)
-        os.makedirs(os.path.dirname('logs/'+LOGGER_NAME+'.log'), exist_ok=True)
-        self.logger = logging.getLogger(LOGGER_NAME)
-        self.logger.setLevel(logging.DEBUG)
+    if LOGGER_NAME is not None:
+        filename=f'tests/logs/{LOGGER_NAME}.log'
+        logging.basicConfig(filename=filename, level=logging.DEBUG)
+        logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        logger = logging.getLogger(LOGGER_NAME)
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        logger = logging.getLogger(LOGGER_NAME)
+        logger.setLevel(logging.DEBUG)
         # create file handler which logs debug messages
-        fh = logging.FileHandler(filename='logs/'+LOGGER_NAME+'.log', mode='a')
+        fh = logging.FileHandler(filename=filename, mode='a')
         fh.setLevel(logging.DEBUG)
         # console handler display logs messages to console
         ch = logging.StreamHandler(sys.stdout)
         ch.setLevel(logging.DEBUG)
-        self.logger.addHandler(fh)
-        self.logger.addHandler(ch)
-    #    self.logger.info('Sonnen Live Batterie Test suite started.')
+        logger.addHandler(fh)
+        logger.addHandler(ch)
+        logger.info ('Live Battery Online!')
+    else:
+        print ('Live Battery Online!')
 
+    def setUp(self) -> None:
+        if self.logger is not None:
+            self.logger.info(f'Test {self._testMethodName} Sonnen Live Batterie setup.')
 
         self._battery = Sonnen(API_READ_TOKEN, BATTERIE_HOST, LOGGER_NAME)  # Batterie online
 
         success = self._battery.update()
-#        self.assertTrue(success)
         if not success:
             self.skipTest('Failed to get battery data!')
 
@@ -67,7 +72,7 @@ class TestBatterie(unittest.TestCase):
             print(f'Seconds to Empty: {seconds:,}')
         else:
             if seconds is None:
-                print(f'Seconds to reserve: Battery charging above reserve')
+                print('Seconds to reserve: Battery charging above reserve')
             else:
                 print(f'Seconds to Reserve: {seconds:,} (charging)')
                 usoc = self._battery.u_soc

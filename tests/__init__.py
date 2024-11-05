@@ -1,4 +1,4 @@
-""" python -m unittest discover . """
+""" python -m unittest discover . -c """
 import os
 import sys
 PROJECT_PATH = os.getcwd()

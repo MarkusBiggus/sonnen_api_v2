@@ -95,10 +95,10 @@ async def get_sonnen():
 async def test_get_value(mocker):
     """Batterie status test using mock data"""
     mock_response = status_charging()
-    mocker.patch.object(Sonnen, "_async_fetch_api_endpoint", AsyncMock(return_value=mock_response))
+    mocker.patch.object(Sonnen, "fetch_status", AsyncMock(return_value=mock_response))
 
     battery = Sonnen(API_READ_TOKEN_1, BATTERIE_1_HOST, LOGGER_NAME)
-    result = await battery.status_update()
+    result = await battery.fetch_status()
 
     assert result is True
     assert battery.grid_in == 54

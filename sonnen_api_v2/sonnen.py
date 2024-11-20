@@ -1,14 +1,17 @@
 """ SonnenAPI v2 module """
 
 from functools import wraps
-from typing import Optional, Union
+from typing import Any, Dict, Optional, Union, Tuple
 from math import floor
+from collections import namedtuple
 
 import datetime
 
 import aiohttp
 import asyncio
 import aiohttp_fast_zlib
+import voluptuous as vol
+from .units import Measurement, Units
 
 import logging
 
@@ -34,15 +37,34 @@ def get_item(_type):
         return inner
     return decorator
 
+class BatterieError(Exception):
+    """Indicates error communicating with batterie"""
+
+class BatterieResponse(
+    namedtuple(
+        "BatterieResponse",
+        [
+            "latestdata",
+            "status",
+            "battery",
+            "powermeter",
+            "configurations",
+            "inverter"
+        ],
+    )
+):
+    """Sonnen Batterie data"""
+
 
 class Sonnen:
     """Class for managing Sonnen API V2 data"""
     from .wrapped import set_request_connect_timeouts, get_request_connect_timeouts
     from .wrapped import get_latest_data, get_configurations, get_status, get_powermeter, get_battery, get_inverter
 
-    def __init__(self, auth_token: str, ip_address: str, logger_name: str = None) -> None:
-        aiohttp_fast_zlib.enable()
+    # pylint: enable=C0301
+    _schema = vol.Schema({})  # type: vol.Schema
 
+    def __init__(self, auth_token: str, ip_address: str, ip_port: str = '80', logger_name: str = None) -> None:
         self.last_updated = None
         self.logger = None
         if logger_name is not None:
@@ -51,7 +73,7 @@ class Sonnen:
 
         self.ip_address = ip_address
         self.auth_token = auth_token
-        self.url = f'http://{ip_address}'
+        self.url = f'http://{ip_address}:{ip_port}'
         self.header = {'Auth-Token': self.auth_token}
         self.request_timeouts = (TIMEOUT, TIMEOUT)  # noqa: F405
         self.client_timeouts = aiohttp.ClientTimeout(connect=TIMEOUT, sock_read=TIMEOUT)  # noqa: F405
@@ -76,6 +98,7 @@ class Sonnen:
         self._inverter_data = {}
         # isal is preferred over zlib_ng if it is available
         aiohttp_fast_zlib.enable()
+
     @property
     def status_api_url(self) -> str:
         """Return api_endpoint url"""
@@ -87,36 +110,66 @@ class Sonnen:
         else:
             print(msg)
 
+    async def get_data(self) -> bool:
+        """Response used by home assistant component"""
+        await self.async_update()
+        return BatterieResponse(
+            latestdata = self._latest_details_data,
+            status = self._status_data,
+            battery = self._battery_status,
+            powermeter = self._powermeter_data,
+            configurations = self._configurations_data,
+            inverter = self._inverter_data,
+        )
+
     async def async_update(self) -> bool:
-        """Update battery data from an aync caller
+        """Update all battery data from an async caller
         Returns:
             True when all updates successful
         """
-        success = await self.fetch_configurations()
+        self._configurations_data = await self.fetch_configurations()
+        success = (self._configurations_data is not None)
+
         if success:
-            success = await self.fetch_latest_details()
+            self._latest_details_data = await self.fetch_latest_details()
+            if self._latest_details_data is not None:
+                self._ic_status = self._latest_details_data[IC_STATUS]  # noqa: F405
+            else:
+                self._ic_status = None
+                success = False
         if success:
-            success = await self.fetch_status()
+            self._status_data = await self.fetch_status()
+            success = (self._status_data is not None)
         if success:
-            success = await self.fetch_battery_status()
+            self._battery_status = await self.fetch_battery_status()
+            success = (self._battery_status is not None)
         if success:
-            success = await self.fetch_powermeter()
+            self._powermeter_data = await self.fetch_powermeter()
+            if self._powermeter_data is not None:
+                self._powermeter_production = self._powermeter_data[0]
+                self._powermeter_consumption = self._powermeter_data[1]
+                self._powermeter_data = None
+            else:
+                success = False
+                self._powermeter_production = None
+                self._powermeter_consumption = None
         if success:
-            success = await self.fetch_inverter_data()
+            self._inverter_data = await self.fetch_inverter_data()
+            success = (self._inverter_data is not None)
 
         self.last_updated = datetime.datetime.now() if success else None
         return success
 
-    async def status_update(self) -> bool:
-        """Updates data from status api of the sonnenBatterie
-            USED ONLY FOR TESTING with mock data by test_sonnen_asyncio
-            Returns:
-                True when update successful
-        """
-        success = await self.fetch_status()
+    # async def status_update(self) -> bool:
+    #     """Updates data from status api of the sonnenBatterie
+    #         USED ONLY FOR TESTING with mock data by test_sonnen_asyncio
+    #         Returns:
+    #             True when update successful
+    #     """
+    #     success = await self.fetch_status()
 
-        self.last_updated = datetime.datetime.now() if success else None
-        return success
+    #     self.last_updated = datetime.datetime.now() if success else None
+    #     return success
 
     def update(self) -> bool:
         """Update battery details from a sequential caller"""
@@ -134,81 +187,59 @@ class Sonnen:
             event_loop.close()
         return (self.last_updated is not None)
 
+    async def _async_fetch_api_endpoint(self, url: str) -> Optional[str]:
+        """Fetch API coroutine"""
+        try:
+            async with aiohttp.ClientSession(headers=self.header, timeout=self.client_timeouts) as session:
+                return await self._async_fetch(session, url)
+        except Exception as error:
+            self._log_error(f'Error fetching coroutine {url}: {error}')
+        return None
+
     async def _async_fetch(self, session: aiohttp.ClientSession, url: str) -> Optional[str]:
-        """Fetch the API endpoint with asyncio"""
+        """Fetch API endpoint with aiohttp client"""
         try:
             async with session.get(url) as response:
-                json = response.json()
-                return await json
+                return await response.json()
         except aiohttp.ClientError as error:
             self._log_error(f'Battery: {self.ip_address} is offline? error: {error}')
         except asyncio.TimeoutError:
             self._log_error(f'Timeout error while accessing: {url}')
+#        except vol.Invalid as ex:
+#            raise BatterieError('Received malformed JSON from inverter', str(self.__class__.__name__)) from ex
         except Exception as error:
             self._log_error(f'Error fetching endpoint {url}: {error}')
-            return None
-
-    async def _async_fetch_api_endpoint(self, url: str) -> Optional[str]:
-        """Fetch api as coroutine"""
-        try:
-            async with aiohttp.ClientSession(headers=self.header, timeout=self.client_timeouts) as session:
-                json_data = await self._async_fetch(session, url)
-                return json_data
-        except Exception as error:
-            self._log_error(f'Error fetching coroutine {url}: {error}')
-            return None
+        return None
 
     async def fetch_latest_details(self) -> bool:
-        self._latest_details_data = None
-        self._latest_details_data = await self._async_fetch_api_endpoint(
+        return await self._async_fetch_api_endpoint(
                 self.latest_details_api_endpoint
             )
-        if self._latest_details_data is not None:
-            self._ic_status = self._latest_details_data[IC_STATUS]  # noqa: F405
-
-        return (self._latest_details_data is not None)
 
     async def fetch_configurations(self) -> Optional[str]:
-        self._configurations_data = None
-        self._configurations_data = await self._async_fetch_api_endpoint(
+        return await self._async_fetch_api_endpoint(
             self.configurations_api_endpoint
         )
-        return (self._configurations_data is not None)
 
     async def fetch_status(self) -> Optional[str]:
-        self._status_data = None
-        self._status_data = await self._async_fetch_api_endpoint(
+        return await self._async_fetch_api_endpoint(
             self.status_api_endpoint
         )
-        return (self._status_data is not None)
-
-    async def fetch_powermeter(self) -> Optional[str]:
-        self._powermeter_data = None
-        self._powermeter_data = await self._async_fetch_api_endpoint(
-            self.powermeter_api_endpoint
-        )
-        if self._powermeter_data is not None:
-            self._powermeter_production = self._powermeter_data[0]
-            self._powermeter_consumption = self._powermeter_data[1]
-        else:
-            self._powermeter_production = None
-            self._powermeter_consumption = None
-
-        return (self._powermeter_data is not None)
 
     async def fetch_battery_status(self) -> Optional[str]:
-        self._battery_status = None
-        self._battery_status = await self._async_fetch_api_endpoint(
+        return await self._async_fetch_api_endpoint(
             self.battery_api_endpoint
         )
-        return (self._battery_status is not None)
+
+    async def fetch_powermeter(self) -> Optional[str]:
+        return await self._async_fetch_api_endpoint(
+            self.powermeter_api_endpoint
+        )
 
     async def fetch_inverter_data(self) -> Optional[str]:
-        self._inverter_data = None
-        self._inverter_data = await self._async_fetch_api_endpoint(
+        return await self._async_fetch_api_endpoint(
             self.inverter_api_endpoint
         )
-        return (self._inverter_data is not None)
 
     @property
     def last_updated(self) -> Optional[datetime.datetime]:
@@ -838,3 +869,33 @@ class Sonnen:
                 JSON String
         """
         return self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED]
+
+    @classmethod
+    def sensor_map(cls) -> Dict[str, Tuple[int, Measurement]]:
+        """
+        Return sensor map
+        Warning, HA depends on this
+        """
+        sensors: Dict[str, Tuple[int, Measurement]] = {}
+        for name, mapping in cls.response_decoder().items():
+            unit = Measurement(Units.NONE)
+
+            (idx, unit_or_measurement, *_) = mapping
+
+            if isinstance(unit_or_measurement, Units):
+                unit = Measurement(unit_or_measurement)
+            else:
+                unit = unit_or_measurement
+            if isinstance(idx, tuple):
+                sensor_indexes = idx[0]
+                first_sensor_index = sensor_indexes[0]
+                idx = first_sensor_index
+            sensors[name] = (idx, unit)
+        return sensors
+
+    @classmethod
+    def schema(cls) -> vol.Schema:
+        """
+        Return schema
+        """
+        return cls._schema

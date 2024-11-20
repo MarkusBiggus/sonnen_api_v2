@@ -110,8 +110,9 @@ async def test_get_batterie_response(mocker: mocker):
     # called by component
     response = await _battery.get_data()
     last_updated = response.last_updated
+    version = response.version
     if last_updated is not None:
-        print('Last Updated: '+ last_updated.strftime('%d-%b-%Y %H:%M:%S'))
+        print(f'Version: {version}  Last Updated: '+ last_updated.strftime('%d-%b-%Y %H:%M:%S'))
     else:
         print('Batterie response was not updated.')
 

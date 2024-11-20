@@ -45,6 +45,7 @@ class BatterieResponse(
         "BatterieResponse",
         [
             "serial_number",
+            "version",
             "last_updated",
             "latestdata",
             "status",
@@ -118,6 +119,7 @@ class Sonnen:
         await self.async_update()
         return BatterieResponse(
             serial_number = "123321", #placeholder
+            version = self.configuration_de_software,
             last_updated = self.last_updated,
             latestdata = self._latest_details_data,
             status = self._status_data,

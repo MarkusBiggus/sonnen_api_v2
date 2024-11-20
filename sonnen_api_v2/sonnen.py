@@ -10,7 +10,7 @@ import datetime
 import aiohttp
 import asyncio
 import aiohttp_fast_zlib
-import voluptuous as vol
+#import voluptuous as vol
 from .units import Measurement, Units
 
 import logging
@@ -62,7 +62,7 @@ class Sonnen:
     from .wrapped import get_latest_data, get_configurations, get_status, get_powermeter, get_battery, get_inverter
 
     # pylint: enable=C0301
-    _schema = vol.Schema({})  # type: vol.Schema
+#    _schema = vol.Schema({})  # type: vol.Schema
 
     def __init__(self, auth_token: str, ip_address: str, ip_port: str = '80', logger_name: str = None) -> None:
         self.last_updated = None
@@ -893,9 +893,9 @@ class Sonnen:
             sensors[name] = (idx, unit)
         return sensors
 
-    @classmethod
-    def schema(cls) -> vol.Schema:
-        """
-        Return schema
-        """
-        return cls._schema
+    # @classmethod
+    # def schema(cls) -> vol.Schema:
+    #     """
+    #     Return schema
+    #     """
+    #     return cls._schema

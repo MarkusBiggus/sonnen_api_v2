@@ -2,7 +2,7 @@ import json
 def status_charging()-> json:
     return {
         'Apparent_output': 98,
-        'BackupBuffer': '0',
+        'BackupBuffer': '20',
         'BatteryCharging': True,
         'BatteryDischarging': False,
         'Consumption_Avg': 486,

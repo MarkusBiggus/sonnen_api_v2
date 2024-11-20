@@ -44,10 +44,13 @@ class BatterieResponse(
     namedtuple(
         "BatterieResponse",
         [
+            "serial_number",
+            "last_updated",
             "latestdata",
             "status",
             "battery",
-            "powermeter",
+            "powermeter_production",
+            "powermeter_consumption",
             "configurations",
             "inverter"
         ],
@@ -114,10 +117,13 @@ class Sonnen:
         """Response used by home assistant component"""
         await self.async_update()
         return BatterieResponse(
+            serial_number = "123321", #placeholder
+            last_updated = self.last_updated,
             latestdata = self._latest_details_data,
             status = self._status_data,
             battery = self._battery_status,
-            powermeter = self._powermeter_data,
+            powermeter_production = self._powermeter_production,
+            powermeter_consumption = self._powermeter_consumption,
             configurations = self._configurations_data,
             inverter = self._inverter_data,
         )
@@ -129,7 +135,6 @@ class Sonnen:
         """
         self._configurations_data = await self.fetch_configurations()
         success = (self._configurations_data is not None)
-
         if success:
             self._latest_details_data = await self.fetch_latest_details()
             if self._latest_details_data is not None:
@@ -143,6 +148,7 @@ class Sonnen:
         if success:
             self._battery_status = await self.fetch_battery_status()
             success = (self._battery_status is not None)
+#        print (f'_battery_status: {self._battery_status}')
         if success:
             self._powermeter_data = await self.fetch_powermeter()
             if self._powermeter_data is not None:
@@ -674,15 +680,6 @@ class Sonnen:
                 System current in Ampere
         """
         return self._battery_status[BATTERY_SYSTEM_CURRENT]
-
-    @property
-    @get_item(float)
-    def battery_system_dc_voltage(self) -> float:
-        """System battery voltage
-            Returns:
-                Voltage in Volt
-        """
-        return self._battery_status[BATTERY_SYSTEM_VOLTAGE]
 
     @property
     @get_item(int)

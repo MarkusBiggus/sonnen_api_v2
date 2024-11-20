@@ -3,7 +3,7 @@ def mock_battery()-> json:
     return {
         "balancechargerequest":0.0,
         "chargecurrentlimit":39.97,
-        "cyclecount":30.0,
+        "cyclecount":32.0,
         "dischargecurrentlimit":39.97,
         "fullchargecapacity":99.297,
         "fullchargecapacitywh":20683.490,
@@ -20,13 +20,13 @@ def mock_battery()-> json:
         "minimummoduledcvoltage":104.15,
         "minimummoduletemperature":-273.15,
         "nominalmoduledcvoltage":102.4,
-        "relativestateofcharge":98.0,
-        "remainingcapacity":75.39,
+        "relativestateofcharge":19.0,
+        "remainingcapacity":18.86,
         "systemalarm":0.0,
         "systemcurrent":0.0,
         "systemdcvoltage":208.3,
         "systemstatus":49.0,
         "systemtime":0.0,
         "systemwarning":0.0,
-        "usableremainingcapacity":17.578
+        "usableremainingcapacity":11.96
     }

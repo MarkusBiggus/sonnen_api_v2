@@ -114,6 +114,6 @@ async def test_get_batterie_response(mocker: mocker):
     if last_updated is not None:
         print(f'Version: {version}  Last Updated: '+ last_updated.strftime('%d-%b-%Y %H:%M:%S'))
     else:
-        print('Batterie response was not updated.')
+        print('Batterie response was not updated!')
 
     assert response.serial_number == "123321"

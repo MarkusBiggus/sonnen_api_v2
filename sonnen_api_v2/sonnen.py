@@ -114,11 +114,41 @@ class Sonnen:
         else:
             print(msg)
 
+    # @classmethod
+    # def sensor_map(self) -> Dict[str, Tuple[int, Measurement]]:
+    #     """
+    #     Return sensor map
+    #     Warning, HA depends on this
+    #     """
+    #     sensors: Dict[str, Tuple[int, Measurement]] = {}
+    #     for name, mapping in self.response_decoder().items():
+    #         unit = Measurement(Units.NONE)
+
+    #         (idx, unit_or_measurement, *_) = mapping
+
+    #         if isinstance(unit_or_measurement, Units):
+    #             unit = Measurement(unit_or_measurement)
+    #         else:
+    #             unit = unit_or_measurement
+    #         if isinstance(idx, tuple):
+    #             sensor_indexes = idx[0]
+    #             first_sensor_index = sensor_indexes[0]
+    #             idx = first_sensor_index
+    #         sensors[name] = (idx, unit)
+    #     return sensors
+
+    # @classmethod
+    # def schema(self) -> vol.Schema:
+    #     """
+    #     Return schema
+    #     """
+    #     return self._schema
+
     async def get_data(self) -> bool:
         """Response used by home assistant component"""
         await self.async_update()
         return BatterieResponse(
-            serial_number = "123321", #placeholder
+            serial_number = "XxxxxX", #placeholder
             version = self.configuration_de_software,
             last_updated = self.last_updated,
             latestdata = self._latest_details_data,

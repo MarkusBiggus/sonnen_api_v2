@@ -1,15 +1,17 @@
 """python -m unittest tests.test_batterie -c """
+
 import os, sys
 import unittest
 import json
 import logging
 from math import floor
-from sonnen_api_v2 import Sonnen
+from sonnen_api_v2.sonnen import Sonnen as Batterie
 from dotenv import load_dotenv
 
 load_dotenv()
 
 BATTERIE_HOST = os.getenv('BATTERIE_HOST','X')
+BATTERIE_PORT = '80'
 API_READ_TOKEN = os.getenv('API_READ_TOKEN')
 # SonnenBatterie config parameters to check against
 BACKUP_BUFFER_USOC = int(os.getenv('BACKUP_BUFFER_USOC'))
@@ -45,7 +47,7 @@ class TestBatterie(unittest.TestCase):
         if self.logger is not None:
             self.logger.info(f'Test {self._testMethodName} Sonnen Live Batterie setup.')
 
-        self._battery = Sonnen(API_READ_TOKEN, BATTERIE_HOST, LOGGER_NAME)  # Batterie online
+        self._battery = Batterie(API_READ_TOKEN, BATTERIE_HOST, BATTERIE_PORT, LOGGER_NAME)  # Batterie online
 
         success = self._battery.update()
         if not success:
@@ -113,7 +115,8 @@ class TestBatterie(unittest.TestCase):
     def test_data_socs(self):
         backup_buffer = self._battery.status_backup_buffer
         usable_reserve = self._battery.backup_buffer_usable_capacity_wh
-        print(f'Backup Buffer: {backup_buffer:2}%  Usable Reserve: {usable_reserve:,}Wh')
+        status = self._battery.system_status
+        print(f'Status: {status}  Backup Buffer: {backup_buffer:2}%  Usable Reserve: {usable_reserve:,}Wh')
         usoc = self._battery.u_soc
         rsoc = self._battery.r_soc
         seconds_to_reserve = self._battery.seconds_to_reserve
@@ -126,7 +129,13 @@ class TestBatterie(unittest.TestCase):
                 print('Battery Discharge to Reserve at: ' + reserve_time.strftime('%d-%b-%Y %H:%M:%S'))
         else:
             discharged_at = self._battery.fully_discharged_at
-            print(f'Backup Fully Discharged at: ' + discharged_at.strftime('%d-%b-%Y %H:%M:%S'))
+            if discharged_at is None:
+                if usoc == backup_buffer:
+                    print ('Battery at backup reserve, not discharging.')
+                else:
+                    print ('Battery is discharged.')
+            else:
+                print('Backup Fully Discharged at: ' + discharged_at.strftime('%d-%b-%Y %H:%M:%S'))
         self.assertEqual(True, True)
 
     def test_battery_charging(self):

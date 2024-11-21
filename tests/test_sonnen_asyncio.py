@@ -1,10 +1,7 @@
-"""pytest tests/test_sonnen_asyncio.py -s -v -x
-"""
-import datetime
+"""pytest tests/test_sonnen_asyncio.py -s -v -x """
+#import datetime
 import os
 import sys
-
-#from typing import Coroutine, Generator, Union
 import logging
 import pytest
 import pytest_asyncio
@@ -14,9 +11,17 @@ import json
 
 
 #from freezegun import freeze_time
-from sonnen_api_v2 import Sonnen
+from sonnen_api_v2.sonnen import Sonnen as Batterie
 from dotenv import load_dotenv
 
+from . mock_status_charging import status_charging
+from . mock_status_discharging import status_discharging
+from . mock_latest_charging import latest_charging
+from . mock_latest_discharging import latest_discharging
+from . mock_powermeter import mock_powermeter
+from . mock_battery import mock_battery
+from . mock_inverter import mock_inverter
+from . mock_configurations import mock_configurations
 
 load_dotenv()
 
@@ -51,55 +56,93 @@ if LOGGER_NAME is not None:
     logger.addHandler(ch)
     logger.info ('Asyncio mock data tests')
 
-def status_charging()-> json:
-    test_data_status_charging = {
-        'Apparent_output': 98,
-        'BackupBuffer': '0',
-        'BatteryCharging': True,
-        'BatteryDischarging': False,
-        'Consumption_Avg': 486,
-        'Consumption_W': 403,
-        'Fac': 50.05781555175781,
-        'FlowConsumptionBattery': False,
-        'FlowConsumptionGrid': False,
-        'FlowConsumptionProduction': True,
-        'FlowGridBattery': False,
-        'FlowProductionBattery': True,
-        'FlowProductionGrid': True,
-        'GridFeedIn_W': 54,
-        'IsSystemInstalled': 1,
-        'OperatingMode': '2',
-        'Pac_total_W': -95,
-        'Production_W': 578,
-        'RSOC': 98,
-        'RemainingCapacity_Wh': 68781,
-        'Sac1': 98,
-        'Sac2': None,
-        'Sac3': None,
-        'SystemStatus': 'OnGrid',
-        'Timestamp': '2022-04-30 17:00:58',
-        'USOC': 98,
-        'Uac': 245,
-        'Ubat': 212,
-        'dischargeNotAllowed': False,
-        'generator_autostart': False
-    }
-    return test_data_status_charging
-
-@pytest_asyncio.fixture
-async def get_sonnen():
-    """Sonnen class fixture"""
-    return  Sonnen(API_READ_TOKEN_1, BATTERIE_1_HOST, LOGGER_NAME)
 
 @pytest.mark.asyncio
-async def test_get_value(mocker):
+async def test_get_status_charging(mocker: mocker):
+    """Batterie status charging using mock data"""
+    mocker.patch.object(Batterie, "fetch_status", AsyncMock(return_value=status_charging()))
+
+    battery = Batterie(API_READ_TOKEN_1, BATTERIE_1_HOST, LOGGER_NAME)
+    status_data = await battery.fetch_status()
+#    print(f'status: {status_data}')
+    assert status_data.get('GridFeedIn_W') == 54
+    assert status_data.get('Consumption_W') == 403
+    assert status_data.get('Pac_total_W') == -95
+    # assert battery.grid_in == 54
+    # assert battery.grid_out == 0
+
+@pytest.mark.asyncio
+async def test_get_status_discharging(mocker: mocker):
+    """Batterie status discharging using mock data"""
+    mocker.patch.object(Batterie, "fetch_status", AsyncMock(return_value=status_discharging()))
+
+    battery = Batterie(API_READ_TOKEN_1, BATTERIE_1_HOST, LOGGER_NAME)
+    status_data = await battery.fetch_status()
+#    print(f'status: {status_data}')
+    assert status_data.get('GridFeedIn_W') == -20
+    assert status_data.get('Consumption_W') == 541
+    assert status_data.get('Pac_total_W') == 438
+
+@pytest.mark.asyncio
+async def test_get_latest_charging(mocker: mocker):
+    """Batterie latest data charging using mock data"""
+    mocker.patch.object(Batterie, "fetch_latest_details", AsyncMock(return_value=latest_charging()))
+
+    battery = Batterie(API_READ_TOKEN_1, BATTERIE_1_HOST, LOGGER_NAME)
+    latest_data = await battery.fetch_latest_details()
+    assert latest_data.get('GridFeedIn_W') == 0
+    assert latest_data.get('Production_W') == 2972
+    assert latest_data.get('Consumption_W') == 1578
+    assert latest_data.get('Pac_total_W') == -1394
+
+@pytest.mark.asyncio
+async def test_get_latest_discharging(mocker: mocker):
+    """Batterie latest data discharging using mock data"""
+    mocker.patch.object(Batterie, "fetch_latest_details", AsyncMock(return_value=latest_discharging()))
+
+    battery = Batterie(API_READ_TOKEN_1, BATTERIE_1_HOST, LOGGER_NAME)
+    latest_data = await battery.fetch_latest_details()
+    assert latest_data.get('GridFeedIn_W') == 0
+    assert latest_data.get('Production_W') == 102
+    assert latest_data.get('Consumption_W') == 1541
+    assert latest_data.get('Pac_total_W') == 1439
+
+@pytest.mark.asyncio
+async def test_get_powermeter(mocker: mocker):
+    """Batterie powermeter test using mock data"""
+    mocker.patch.object(Batterie, "fetch_powermeter", AsyncMock(return_value=mock_powermeter()))
+
+    battery = Batterie(API_READ_TOKEN_1, BATTERIE_1_HOST, LOGGER_NAME)
+    powermeter = await battery.fetch_powermeter()
+    assert powermeter[0]['direction'] == 'production'
+    assert powermeter[1]['direction'] == 'consumption'
+
+@pytest.mark.asyncio
+async def test_get_battery(mocker: mocker):
     """Batterie status test using mock data"""
-    mock_response = status_charging()
-    mocker.patch.object(Sonnen, "_async_fetch_api_endpoint", AsyncMock(return_value=mock_response))
+    mocker.patch.object(Batterie, "fetch_battery_status", AsyncMock(return_value=mock_battery()))
 
-    battery = Sonnen(API_READ_TOKEN_1, BATTERIE_1_HOST, LOGGER_NAME)
-    result = await battery.status_update()
+    battery = Batterie(API_READ_TOKEN_1, BATTERIE_1_HOST, LOGGER_NAME)
+    status_data = await battery.fetch_battery_status()
+    assert status_data.get('cyclecount') == 30
+    assert status_data.get('remainingcapacity') == 75.39
 
-    assert result is True
-    assert battery.grid_in == 54
-    assert battery.grid_out == 0
+@pytest.mark.asyncio
+async def test_get_inverter(mocker: mocker):
+    """Batterie inverter status using mock data"""
+    mocker.patch.object(Batterie, "fetch_inverter_data", AsyncMock(return_value=mock_inverter()))
+
+    battery = Batterie(API_READ_TOKEN_1, BATTERIE_1_HOST, LOGGER_NAME)
+    status_data = await battery.fetch_inverter_data()
+    assert status_data.get('pac_total') == 0.06
+    assert status_data.get('uac') == 233.55
+
+@pytest.mark.asyncio
+async def test_get_configurations(mocker: mocker):
+    """Batterie configurations using mock data"""
+    mocker.patch.object(Batterie, "fetch_configurations", AsyncMock(return_value=mock_configurations()))
+
+    battery = Batterie(API_READ_TOKEN_1, BATTERIE_1_HOST, LOGGER_NAME)
+    configuratons = await battery.fetch_configurations()
+    assert configuratons.get('DE_Software') == '1.14.5'
+    assert configuratons.get('EM_USOC') == '20'

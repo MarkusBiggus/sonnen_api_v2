@@ -1,9 +1,7 @@
-"""pytest tests/test_sonnen_asyncio.py -s -v -x
-"""
+"""pytest tests/test_sonnen_asyncio.py -s -v -x """
 #import datetime
 import os
 import sys
-
 import logging
 import pytest
 import pytest_asyncio

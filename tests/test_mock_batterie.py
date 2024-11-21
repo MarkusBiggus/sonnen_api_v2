@@ -7,6 +7,7 @@ import sys
 import logging
 import pytest
 import pytest_asyncio
+
 #from pytest_mock import mocker
 from asyncmock import AsyncMock
 #import json
@@ -14,6 +15,7 @@ from dotenv import load_dotenv
 #from freezegun import freeze_time
 
 from sonnen_api_v2.sonnen import Sonnen as Batterie
+
 
 from . mock_status_charging import status_charging
 from . mock_status_discharging import status_discharging
@@ -63,6 +65,7 @@ if LOGGER_NAME is not None:
 
 @pytest.mark.asyncio
 async def test_get_batterie_charging(mocker):
+
     """Batterie charging using mock data"""
     mocker.patch.object(Batterie, "fetch_configurations", AsyncMock(return_value=mock_configurations()))
     mocker.patch.object(Batterie, "fetch_status", AsyncMock(return_value=status_charging()))
@@ -114,9 +117,9 @@ async def test_get_batterie_response(mocker):
         print(f'Version: {version}  Last Updated: '+ last_updated.strftime('%d-%b-%Y %H:%M:%S'))
     else:
         print('Batterie response was not updated!')
-
     assert response.serial_number == "XxxxxX"
 
+    
 def test_get_batterie_wrapped(mocker):
     """sonnenbatterie package Emulated methods using mock data"""
     mocker.patch.object(Batterie, "fetch_configurations", AsyncMock(return_value=mock_configurations()))

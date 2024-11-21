@@ -1,15 +1,8 @@
+"""Methods to emulate sonnenbatterie (v1) package for sonnenbatterie_v2_api ha component"""
 from typing import Union
 
 import aiohttp
 import asyncio
-
-__all__ = [
-    "set_request_connect_timeouts",
-    "get_request_connect_timeouts",
-    "get_latest_data",
-    "get_configurations",
-    "get_status"
-    ]
 
 def set_request_connect_timeouts(self, request_timeouts: tuple[int, int]):
     self.request_timeouts = request_timeouts
@@ -25,7 +18,7 @@ def get_latest_data(self)-> Union[str, bool]:
             json response
     """
     async def _get_latest_data(self):
-        await self.fetch_latest_details()
+        self._latest_details_data = await self.fetch_latest_details()
 
     event_loop = asyncio.new_event_loop()
     asyncio.set_event_loop(event_loop)
@@ -42,7 +35,7 @@ def get_configurations(self)-> Union[str, bool]:
             json response
     """
     async def _get_configurations(self):
-        await self.fetch_configurations()
+        self._configurations_data = await self.fetch_configurations()
 
     event_loop = asyncio.new_event_loop()
     asyncio.set_event_loop(event_loop)
@@ -59,7 +52,7 @@ def get_status(self)-> Union[str, bool]:
             json response
     """
     async def _get_status(self):
-        await self.fetch_status()
+        self._status_data = await self.fetch_status()
 
     event_loop = asyncio.new_event_loop()
     asyncio.set_event_loop(event_loop)
@@ -76,7 +69,7 @@ def get_powermeter(self)-> Union[str, bool]:
             json response
     """
     async def _get_powermeter(self):
-        await self.fetch_powermeter()
+        self._powermeter_data = await self.fetch_powermeter()
 
     event_loop = asyncio.new_event_loop()
     asyncio.set_event_loop(event_loop)
@@ -93,7 +86,7 @@ def get_battery(self)-> Union[str, bool]:
             json response
     """
     async def _get_battery(self):
-        await self.fetch_battery_status()
+        self._battery_status = await self.fetch_battery_status()
 
     event_loop = asyncio.new_event_loop()
     asyncio.set_event_loop(event_loop)
@@ -110,7 +103,7 @@ def get_inverter(self)-> Union[str, bool]:
             json response
     """
     async def _get_inverter(self):
-        await self.fetch_inverter_data()
+        self._inverter_data = await self.fetch_inverter_data()
 
     event_loop = asyncio.new_event_loop()
     asyncio.set_event_loop(event_loop)
@@ -120,3 +113,15 @@ def get_inverter(self)-> Union[str, bool]:
         event_loop.close()
 
     return self._inverter_data if self._inverter_data is not None else False
+
+def get_batterysystem(self)-> Union[str, bool]:
+    """battery_system not in V2 - fake it for required component attributes"""
+    if self._configurations_data is None:
+        get_configurations()
+        if self._configurations_data is None:
+            return False
+
+    systemdata = {'modules': self._configurations_data.get('IC_BatteryModules'),
+                    'battery_system': {'system': {'storage_capacity_per_module': self._configurations_data.get('CM_MarketingModuleCapacity') }}
+                }
+    return systemdata

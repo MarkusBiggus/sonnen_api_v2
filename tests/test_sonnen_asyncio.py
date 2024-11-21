@@ -4,10 +4,10 @@ import os
 import sys
 import logging
 import pytest
-import pytest_asyncio
-from pytest_mock import mocker
+#import pytest_asyncio
+#from pytest_mock import mocker
 from asyncmock import AsyncMock
-import json
+#import json
 
 
 #from freezegun import freeze_time
@@ -58,7 +58,7 @@ if LOGGER_NAME is not None:
 
 
 @pytest.mark.asyncio
-async def test_get_status_charging(mocker: mocker):
+async def test_get_status_charging(mocker):
     """Batterie status charging using mock data"""
     mocker.patch.object(Batterie, "fetch_status", AsyncMock(return_value=status_charging()))
 
@@ -72,7 +72,7 @@ async def test_get_status_charging(mocker: mocker):
     # assert battery.grid_out == 0
 
 @pytest.mark.asyncio
-async def test_get_status_discharging(mocker: mocker):
+async def test_get_status_discharging(mocker):
     """Batterie status discharging using mock data"""
     mocker.patch.object(Batterie, "fetch_status", AsyncMock(return_value=status_discharging()))
 
@@ -84,7 +84,7 @@ async def test_get_status_discharging(mocker: mocker):
     assert status_data.get('Pac_total_W') == 438
 
 @pytest.mark.asyncio
-async def test_get_latest_charging(mocker: mocker):
+async def test_get_latest_charging(mocker):
     """Batterie latest data charging using mock data"""
     mocker.patch.object(Batterie, "fetch_latest_details", AsyncMock(return_value=latest_charging()))
 
@@ -96,7 +96,7 @@ async def test_get_latest_charging(mocker: mocker):
     assert latest_data.get('Pac_total_W') == -1394
 
 @pytest.mark.asyncio
-async def test_get_latest_discharging(mocker: mocker):
+async def test_get_latest_discharging(mocker):
     """Batterie latest data discharging using mock data"""
     mocker.patch.object(Batterie, "fetch_latest_details", AsyncMock(return_value=latest_discharging()))
 
@@ -108,7 +108,7 @@ async def test_get_latest_discharging(mocker: mocker):
     assert latest_data.get('Pac_total_W') == 1439
 
 @pytest.mark.asyncio
-async def test_get_powermeter(mocker: mocker):
+async def test_get_powermeter(mocker):
     """Batterie powermeter test using mock data"""
     mocker.patch.object(Batterie, "fetch_powermeter", AsyncMock(return_value=mock_powermeter()))
 
@@ -118,7 +118,7 @@ async def test_get_powermeter(mocker: mocker):
     assert powermeter[1]['direction'] == 'consumption'
 
 @pytest.mark.asyncio
-async def test_get_battery(mocker: mocker):
+async def test_get_battery(mocker):
     """Batterie status test using mock data"""
     mocker.patch.object(Batterie, "fetch_battery_status", AsyncMock(return_value=mock_battery()))
 
@@ -128,7 +128,7 @@ async def test_get_battery(mocker: mocker):
     assert status_data.get('remainingcapacity') == 75.39
 
 @pytest.mark.asyncio
-async def test_get_inverter(mocker: mocker):
+async def test_get_inverter(mocker):
     """Batterie inverter status using mock data"""
     mocker.patch.object(Batterie, "fetch_inverter_data", AsyncMock(return_value=mock_inverter()))
 
@@ -138,7 +138,7 @@ async def test_get_inverter(mocker: mocker):
     assert status_data.get('uac') == 233.55
 
 @pytest.mark.asyncio
-async def test_get_configurations(mocker: mocker):
+async def test_get_configurations(mocker):
     """Batterie configurations using mock data"""
     mocker.patch.object(Batterie, "fetch_configurations", AsyncMock(return_value=mock_configurations()))
 

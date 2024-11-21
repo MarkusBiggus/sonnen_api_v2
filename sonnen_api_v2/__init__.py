@@ -11,6 +11,15 @@ __all__ = (
     "Batterie",
     "BatterieResponse",
     "RealTimeAPI",
+    "set_request_connect_timeouts",
+    "get_request_connect_timeouts",
+    "get_latest_data",
+    "get_configurations",
+    "get_status",
+    "get_powermeter",
+    "get_battery",
+    "get_inverter",
+    "get_batterysystem"
 )
 
 #_LOGGER = logging.getLogger(__name__)

@@ -7,14 +7,15 @@ import sys
 import logging
 import pytest
 import pytest_asyncio
-from pytest_mock import mocker
+
+#from pytest_mock import mocker
 from asyncmock import AsyncMock
-import json
-
-
-#from freezegun import freeze_time
-from sonnen_api_v2.sonnen import Sonnen as Batterie
+#import json
 from dotenv import load_dotenv
+#from freezegun import freeze_time
+
+from sonnen_api_v2.sonnen import Sonnen as Batterie
+
 
 from . mock_status_charging import status_charging
 from . mock_status_discharging import status_discharging
@@ -63,7 +64,8 @@ if LOGGER_NAME is not None:
 
 
 @pytest.mark.asyncio
-async def test_get_batterie_charging(mocker: mocker):
+async def test_get_batterie_charging(mocker):
+
     """Batterie charging using mock data"""
     mocker.patch.object(Batterie, "fetch_configurations", AsyncMock(return_value=mock_configurations()))
     mocker.patch.object(Batterie, "fetch_status", AsyncMock(return_value=status_charging()))
@@ -94,7 +96,7 @@ async def test_get_batterie_charging(mocker: mocker):
     assert kwh_consumed == 816.5
 
 @pytest.mark.asyncio
-async def test_get_batterie_response(mocker: mocker):
+async def test_get_batterie_response(mocker):
     """Batterie charging using mock data"""
     mocker.patch.object(Batterie, "fetch_configurations", AsyncMock(return_value=mock_configurations()))
     mocker.patch.object(Batterie, "fetch_status", AsyncMock(return_value=status_charging()))
@@ -107,7 +109,7 @@ async def test_get_batterie_response(mocker: mocker):
 
     _battery = Batterie(API_READ_TOKEN, BATTERIE_HOST, BATTERIE_PORT, LOGGER_NAME)  # Batterie online
 
-    # called by component
+    # called by sonnen ha component
     response = await _battery.get_data()
     last_updated = response.last_updated
     version = response.version
@@ -115,5 +117,61 @@ async def test_get_batterie_response(mocker: mocker):
         print(f'Version: {version}  Last Updated: '+ last_updated.strftime('%d-%b-%Y %H:%M:%S'))
     else:
         print('Batterie response was not updated!')
+    assert response.serial_number == "XxxxxX"
 
-    assert response.serial_number == "123321"
+    
+def test_get_batterie_wrapped(mocker):
+    """sonnenbatterie package Emulated methods using mock data"""
+    mocker.patch.object(Batterie, "fetch_configurations", AsyncMock(return_value=mock_configurations()))
+    mocker.patch.object(Batterie, "fetch_status", AsyncMock(return_value=status_charging()))
+#    mocker.patch.object(Batterie, "fetch_status", AsyncMock(return_value=status_discharging()))
+    mocker.patch.object(Batterie, "fetch_latest_details", AsyncMock(return_value=latest_charging()))
+#    mocker.patch.object(Batterie, "fetch_latest_details", AsyncMock(return_value=latest_discharging()))
+    mocker.patch.object(Batterie, "fetch_powermeter", AsyncMock(return_value=mock_powermeter()))
+    mocker.patch.object(Batterie, "fetch_battery_status", AsyncMock(return_value=mock_battery()))
+    mocker.patch.object(Batterie, "fetch_inverter_data", AsyncMock(return_value=mock_inverter()))
+
+    _battery = Batterie(API_READ_TOKEN, BATTERIE_HOST, BATTERIE_PORT, LOGGER_NAME)  # Batterie online
+    assert _battery is not False
+    latestData = {}
+    # code syntax from custom_component coordinator.py
+    latestData["battery_system"] = _battery.get_batterysystem()
+    batt_module_capacity = int(
+        latestData["battery_system"]["battery_system"]["system"][
+            "storage_capacity_per_module"
+        ]
+    )
+    assert batt_module_capacity == 5000
+    batt_module_count = int(latestData["battery_system"]["modules"])
+    assert batt_module_count == 2
+
+    latestData["powermeter"] = _battery.get_powermeter()
+    if(isinstance(latestData["powermeter"],dict)):
+        newPowerMeters=[]
+        for index,dictIndex in enumerate(latestData["powermeter"]):
+            newPowerMeters.append(latestData["powermeter"][dictIndex])
+        print(f'new powermeters: {newPowerMeters}')
+
+    latestData["status"] = _battery.get_status()
+    print(f'status type: {type(latestData["status"])}')
+    if latestData["status"]["BatteryCharging"]:
+        battery_current_state = "charging"
+    elif latestData["status"]["BatteryDischarging"]:
+        battery_current_state = "discharging"
+    else:
+        battery_current_state = "standby"
+    RSOC = latestData["status"]["RSOC"]
+    print(f'battery_state: {battery_current_state}  RSOC: {RSOC}%')
+
+    print(f'module_capacity: {batt_module_capacity:,}Wh  module_count: {batt_module_count}')
+    batt_reserved_factor = 7.0
+    total_installed_capacity = int(batt_module_count * batt_module_capacity)
+    reserved_capacity = int(
+            total_installed_capacity * (batt_reserved_factor / 100.0)
+        )
+    remaining_capacity = (
+            int(total_installed_capacity * latestData["status"]["RSOC"]) / 100.0
+        )
+    remaining_capacity_usable = max(
+            0, int(remaining_capacity - reserved_capacity))
+    print(f'remaining_capacity_usable: {remaining_capacity_usable:,}Wh')

@@ -63,7 +63,7 @@ class BatterieResponse(
 class Sonnen:
     """Class for managing Sonnen API V2 data"""
     from .wrapped import set_request_connect_timeouts, get_request_connect_timeouts
-    from .wrapped import get_latest_data, get_configurations, get_status, get_powermeter, get_battery, get_inverter
+    from .wrapped import get_latest_data, get_configurations, get_status, get_powermeter, get_battery, get_inverter, get_batterysystem
 
     # pylint: enable=C0301
 #    _schema = vol.Schema({})  # type: vol.Schema
@@ -91,15 +91,15 @@ class Sonnen:
         self.inverter_api_endpoint = f'{self.url}/api/v2/inverter'
 
         # api data
-        self._latest_details_data = {}
-        self._status_data = {}
-        self._ic_status = {}
-        self._battery_status = {}
-        self._powermeter_data = []
-        self._powermeter_production = {}
-        self._powermeter_consumption = {}
-        self._configurations_data = {}
-        self._inverter_data = {}
+        self._latest_details_data = None
+        self._status_data = None
+        self._ic_status = None
+        self._battery_status = None
+        self._powermeter_data = None
+        self._powermeter_production = None
+        self._powermeter_consumption = None
+        self._configurations_data = None
+        self._inverter_data = None
         # isal is preferred over zlib_ng if it is available
         aiohttp_fast_zlib.enable()
 

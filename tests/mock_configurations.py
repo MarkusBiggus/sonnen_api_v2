@@ -2,7 +2,7 @@ import json
 def mock_configurations()-> json:
 # Economical Charging (default)
     return {
-        "EM_RE_ENABLE_MICROGRID": False,
+        "EM_RE_ENABLE_MICROGRID": 'False',
         "NVM_PfcIsFixedCosPhiActive": 0,
         "NVM_PfcFixedCosPhi": 0.8,
         "IC_BatteryModules": 2,

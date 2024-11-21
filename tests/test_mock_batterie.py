@@ -117,8 +117,6 @@ async def test_get_batterie_response(mocker):
 
     assert response.serial_number == "XxxxxX"
 
-# @pytest.mark.asyncio
-# async def test_get_batterie_wrapped(mocker):
 def test_get_batterie_wrapped(mocker):
     """sonnenbatterie package Emulated methods using mock data"""
     mocker.patch.object(Batterie, "fetch_configurations", AsyncMock(return_value=mock_configurations()))
@@ -134,9 +132,7 @@ def test_get_batterie_wrapped(mocker):
     assert _battery is not False
     latestData = {}
     # code syntax from custom_component coordinator.py
-    latestData["powermeter"] = _battery.get_powermeter()
     latestData["battery_system"] = _battery.get_batterysystem()
-    print(f'latest: {latestData}')
     batt_module_capacity = int(
         latestData["battery_system"]["battery_system"]["system"][
             "storage_capacity_per_module"

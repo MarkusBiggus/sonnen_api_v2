@@ -117,10 +117,9 @@ def get_inverter(self)-> Union[str, bool]:
 def get_batterysystem(self)-> Union[str, bool]:
     """battery_system not in V2 - fake it for required component attributes"""
     if self._configurations_data is None:
-        get_configurations()
+        self.get_configurations()
         if self._configurations_data is None:
             return False
-
     systemdata = {'modules': self._configurations_data.get('IC_BatteryModules'),
                     'battery_system': {'system': {'storage_capacity_per_module': self._configurations_data.get('CM_MarketingModuleCapacity') }}
                 }

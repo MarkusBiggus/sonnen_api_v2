@@ -19,7 +19,7 @@ __all__ = (
     "get_powermeter",
     "get_battery",
     "get_inverter",
-    "get_batterysystem"
+    "get_batterysystem",
 )
 
 #_LOGGER = logging.getLogger(__name__)

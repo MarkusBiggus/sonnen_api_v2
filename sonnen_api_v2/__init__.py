@@ -1,7 +1,7 @@
 """ SonnenBatterie API V2 module """
 
 #import asyncio
-import logging
+#import logging
 from .sonnen import Sonnen as Batterie, BatterieResponse
 
 __version__ = '0.5.12'
@@ -33,7 +33,9 @@ async def real_time_api(auth_token, ip_address, port=80):
 
 
 class RealTimeAPI:
-    """Sonnen Batterie real time API"""
+    """Sonnen Batterie real time API
+        Used by home assistant component
+    """
 
     # pylint: disable=too-few-public-methods
 

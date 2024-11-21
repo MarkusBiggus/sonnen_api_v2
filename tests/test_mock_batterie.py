@@ -6,7 +6,7 @@ import sys
 
 import logging
 import pytest
-import pytest_asyncio
+#import pytest_asyncio
 
 #from pytest_mock import mocker
 from asyncmock import AsyncMock
@@ -119,7 +119,7 @@ async def test_get_batterie_response(mocker):
         print('Batterie response was not updated!')
     assert response.serial_number == "XxxxxX"
 
-    
+
 def test_get_batterie_wrapped(mocker):
     """sonnenbatterie package Emulated methods using mock data"""
     mocker.patch.object(Batterie, "fetch_configurations", AsyncMock(return_value=mock_configurations()))

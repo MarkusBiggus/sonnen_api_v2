@@ -95,6 +95,25 @@ def get_battery(self)-> Union[str, bool]:
     finally:
         event_loop.close()
 
+    if self._status_data is None:
+        self.get_status()
+        if self._status_data is None:
+            return False
+    """ current_status index of: ["standby", "charging", "discharging", "charged", "discharged"] """
+    if self.status_battery_charging:
+        self._battery_status['current_status'] = 1
+    elif self.status_battery_discharging:
+        self._battery_status['current_status'] = 2
+    elif self.battery_rsoc > 99:
+        self._battery_status['current_status'] = 3
+#    elif self.battery_rsoc == self.status_backup_buffer:
+#        self._battery_status['current_status'] = 0
+    elif self.battery_usable_remaining_capacity < 1:
+        self._battery_status['current_status'] = 4
+    else:
+        self._battery_status['current_status'] = 0
+    
+    self._battery_status['cyclecount'] = self.battery_cycle_count
     return self._battery_status if self._battery_status is not None else False
 
 def get_inverter(self)-> Union[str, bool]:

@@ -4,6 +4,8 @@ from typing import Union
 import aiohttp
 import asyncio
 
+from .const import BATTERY_FULL_CHARGE_CAPACITY_WH, BATTERY_REMAINING_CAPACITY, BATTERY_USABLE_REMAINING_CAPACITY
+
 def set_request_connect_timeouts(self, request_timeouts: tuple[int, int]):
     self.request_timeouts = request_timeouts
     self.client_timeouts = aiohttp.ClientTimeout(connect=request_timeouts[0], sock_read=request_timeouts[1])
@@ -82,6 +84,7 @@ def get_powermeter(self)-> Union[str, bool]:
 
 def get_battery(self)-> Union[str, bool]:
     """Battery status for sonnenbatterie wrapper
+        Fake V1 API data used by ha sonnenbatterie component
         Returns:
             json response
     """
@@ -101,19 +104,24 @@ def get_battery(self)-> Union[str, bool]:
             return False
     """ current_status index of: ["standby", "charging", "discharging", "charged", "discharged"] """
     if self.status_battery_charging:
-        self._battery_status['current_status'] = 1
+        self._battery_status['current_status'] = '1'
     elif self.status_battery_discharging:
-        self._battery_status['current_status'] = 2
-    elif self.battery_rsoc > 99:
-        self._battery_status['current_status'] = 3
+        self._battery_status['current_status'] = '2'
+    elif self.battery_rsoc > 98:
+        self._battery_status['current_status'] = '3'
 #    elif self.battery_rsoc == self.status_backup_buffer:
-#        self._battery_status['current_status'] = 0
-    elif self.battery_usable_remaining_capacity < 1:
-        self._battery_status['current_status'] = 4
+#        self._battery_status['current_status'] = '0'
+    elif self.battery_usable_remaining_capacity < 2:
+        self._battery_status['current_status'] = '4'
     else:
-        self._battery_status['current_status'] = 0
-    
-    self._battery_status['cyclecount'] = self.battery_cycle_count
+        self._battery_status['current_status'] = '0'
+
+    self._battery_status['remainingcapacity'] = self._battery_status[BATTERY_FULL_CHARGE_CAPACITY_WH]
+    self._battery_status['total_installed_capacity'] = self._battery_status[BATTERY_FULL_CHARGE_CAPACITY_WH]
+    self._battery_status['reserved_capacity'] = str(self.backup_buffer_capacity_wh)
+    self._battery_status['remaining_capacity'] = self._battery_status[BATTERY_REMAINING_CAPACITY]
+    self._battery_status['remaining_capacity_usable'] = self._battery_status[BATTERY_USABLE_REMAINING_CAPACITY]
+
     return self._battery_status if self._battery_status is not None else False
 
 def get_inverter(self)-> Union[str, bool]:
@@ -140,6 +148,6 @@ def get_batterysystem(self)-> Union[str, bool]:
         if self._configurations_data is None:
             return False
     systemdata = {'modules': self._configurations_data.get('IC_BatteryModules'),
-                    'battery_system': {'system': {'storage_capacity_per_module': self._configurations_data.get('CM_MarketingModuleCapacity') }}
+                  'battery_system': {'system': {'storage_capacity_per_module': self._configurations_data.get('CM_MarketingModuleCapacity') }}
                 }
     return systemdata

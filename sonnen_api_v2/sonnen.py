@@ -545,7 +545,7 @@ class Sonnen:
     def battery_cycle_count(self) -> int:
         """Number of charge/discharge cycles
             Returns:
-                Number of charge/discharge cycles
+                Int count
         """
         return self._battery_status[BATTERY_CYCLE_COUNT]
 
@@ -740,7 +740,7 @@ class Sonnen:
     @property
     @get_item(int)
     def configuration_em_usoc(self) -> int:
-        """User State Of Charge - BackupBuffer value (includes 6% unusable reserve)
+        """User State Of Charge - BackupBuffer value (includes unusable reserve)
             Returns:
                 Integer Percent
         """

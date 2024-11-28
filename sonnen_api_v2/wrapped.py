@@ -103,6 +103,7 @@ def get_battery(self)-> Union[str, bool]:
 
     return ext_battery_v1data(self)
 
+
 def ext_battery_v1data(self)-> Union[str, bool]:
     """Battery status for sonnenbatterie wrapper
         Fake V1 API data used by ha sonnenbatterie component

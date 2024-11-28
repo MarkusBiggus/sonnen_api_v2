@@ -428,6 +428,15 @@ class Sonnen:
 
     @property
     @get_item(int)
+    def installed_capacity(self) -> int:
+        """Battery modules installed in the system
+            Returns:
+                total installed capacity Wh
+        """
+        return self._configurations_data[CONFIGURATION_MODULECAPACITY] * self.installed_modules
+
+    @property
+    @get_item(int)
     def u_soc(self) -> int:
         """User state of charge (usable charge)
             Returns:

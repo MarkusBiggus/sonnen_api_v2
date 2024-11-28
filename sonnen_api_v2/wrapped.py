@@ -98,9 +98,13 @@ def get_battery(self)-> Union[str, bool]:
     finally:
         event_loop.close()
 
-    if self._status_data is None:
-        self.get_status()
-        if self._status_data is None:
+#    if self._status_data is None:
+#        self.get_status()
+#        if self._status_data is None:
+#            return False
+    if self._configurations_data is None:
+        self.get_configurations()
+        if self._configurations_data is None:
             return False
     """ current_state index of: ["standby", "charging", "discharging", "charged", "discharged"] """
     if self.status_battery_charging:

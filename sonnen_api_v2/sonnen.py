@@ -697,6 +697,7 @@ class Sonnen:
     @get_item(float)
     def battery_module_dc_voltage(self) -> float:
         """Battery module voltage
+            value is consistent with Ah & Wh values reported
             Returns:
                 Voltage in Volt
         """
@@ -706,6 +707,7 @@ class Sonnen:
     @get_item(float)
     def battery_system_dc_voltage(self) -> float:
         """System battery voltage
+            seems to be module voltage * num modules
             Returns:
                 Voltage in Volt
         """

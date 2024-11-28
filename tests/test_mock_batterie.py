@@ -123,7 +123,6 @@ async def test_get_batterie_charging(mocker):
 #     print(f'Depth of Discharge limit: {dod}%')
 #     assert dod == 93
 
-
 def test_get_batterie_wrapped(mocker):
     """sonnenbatterie package Emulated methods using mock data"""
     mocker.patch.object(Batterie, "fetch_configurations", AsyncMock(return_value=mock_configurations()))

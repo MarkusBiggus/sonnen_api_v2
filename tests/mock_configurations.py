@@ -5,7 +5,7 @@ def mock_configurations()-> json:
         "EM_RE_ENABLE_MICROGRID": 'False',
         "NVM_PfcIsFixedCosPhiActive": 0,
         "NVM_PfcFixedCosPhi": 0.8,
-        "IC_BatteryModules": 2,
+        "IC_BatteryModules": 4,
         "EM_ToU_Schedule": [],
         "DE_Software":"1.14.5",
         "EM_USER_INPUT_TIME_ONE": 0,

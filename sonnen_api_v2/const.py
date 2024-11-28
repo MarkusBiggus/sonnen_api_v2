@@ -17,6 +17,7 @@ BATTERY_MIN_MODULE_VOLTAGE = 'minimummoduledcvoltage'
 BATTERY_MIN_MODULE_TEMP = 'minimummoduletemperature'
 BATTERY_REMAINING_CAPACITY = 'remainingcapacity'
 BATTERY_REMAINING_CAPACITY = 'remainingcapacity'
+BATTERY_NOMINAL_MODULE_VOLTAGE = 'nominalmoduledcvoltage'
 BATTERY_RSOC = 'relativestateofcharge'
 BATTERY_SYSTEM_CURRENT = 'systemcurrent'
 BATTERY_SYSTEM_VOLTAGE = 'systemdcvoltage'
@@ -71,3 +72,6 @@ INVERTER_PAC_TOTAL = 'pac_total'
 TIMEOUT = 20
 TIMEOUT_CONNECT=0
 TIMEOUT_REQUEST=1
+
+# Manufacturer reserve 7%
+BATTERY_UNUSABLE_RESERVE = .07

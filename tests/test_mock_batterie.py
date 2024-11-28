@@ -113,11 +113,14 @@ async def test_get_batterie_response(mocker):
     response = await _battery.get_data()
     last_updated = response.last_updated
     version = response.version
+    dod = _battery.battery_dod_limit
     if last_updated is not None:
         print(f'Version: {version}  Last Updated: '+ last_updated.strftime('%d-%b-%Y %H:%M:%S'))
     else:
         print('Batterie response was not updated!')
     assert response.serial_number == "XxxxxX"
+    print(f'Depth of Discharge limit: {dod}%')
+    assert dod == 93
 
 
 def test_get_batterie_wrapped(mocker):
@@ -143,7 +146,7 @@ def test_get_batterie_wrapped(mocker):
     )
     assert batt_module_capacity == 5000
     batt_module_count = int(latestData["battery_system"]["modules"])
-    assert batt_module_count == 2
+    assert batt_module_count == 4
 
     latestData["powermeter"] = _battery.get_powermeter()
     if(isinstance(latestData["powermeter"],dict)):
@@ -153,25 +156,59 @@ def test_get_batterie_wrapped(mocker):
         print(f'new powermeters: {newPowerMeters}')
 
     latestData["status"] = _battery.get_status()
-    print(f'status type: {type(latestData["status"])}')
+#    print(f'status type: {type(latestData["status"])}')
     if latestData["status"]["BatteryCharging"]:
         battery_current_state = "charging"
     elif latestData["status"]["BatteryDischarging"]:
         battery_current_state = "discharging"
     else:
         battery_current_state = "standby"
-    RSOC = latestData["status"]["RSOC"]
-    print(f'battery_state: {battery_current_state}  RSOC: {RSOC}%')
+    rsoc = latestData["status"]["RSOC"]
+    operatingmode = latestData.get("status", {}).get("OperatingMode")
+    print(f'battery_state: {battery_current_state}  RSOC: {rsoc}%  Operating Mode: {operatingmode}')
 
     print(f'module_capacity: {batt_module_capacity:,}Wh  module_count: {batt_module_count}')
     batt_reserved_factor = 7.0
     total_installed_capacity = int(batt_module_count * batt_module_capacity)
-    reserved_capacity = int(
+    unusable_reserved_capacity = int(
             total_installed_capacity * (batt_reserved_factor / 100.0)
         )
     remaining_capacity = (
             int(total_installed_capacity * latestData["status"]["RSOC"]) / 100.0
         )
     remaining_capacity_usable = max(
-            0, int(remaining_capacity - reserved_capacity))
-    print(f'remaining_capacity_usable: {remaining_capacity_usable:,}Wh')
+            0, int(remaining_capacity - unusable_reserved_capacity))
+    print(f'total_capacity (calc): {total_installed_capacity:,}Wh')
+    print(f'unusable_reserved (calc): {unusable_reserved_capacity:,}Wh  remaining_capacity:{remaining_capacity}Wh')
+    print(f'remaining_usable (calc): {remaining_capacity_usable:,}Wh')
+    assert total_installed_capacity == 20000
+    assert unusable_reserved_capacity == 1400
+    assert remaining_capacity == 19600
+    assert remaining_capacity_usable == 18200
+
+    latestData["battery_info"] = _battery.get_battery()
+    current_state = latestData.get("battery_info", {}).get("current_state")
+    print(f'current_state: {current_state}')
+    assert current_state == 'charging'
+    measurements = latestData["battery_info"]['measurements']
+    print(f'measurements: {measurements}')
+    total_capacity_usable = (latestData.get("battery_info", {}).get(
+                "total_installed_capacity", 0
+            )
+            - latestData.get("battery_info", {}).get("reserved_capacity", 0)
+    )
+    BackupBuffer = latestData.get("status", {}).get("BackupBuffer")
+    backup_buffer_usable = latestData.get("battery_info", {}).get("backup_buffer_usable")
+    print(f'BackupBuffer: {BackupBuffer}%  Backup_Usable: {backup_buffer_usable:,}Wh')
+    total_capacity_raw = latestData.get("battery_info", {}).get("fullchargecapacitywh")
+    reserved_capacity_raw = latestData.get("battery_info", {}).get("reserved_capacity")
+    print(f'total_capacity (raw): {total_capacity_raw:,}Wh')
+    print(f'Reserved (raw): {reserved_capacity_raw:,}Wh  total_usable (calc): {total_capacity_usable:,}Wh')
+    assert total_capacity_raw == 20683.490
+    assert total_capacity_usable == 18553
+    assert reserved_capacity_raw == 1447
+    remaining_capacity = latestData.get("battery_info", {}).get("remaining_capacity")
+    remaining_capacity_usable = latestData.get("battery_info", {}).get("remaining_capacity_usable")
+    print(f'remaining_capacity (raw): {remaining_capacity:,}Wh  remaining_usable (raw): {remaining_capacity_usable:,}Wh')
+    assert remaining_capacity == 20269
+    assert remaining_capacity_usable == 18821

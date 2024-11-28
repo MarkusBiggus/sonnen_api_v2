@@ -4,7 +4,7 @@ from typing import Union
 import aiohttp
 import asyncio
 
-from .const import BATTERY_FULL_CHARGE_CAPACITY_WH, BATTERY_REMAINING_CAPACITY, BATTERY_USABLE_REMAINING_CAPACITY
+from .const import BATTERY_FULL_CHARGE_CAPACITY_WH, BATTERY_REMAINING_CAPACITY, BATTERY_USABLE_REMAINING_CAPACITY, BATTERY_RSOC
 
 def set_request_connect_timeouts(self, request_timeouts: tuple[int, int]):
     self.request_timeouts = request_timeouts
@@ -102,25 +102,30 @@ def get_battery(self)-> Union[str, bool]:
         self.get_status()
         if self._status_data is None:
             return False
-    """ current_status index of: ["standby", "charging", "discharging", "charged", "discharged"] """
+    """ current_state index of: ["standby", "charging", "discharging", "charged", "discharged"] """
     if self.status_battery_charging:
-        self._battery_status['current_status'] = '1'
+        self._battery_status['current_state'] = "charging"
     elif self.status_battery_discharging:
-        self._battery_status['current_status'] = '2'
+        self._battery_status['current_state'] = "discharging"
     elif self.battery_rsoc > 98:
-        self._battery_status['current_status'] = '3'
+        self._battery_status['current_state'] = "charged"
 #    elif self.battery_rsoc == self.status_backup_buffer:
-#        self._battery_status['current_status'] = '0'
+#        self._battery_status['current_state'] = '0'
     elif self.battery_usable_remaining_capacity < 2:
-        self._battery_status['current_status'] = '4'
+        self._battery_status['current_state'] = "discharged"
     else:
-        self._battery_status['current_status'] = '0'
+        self._battery_status['current_state'] = "standby"
 
-    self._battery_status['remainingcapacity'] = self._battery_status[BATTERY_FULL_CHARGE_CAPACITY_WH]
-    self._battery_status['total_installed_capacity'] = self._battery_status[BATTERY_FULL_CHARGE_CAPACITY_WH]
-    self._battery_status['reserved_capacity'] = str(self.backup_buffer_capacity_wh)
-    self._battery_status['remaining_capacity'] = self._battery_status[BATTERY_REMAINING_CAPACITY]
-    self._battery_status['remaining_capacity_usable'] = self._battery_status[BATTERY_USABLE_REMAINING_CAPACITY]
+    measurements = {'battery_status': {'cyclecount': self.battery_cycle_count,
+                                       'stateofhealth': int(self.battery_rsoc)
+                                      }
+                    }
+    self._battery_status['measurements'] = measurements
+    self._battery_status['total_installed_capacity'] = self._configurations_data.get('IC_BatteryModules') * self._configurations_data.get('CM_MarketingModuleCapacity') #self.battery_full_charge_capacity_wh #_battery_status[BATTERY_FULL_CHARGE_CAPACITY_WH]
+    self._battery_status['reserved_capacity'] = self.battery_unusable_capacity_wh #backup_buffer_capacity_wh
+    self._battery_status['remaining_capacity'] = self.battery_remaining_capacity_wh #_battery_status[BATTERY_REMAINING_CAPACITY]
+    self._battery_status['remaining_capacity_usable'] = self.battery_usable_remaining_capacity_wh #_battery_status[BATTERY_USABLE_REMAINING_CAPACITY]
+    self._battery_status['backup_buffer_usable'] = self.backup_buffer_usable_capacity_wh
 
     return self._battery_status if self._battery_status is not None else False
 

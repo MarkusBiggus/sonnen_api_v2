@@ -96,32 +96,32 @@ async def test_get_batterie_charging(mocker):
     assert backup_buffer == 20
     assert kwh_consumed == 816.5
 
-@pytest.mark.asyncio
-async def test_get_batterie_response(mocker):
-    """Batterie charging using mock data"""
-    mocker.patch.object(Batterie, "fetch_configurations", AsyncMock(return_value=mock_configurations()))
-    mocker.patch.object(Batterie, "fetch_status", AsyncMock(return_value=status_charging()))
-#    mocker.patch.object(Batterie, "fetch_status", AsyncMock(return_value=status_discharging()))
-    mocker.patch.object(Batterie, "fetch_latest_details", AsyncMock(return_value=latest_charging()))
-#    mocker.patch.object(Batterie, "fetch_latest_details", AsyncMock(return_value=latest_discharging()))
-    mocker.patch.object(Batterie, "fetch_powermeter", AsyncMock(return_value=mock_powermeter()))
-    mocker.patch.object(Batterie, "fetch_battery_status", AsyncMock(return_value=mock_battery()))
-    mocker.patch.object(Batterie, "fetch_inverter_data", AsyncMock(return_value=mock_inverter()))
+# @pytest.mark.asyncio
+# async def test_get_batterie_response(mocker):
+#     """Batterie charging using mock data"""
+#     mocker.patch.object(Batterie, "fetch_configurations", AsyncMock(return_value=mock_configurations()))
+#     mocker.patch.object(Batterie, "fetch_status", AsyncMock(return_value=status_charging()))
+# #    mocker.patch.object(Batterie, "fetch_status", AsyncMock(return_value=status_discharging()))
+#     mocker.patch.object(Batterie, "fetch_latest_details", AsyncMock(return_value=latest_charging()))
+# #    mocker.patch.object(Batterie, "fetch_latest_details", AsyncMock(return_value=latest_discharging()))
+#     mocker.patch.object(Batterie, "fetch_powermeter", AsyncMock(return_value=mock_powermeter()))
+#     mocker.patch.object(Batterie, "fetch_battery_status", AsyncMock(return_value=mock_battery()))
+#     mocker.patch.object(Batterie, "fetch_inverter_data", AsyncMock(return_value=mock_inverter()))
 
-    _battery = Batterie(API_READ_TOKEN, BATTERIE_HOST, BATTERIE_PORT, LOGGER_NAME)  # Batterie online
+#     _battery = Batterie(API_READ_TOKEN, BATTERIE_HOST, BATTERIE_PORT, LOGGER_NAME)  # Batterie online
 
-    # called by sonnen ha component
-    response = await _battery.get_data()
-    last_updated = response.last_updated
-    version = response.version
-    dod = _battery.battery_dod_limit
-    if last_updated is not None:
-        print(f'Version: {version}  Last Updated: '+ last_updated.strftime('%d-%b-%Y %H:%M:%S'))
-    else:
-        print('Batterie response was not updated!')
-    assert response.serial_number == "XxxxxX"
-    print(f'Depth of Discharge limit: {dod}%')
-    assert dod == 93
+#     # called by sonnen ha component
+#     response = await _battery.get_data()
+#     last_updated = response.last_updated
+#     version = response.version
+#     dod = _battery.battery_dod_limit
+#     if last_updated is not None:
+#         print(f'Version: {version}  Last Updated: '+ last_updated.strftime('%d-%b-%Y %H:%M:%S'))
+#     else:
+#         print('Batterie response was not updated!')
+#     assert response.serial_number == "XxxxxX"
+#     print(f'Depth of Discharge limit: {dod}%')
+#     assert dod == 93
 
 
 def test_get_batterie_wrapped(mocker):

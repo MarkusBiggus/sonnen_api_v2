@@ -144,21 +144,23 @@ class Sonnen:
     #     """
     #     return self._schema
 
-    async def get_data(self) -> bool:
-        """Response used by home assistant component"""
-        await self.async_update()
-        return BatterieResponse(
-            serial_number = "XxxxxX", #placeholder
-            version = self.configuration_de_software,
-            last_updated = self.last_updated,
-            latestdata = self._latest_details_data,
-            status = self._status_data,
-            battery = self._battery_status,
-            powermeter_production = self._powermeter_production,
-            powermeter_consumption = self._powermeter_consumption,
-            configurations = self._configurations_data,
-            inverter = self._inverter_data,
-        )
+############ GOES IN COMPONENT  #######################
+    # async def get_data(self) -> bool:
+    #     """Response used by home assistant component"""
+    #     await self.async_update()
+    #     self._battery_status['system'] = self.get_batterysystem(),
+    #     return BatterieResponse(
+    #         serial_number = "XxxxxX", #placeholder
+    #         version = self.configuration_de_software,
+    #         last_updated = self.last_updated,
+    #         latestdata = self._latest_details_data,
+    #         status = self._status_data,
+    #         battery = self._battery_status,
+    #         powermeter_production = self._powermeter_production,
+    #         powermeter_consumption = self._powermeter_consumption,
+    #         configurations = self._configurations_data,
+    #         inverter = self._inverter_data,
+    #     )
 
     async def async_update(self) -> bool:
         """Update all battery data from an async caller

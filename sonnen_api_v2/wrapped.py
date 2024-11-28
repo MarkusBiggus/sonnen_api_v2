@@ -123,7 +123,7 @@ def get_battery(self)-> Union[str, bool]:
         self._battery_status['current_state'] = "standby"
 
     measurements = {'battery_status': {'cyclecount': self.battery_cycle_count,
-                                       'stateofhealth': int(self.battery_rsoc)
+                                       'stateofhealth': int(self._battery_status.get('systemstatus'))
                                       }
                     }
     self._battery_status['measurements'] = measurements
@@ -133,7 +133,7 @@ def get_battery(self)-> Union[str, bool]:
     self._battery_status['remaining_capacity_usable'] = self.battery_usable_remaining_capacity_wh #_battery_status[BATTERY_USABLE_REMAINING_CAPACITY]
     self._battery_status['backup_buffer_usable'] = self.backup_buffer_usable_capacity_wh
 
-    return self._battery_status 
+    return self._battery_status
 
 def get_inverter(self)-> Union[str, bool]:
     """Inverter details for sonnenbatterie wrapper
@@ -158,14 +158,14 @@ def get_batterysystem(self)-> Union[str, bool]:
         self.get_configurations()
         if self._configurations_data is None:
             return False
-    systemdata = {'modules': 
+    systemdata = {'modules':
                      self._configurations_data.get('IC_BatteryModules'),
-                     'battery_system': 
+                     'battery_system':
                      {
-                         'system': 
+                         'system':
                          {
                              'storage_capacity_per_module': self._configurations_data.get('CM_MarketingModuleCapacity'),
-                             'depthofdischargelimit': (1 - BATTERY_UNUSABLE_RESERVE) * 100
+                             'depthofdischargelimit': int((1 - BATTERY_UNUSABLE_RESERVE) * 100)
                          }
                      }
                  }

@@ -125,6 +125,7 @@ def get_battery(self)-> Union[str, bool]:
                                       }
                     }
     self._battery_status['measurements'] = measurements
+    print (f'{self._configurations_data.get('IC_BatteryModules')}  {self._configurations_data.get('CM_MarketingModuleCapacity')}')
     self._battery_status['total_installed_capacity'] = self._configurations_data.get('IC_BatteryModules') * self._configurations_data.get('CM_MarketingModuleCapacity') #self.battery_full_charge_capacity_wh #_battery_status[BATTERY_FULL_CHARGE_CAPACITY_WH]
     self._battery_status['reserved_capacity'] = self.battery_unusable_capacity_wh #backup_buffer_capacity_wh
     self._battery_status['remaining_capacity'] = self.battery_remaining_capacity_wh #_battery_status[BATTERY_REMAINING_CAPACITY]

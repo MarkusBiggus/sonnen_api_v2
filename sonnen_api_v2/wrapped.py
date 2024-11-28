@@ -4,7 +4,7 @@ from typing import Union
 import aiohttp
 import asyncio
 
-from .const import BATTERY_FULL_CHARGE_CAPACITY_WH, BATTERY_REMAINING_CAPACITY, BATTERY_USABLE_REMAINING_CAPACITY, BATTERY_RSOC
+from .const import BATTERY_FULL_CHARGE_CAPACITY_WH, BATTERY_REMAINING_CAPACITY, BATTERY_USABLE_REMAINING_CAPACITY, BATTERY_RSOC, BATTERY_UNUSABLE_RESERVE
 
 def set_request_connect_timeouts(self, request_timeouts: tuple[int, int]):
     self.request_timeouts = request_timeouts
@@ -98,10 +98,26 @@ def get_battery(self)-> Union[str, bool]:
     finally:
         event_loop.close()
 
+    if self._battery_status is None:
+        return False
+
+    return ext_battery_v1data()
+
+def ext_battery_v1data(self)-> Union[str, bool]:
+    """Battery status for sonnenbatterie wrapper
+        Fake V1 API data used by ha sonnenbatterie component
+        Returns:
+            json response
+    """
     if self._status_data is None:
         self.get_status()
         if self._status_data is None:
             return False
+    if self._configurations_data is None:
+        self.get_configurations()
+        if self._configurations_data is None:
+            return False
+
     """ current_state index of: ["standby", "charging", "discharging", "charged", "discharged"] """
     if self.status_battery_charging:
         self._battery_status['current_state'] = "charging"
@@ -109,25 +125,23 @@ def get_battery(self)-> Union[str, bool]:
         self._battery_status['current_state'] = "discharging"
     elif self.battery_rsoc > 98:
         self._battery_status['current_state'] = "charged"
-#    elif self.battery_rsoc == self.status_backup_buffer:
-#        self._battery_status['current_state'] = '0'
     elif self.battery_usable_remaining_capacity < 2:
         self._battery_status['current_state'] = "discharged"
     else:
         self._battery_status['current_state'] = "standby"
 
     measurements = {'battery_status': {'cyclecount': self.battery_cycle_count,
-                                       'stateofhealth': int(self.battery_rsoc)
+                                       'stateofhealth': int(self._battery_status.get('systemstatus'))
                                       }
                     }
     self._battery_status['measurements'] = measurements
-    self._battery_status['total_installed_capacity'] = self._configurations_data.get('IC_BatteryModules') * self._configurations_data.get('CM_MarketingModuleCapacity') #self.battery_full_charge_capacity_wh #_battery_status[BATTERY_FULL_CHARGE_CAPACITY_WH]
-    self._battery_status['reserved_capacity'] = self.battery_unusable_capacity_wh #backup_buffer_capacity_wh
-    self._battery_status['remaining_capacity'] = self.battery_remaining_capacity_wh #_battery_status[BATTERY_REMAINING_CAPACITY]
-    self._battery_status['remaining_capacity_usable'] = self.battery_usable_remaining_capacity_wh #_battery_status[BATTERY_USABLE_REMAINING_CAPACITY]
+    self._battery_status['total_installed_capacity'] = int(self._configurations_data.get('IC_BatteryModules')) * int(self._configurations_data.get('CM_MarketingModuleCapacity')) #self.battery_full_charge_capacity_wh #_battery_status[BATTERY_FULL_CHARGE_CAPACITY_WH]
+    self._battery_status['reserved_capacity'] = self.battery_unusable_capacity_wh
+    self._battery_status['remaining_capacity'] = self.battery_remaining_capacity_wh
+    self._battery_status['remaining_capacity_usable'] = self.battery_usable_remaining_capacity_wh
     self._battery_status['backup_buffer_usable'] = self.backup_buffer_usable_capacity_wh
 
-    return self._battery_status if self._battery_status is not None else False
+    return self._battery_status
 
 def get_inverter(self)-> Union[str, bool]:
     """Inverter details for sonnenbatterie wrapper
@@ -152,7 +166,16 @@ def get_batterysystem(self)-> Union[str, bool]:
         self.get_configurations()
         if self._configurations_data is None:
             return False
-    systemdata = {'modules': self._configurations_data.get('IC_BatteryModules'),
-                  'battery_system': {'system': {'storage_capacity_per_module': self._configurations_data.get('CM_MarketingModuleCapacity') }}
+    systemdata = {'modules':
+                     self._configurations_data.get('IC_BatteryModules'),
+                     'battery_system':
+                     {
+                         'system':
+                         {
+                             'storage_capacity_per_module': self._configurations_data.get('CM_MarketingModuleCapacity'),
+                             'depthofdischargelimit': int((1 - BATTERY_UNUSABLE_RESERVE) * 100)
+                         }
+                     }
+
                  }
     return systemdata

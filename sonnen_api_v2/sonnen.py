@@ -62,7 +62,7 @@ class BatterieResponse(
 
 class Sonnen:
     """Class for managing Sonnen API V2 data"""
-    from .wrapped import set_request_connect_timeouts, get_request_connect_timeouts
+    from .wrapped import set_request_connect_timeouts, get_request_connect_timeouts, ext_battery_v1data
     from .wrapped import get_latest_data, get_configurations, get_status, get_powermeter, get_battery, get_inverter, get_batterysystem
 
     # pylint: enable=C0301
@@ -144,27 +144,36 @@ class Sonnen:
     #     """
     #     return self._schema
 
-    async def get_data(self) -> bool:
-        """Response used by home assistant component"""
-        await self.async_update()
-        return BatterieResponse(
-            serial_number = "XxxxxX", #placeholder
-            version = self.configuration_de_software,
-            last_updated = self.last_updated,
-            latestdata = self._latest_details_data,
-            status = self._status_data,
-            battery = self._battery_status,
-            powermeter_production = self._powermeter_production,
-            powermeter_consumption = self._powermeter_consumption,
-            configurations = self._configurations_data,
-            inverter = self._inverter_data,
-        )
+############ GOES IN COMPONENT  #######################
+    # async def get_data(self) -> bool:
+    #     """Response used by home assistant component"""
+    #     await self.async_update()
+    #     self._battery_status['system'] = self.get_batterysystem(),
+    #     return BatterieResponse(
+    #         serial_number = "XxxxxX", #placeholder
+    #         version = self.configuration_de_software,
+    #         last_updated = self.last_updated,
+    #         latestdata = self._latest_details_data,
+    #         status = self._status_data,
+    #         battery = self._battery_status,
+    #         powermeter_production = self._powermeter_production,
+    #         powermeter_consumption = self._powermeter_consumption,
+    #         configurations = self._configurations_data,
+    #         inverter = self._inverter_data,
+    #     )
 
     async def async_update(self) -> bool:
         """Update all battery data from an async caller
         Returns:
             True when all updates successful
         """
+        self._configurations_data = None
+        self._latest_details_data = None
+        self._status_data = None
+        self._battery_status = None
+        self._powermeter_data = None
+        self._inverter_data = None
+
         self._configurations_data = await self.fetch_configurations()
         success = (self._configurations_data is not None)
         if success:
@@ -182,6 +191,7 @@ class Sonnen:
             success = (self._battery_status is not None)
 #        print (f'_battery_status: {self._battery_status}')
         if success:
+            self.ext_battery_v1data()
             self._powermeter_data = await self.fetch_powermeter()
             if self._powermeter_data is not None:
                 self._powermeter_production = self._powermeter_data[0]
@@ -415,6 +425,15 @@ class Sonnen:
                 Number of modules
         """
         return self._ic_status[STATUS_MODULES_INSTALLED]
+
+    @property
+    @get_item(int)
+    def installed_capacity(self) -> int:
+        """Battery modules installed in the system
+            Returns:
+                total installed capacity Wh
+        """
+        return self._configurations_data[CONFIGURATION_MODULECAPACITY] * self.installed_modules
 
     @property
     @get_item(int)
@@ -697,6 +716,8 @@ class Sonnen:
     @get_item(float)
     def battery_module_dc_voltage(self) -> float:
         """Battery module voltage
+            value is consistent with Ah & Wh values reported
+
             Returns:
                 Voltage in Volt
         """
@@ -706,6 +727,7 @@ class Sonnen:
     @get_item(float)
     def battery_system_dc_voltage(self) -> float:
         """System battery voltage
+            seems to be module voltage * num modules
             Returns:
                 Voltage in Volt
         """

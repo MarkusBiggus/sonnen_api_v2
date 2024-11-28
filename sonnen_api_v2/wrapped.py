@@ -100,10 +100,10 @@ def get_battery(self)-> Union[str, bool]:
 
     if self._battery_status is None:
         return False
-#    if self._status_data is None:
-#        self.get_status()
-#        if self._status_data is None:
-#            return False
+    if self._status_data is None:
+        self.get_status()
+        if self._status_data is None:
+            return False
     if self._configurations_data is None:
         self.get_configurations()
         if self._configurations_data is None:

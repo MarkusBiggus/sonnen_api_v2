@@ -154,5 +154,5 @@ def get_batterysystem(self)-> Union[str, bool]:
             return False
     systemdata = {'modules': self._configurations_data.get('IC_BatteryModules'),
                   'battery_system': {'system': {'storage_capacity_per_module': self._configurations_data.get('CM_MarketingModuleCapacity') }}
-                }
+                 }
     return systemdata

@@ -6,6 +6,7 @@ import sys
 
 import logging
 import pytest
+
 #import pytest_asyncio
 
 #from pytest_mock import mocker
@@ -133,7 +134,6 @@ def test_get_batterie_wrapped(mocker):
     mocker.patch.object(Batterie, "fetch_powermeter", AsyncMock(return_value=mock_powermeter()))
     mocker.patch.object(Batterie, "fetch_battery_status", AsyncMock(return_value=mock_battery()))
     mocker.patch.object(Batterie, "fetch_inverter_data", AsyncMock(return_value=mock_inverter()))
-
     _battery = Batterie(API_READ_TOKEN, BATTERIE_HOST, BATTERIE_PORT, LOGGER_NAME)  # Batterie online
     assert _battery is not False
     latestData = {}
@@ -146,6 +146,7 @@ def test_get_batterie_wrapped(mocker):
     )
     assert batt_module_capacity == 5000
     batt_module_count = int(latestData["battery_system"]["modules"])
+
     assert batt_module_count == 4
 
     latestData["powermeter"] = _battery.get_powermeter()
@@ -157,6 +158,7 @@ def test_get_batterie_wrapped(mocker):
 
     latestData["status"] = _battery.get_status()
 #    print(f'status type: {type(latestData["status"])}')
+
     if latestData["status"]["BatteryCharging"]:
         battery_current_state = "charging"
     elif latestData["status"]["BatteryDischarging"]:

@@ -84,7 +84,6 @@ def get_powermeter(self)-> Union[str, bool]:
 
 def get_battery(self)-> Union[str, bool]:
     """Battery status for sonnenbatterie wrapper
-        Fake V1 API data used by ha sonnenbatterie component
         Returns:
             json response
     """
@@ -100,6 +99,15 @@ def get_battery(self)-> Union[str, bool]:
 
     if self._battery_status is None:
         return False
+
+    return ext_battery_v1data()
+
+def ext_battery_v1data(self)-> Union[str, bool]:
+    """Battery status for sonnenbatterie wrapper
+        Fake V1 API data used by ha sonnenbatterie component
+        Returns:
+            json response
+    """
     if self._status_data is None:
         self.get_status()
         if self._status_data is None:
@@ -115,8 +123,6 @@ def get_battery(self)-> Union[str, bool]:
         self._battery_status['current_state'] = "discharging"
     elif self.battery_rsoc > 98:
         self._battery_status['current_state'] = "charged"
-#    elif self.battery_rsoc == self.status_backup_buffer:
-#        self._battery_status['current_state'] = '0'
     elif self.battery_usable_remaining_capacity < 2:
         self._battery_status['current_state'] = "discharged"
     else:
@@ -128,9 +134,9 @@ def get_battery(self)-> Union[str, bool]:
                     }
     self._battery_status['measurements'] = measurements
     self._battery_status['total_installed_capacity'] = int(self._configurations_data.get('IC_BatteryModules')) * int(self._configurations_data.get('CM_MarketingModuleCapacity')) #self.battery_full_charge_capacity_wh #_battery_status[BATTERY_FULL_CHARGE_CAPACITY_WH]
-    self._battery_status['reserved_capacity'] = self.battery_unusable_capacity_wh #backup_buffer_capacity_wh
-    self._battery_status['remaining_capacity'] = self.battery_remaining_capacity_wh #_battery_status[BATTERY_REMAINING_CAPACITY]
-    self._battery_status['remaining_capacity_usable'] = self.battery_usable_remaining_capacity_wh #_battery_status[BATTERY_USABLE_REMAINING_CAPACITY]
+    self._battery_status['reserved_capacity'] = self.battery_unusable_capacity_wh
+    self._battery_status['remaining_capacity'] = self.battery_remaining_capacity_wh
+    self._battery_status['remaining_capacity_usable'] = self.battery_usable_remaining_capacity_wh
     self._battery_status['backup_buffer_usable'] = self.backup_buffer_usable_capacity_wh
 
     return self._battery_status

@@ -62,7 +62,7 @@ class BatterieResponse(
 
 class Sonnen:
     """Class for managing Sonnen API V2 data"""
-    from .wrapped import set_request_connect_timeouts, get_request_connect_timeouts
+    from .wrapped import set_request_connect_timeouts, get_request_connect_timeouts, ext_battery_v1data
     from .wrapped import get_latest_data, get_configurations, get_status, get_powermeter, get_battery, get_inverter, get_batterysystem
 
     # pylint: enable=C0301
@@ -191,6 +191,7 @@ class Sonnen:
             success = (self._battery_status is not None)
 #        print (f'_battery_status: {self._battery_status}')
         if success:
+            self.ext_battery_v1data()
             self._powermeter_data = await self.fetch_powermeter()
             if self._powermeter_data is not None:
                 self._powermeter_production = self._powermeter_data[0]

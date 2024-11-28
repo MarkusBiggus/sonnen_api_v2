@@ -100,7 +100,7 @@ def get_battery(self)-> Union[str, bool]:
     if self._battery_status is None:
         return False
 
-    return ext_battery_v1data()
+    return ext_battery_v1data(self)
 
 def ext_battery_v1data(self)-> Union[str, bool]:
     """Battery status for sonnenbatterie wrapper

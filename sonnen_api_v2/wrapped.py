@@ -4,7 +4,7 @@ from typing import Union
 import aiohttp
 import asyncio
 
-from .const import BATTERY_FULL_CHARGE_CAPACITY_WH, BATTERY_REMAINING_CAPACITY, BATTERY_USABLE_REMAINING_CAPACITY, BATTERY_RSOC
+from .const import BATTERY_FULL_CHARGE_CAPACITY_WH, BATTERY_REMAINING_CAPACITY, BATTERY_USABLE_REMAINING_CAPACITY, BATTERY_RSOC, BATTERY_UNUSABLE_RESERVE
 
 def set_request_connect_timeouts(self, request_timeouts: tuple[int, int]):
     self.request_timeouts = request_timeouts
@@ -158,7 +158,15 @@ def get_batterysystem(self)-> Union[str, bool]:
         self.get_configurations()
         if self._configurations_data is None:
             return False
-    systemdata = {'modules': self._configurations_data.get('IC_BatteryModules'),
-                  'battery_system': {'system': {'storage_capacity_per_module': self._configurations_data.get('CM_MarketingModuleCapacity') }}
+    systemdata = {'modules': 
+                     self._configurations_data.get('IC_BatteryModules'),
+                     'battery_system': 
+                     {
+                         'system': 
+                         {
+                             'storage_capacity_per_module': self._configurations_data.get('CM_MarketingModuleCapacity'),
+                             'depthofdischargelimit': (1 - BATTERY_UNUSABLE_RESERVE) * 100
+                         }
+                     }
                  }
     return systemdata

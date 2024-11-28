@@ -165,6 +165,13 @@ class Sonnen:
         Returns:
             True when all updates successful
         """
+        self._configurations_data = None
+        self._latest_details_data = None
+        self._status_data = None
+        self._battery_status = None
+        self._powermeter_data = None
+        self._inverter_data = None
+
         self._configurations_data = await self.fetch_configurations()
         success = (self._configurations_data is not None)
         if success:

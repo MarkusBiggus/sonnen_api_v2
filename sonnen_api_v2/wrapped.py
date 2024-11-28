@@ -98,6 +98,8 @@ def get_battery(self)-> Union[str, bool]:
     finally:
         event_loop.close()
 
+    if self._battery_status is None 
+        return False
 #    if self._status_data is None:
 #        self.get_status()
 #        if self._status_data is None:
@@ -131,7 +133,7 @@ def get_battery(self)-> Union[str, bool]:
     self._battery_status['remaining_capacity_usable'] = self.battery_usable_remaining_capacity_wh #_battery_status[BATTERY_USABLE_REMAINING_CAPACITY]
     self._battery_status['backup_buffer_usable'] = self.backup_buffer_usable_capacity_wh
 
-    return self._battery_status if self._battery_status is not None else False
+    return self._battery_status 
 
 def get_inverter(self)-> Union[str, bool]:
     """Inverter details for sonnenbatterie wrapper

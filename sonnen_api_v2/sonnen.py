@@ -717,6 +717,7 @@ class Sonnen:
     def battery_module_dc_voltage(self) -> float:
         """Battery module voltage
             value is consistent with Ah & Wh values reported
+
             Returns:
                 Voltage in Volt
         """

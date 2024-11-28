@@ -84,6 +84,7 @@ def get_powermeter(self)-> Union[str, bool]:
 
 def get_battery(self)-> Union[str, bool]:
     """Battery status for sonnenbatterie wrapper
+        Fake V1 API data used by ha sonnenbatterie component
         Returns:
             json response
     """
@@ -116,6 +117,7 @@ def ext_battery_v1data(self)-> Union[str, bool]:
         self.get_configurations()
         if self._configurations_data is None:
             return False
+
     """ current_state index of: ["standby", "charging", "discharging", "charged", "discharged"] """
     if self.status_battery_charging:
         self._battery_status['current_state'] = "charging"
@@ -174,5 +176,6 @@ def get_batterysystem(self)-> Union[str, bool]:
                              'depthofdischargelimit': int((1 - BATTERY_UNUSABLE_RESERVE) * 100)
                          }
                      }
+
                  }
     return systemdata

@@ -11,5 +11,4 @@ aiohttp-fast-zlib>=0.1.1
 isal==1.7.1
 urllib3>=1.26.20,<2.0.0
 yarl==1.16.0
-aioresponses~=0.7.6
 asyncmock>=0.4.2

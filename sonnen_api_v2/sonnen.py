@@ -39,6 +39,7 @@ def get_item(_type):
 
 class BatterieError(Exception):
     """Indicates error communicating with batterie"""
+    pass
 
 class BatterieResponse(
     namedtuple(
@@ -57,23 +58,26 @@ class BatterieResponse(
         ],
     )
 ):
-    """Sonnen Batterie data"""
+    """Sonnen Batterie response for ha component"""
 
 
 class Sonnen:
     """Class for managing Sonnen API V2 data"""
-    from .wrapped import set_request_connect_timeouts, get_request_connect_timeouts, ext_battery_v1data
-    from .wrapped import get_latest_data, get_configurations, get_status, get_powermeter, get_battery, get_inverter, get_batterysystem
+    from .wrapped import set_request_connect_timeouts, get_request_connect_timeouts
+    from .wrapped import get_latest_data, get_configurations, get_status, get_powermeter, get_battery, get_inverter
 
     # pylint: enable=C0301
 #    _schema = vol.Schema({})  # type: vol.Schema
 
     def __init__(self, auth_token: str, ip_address: str, ip_port: str = '80', logger_name: str = None) -> None:
         self.last_updated = None
-        self.logger = None
+
+        logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         if logger_name is not None:
-            logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
             self.logger = logging.getLogger(logger_name)
+        else:
+            self.logger = logging.getLogger(__package__)
+
 
         self.ip_address = ip_address
         self.auth_token = auth_token
@@ -191,7 +195,6 @@ class Sonnen:
             success = (self._battery_status is not None)
 #        print (f'_battery_status: {self._battery_status}')
         if success:
-            self.ext_battery_v1data(self)
             self._powermeter_data = await self.fetch_powermeter()
             if self._powermeter_data is not None:
                 self._powermeter_production = self._powermeter_data[0]
@@ -241,7 +244,8 @@ class Sonnen:
             async with aiohttp.ClientSession(headers=self.header, timeout=self.client_timeouts) as session:
                 return await self._async_fetch(session, url)
         except Exception as error:
-            self._log_error(f'Error fetching coroutine {url}: {error}')
+            self._log_error(f'Coroutine fetch {url} fail: {error}')
+            raise BatterieError(f'Coroutine "{url}"  fail: {error}') from error
         return None
 
     async def _async_fetch(self, session: aiohttp.ClientSession, url: str) -> Optional[str]:
@@ -251,12 +255,13 @@ class Sonnen:
                 return await response.json()
         except aiohttp.ClientError as error:
             self._log_error(f'Battery: {self.ip_address} is offline? error: {error}')
-        except asyncio.TimeoutError:
+            raise BatterieError(f'Client {self.ip_address} error: {error}') from error
+        except asyncio.TimeoutError as error:
             self._log_error(f'Timeout error while accessing: {url}')
-#        except vol.Invalid as ex:
-#            raise BatterieError('Received malformed JSON from inverter', str(self.__class__.__name__)) from ex
+            raise BatterieError(f'Client Timeout: {error}') from error
         except Exception as error:
             self._log_error(f'Error fetching endpoint {url}: {error}')
+            raise BatterieError(f'Endpoint "{url}" error: {error}') from error
         return None
 
     async def fetch_latest_details(self) -> bool:

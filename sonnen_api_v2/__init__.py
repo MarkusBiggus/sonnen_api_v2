@@ -8,7 +8,8 @@ __version__ = '0.5.12'
 
 __all__ = (
     "real_time_api",
-    "Batterie",
+    "Sonnen"
+    "BatterieError",
     "BatterieResponse",
     "RealTimeAPI",
     "set_request_connect_timeouts",

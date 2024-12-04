@@ -195,7 +195,6 @@ class Sonnen:
             success = (self._battery_status is not None)
 #        print (f'_battery_status: {self._battery_status}')
         if success:
-            self.ext_battery_v1data(self)
             self._powermeter_data = await self.fetch_powermeter()
             if self._powermeter_data is not None:
                 self._powermeter_production = self._powermeter_data[0]

@@ -9,6 +9,7 @@ from .const import BATTERY_UNUSABLE_RESERVE
 def set_request_connect_timeouts(self, request_timeouts: tuple[int, int]):
     self.request_timeouts = request_timeouts
     self.client_timeouts = aiohttp.ClientTimeout(connect=request_timeouts[0], sock_read=request_timeouts[1])
+    return self.request_timeouts
 
 def get_request_connect_timeouts(self) -> tuple[int, int]:
     return self.request_timeouts
@@ -105,6 +106,18 @@ def get_battery(self)-> Union[str, bool]:
 
     if self._battery_status is None:
         return False
+
+    self._battery_status['total_installed_capacity'] = 0
+    if self._configurations_data is None:
+        self._configurations_data = get_configurations(self)
+
+    if self._configurations_data is not None:
+        self._battery_status['total_installed_capacity'] = int(self._configurations_data.get('IC_BatteryModules')) * int(self._configurations_data.get('CM_MarketingModuleCapacity'))
+
+    self._battery_status['reserved_capacity'] = self.battery_unusable_capacity_wh
+    self._battery_status['remaining_capacity'] = self.battery_remaining_capacity_wh
+    self._battery_status['remaining_capacity_usable'] = self.battery_usable_remaining_capacity_wh
+    self._battery_status['backup_buffer_usable'] = self.backup_buffer_usable_capacity_wh
 
     return self._battery_status if self._battery_status is not None else False
 

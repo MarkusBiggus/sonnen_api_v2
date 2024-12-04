@@ -14,8 +14,8 @@ from asyncmock import AsyncMock
 from sonnen_api_v2.sonnen import Sonnen as Batterie
 from dotenv import load_dotenv
 
-from . mock_sonnenbatterie_charging import __mock_status_charging, __mock_latest_charging, __mock_configurations, __mock_battery, __mock_powermeter, __mock_inverter
-from . mock_sonnenbatterie_discharging import __mock_status_discharging, __mock_latest_discharging
+from . mock_sonnenbatterie_v2_charging import __mock_status_charging, __mock_latest_charging, __mock_configurations, __mock_battery, __mock_powermeter, __mock_inverter
+from . mock_sonnenbatterie_v2_discharging import __mock_status_discharging, __mock_latest_discharging
 
 load_dotenv()
 
@@ -61,6 +61,7 @@ async def test_get_status_charging(mocker):
 #    print(f'status: {status_data}')
     assert status_data.get('GridFeedIn_W') == 54
     assert status_data.get('Consumption_W') == 403
+    assert status_data.get('Production_W') == 578
     assert status_data.get('Pac_total_W') == -95
     # assert battery.grid_in == 54
     # assert battery.grid_out == 0
@@ -75,6 +76,7 @@ async def test_get_status_discharging(mocker):
 #    print(f'status: {status_data}')
     assert status_data.get('GridFeedIn_W') == -20
     assert status_data.get('Consumption_W') == 541
+    assert status_data.get('Production_W') == 102
     assert status_data.get('Pac_total_W') == 438
 
 @pytest.mark.asyncio
@@ -119,7 +121,7 @@ async def test_get_battery(mocker):
     battery = Batterie(API_READ_TOKEN_1, BATTERIE_1_HOST, LOGGER_NAME)
     status_data = await battery.fetch_battery_status()
     assert status_data.get('cyclecount') == 30
-    assert status_data.get('remainingcapacity') == 75.39
+    assert status_data.get('remainingcapacity') == 197.94
 
 @pytest.mark.asyncio
 async def test_get_inverter(mocker):
@@ -128,7 +130,7 @@ async def test_get_inverter(mocker):
 
     battery = Batterie(API_READ_TOKEN_1, BATTERIE_1_HOST, LOGGER_NAME)
     status_data = await battery.fetch_inverter_data()
-    assert status_data.get('pac_total') == 0.06
+    assert status_data.get('pac_total') == -1394.33
     assert status_data.get('uac') == 233.55
 
 @pytest.mark.asyncio
@@ -139,4 +141,4 @@ async def test_get_configurations(mocker):
     battery = Batterie(API_READ_TOKEN_1, BATTERIE_1_HOST, LOGGER_NAME)
     configuratons = await battery.fetch_configurations()
     assert configuratons.get('DE_Software') == '1.14.5'
-    assert configuratons.get('EM_USOC') == '20'
+    assert configuratons.get('EM_USOC') == 20

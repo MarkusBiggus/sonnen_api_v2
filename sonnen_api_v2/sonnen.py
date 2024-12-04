@@ -63,8 +63,8 @@ class BatterieResponse(
 
 class Sonnen:
     """Class for managing Sonnen API V2 data"""
-    from .wrapped import set_request_connect_timeouts, get_request_connect_timeouts, ext_battery_v1data
-    from .wrapped import get_latest_data, get_configurations, get_status, get_powermeter, get_battery, get_inverter, get_batterysystem
+    from .wrapped import set_request_connect_timeouts, get_request_connect_timeouts
+    from .wrapped import get_latest_data, get_configurations, get_status, get_powermeter, get_battery, get_inverter
 
     # pylint: enable=C0301
 #    _schema = vol.Schema({})  # type: vol.Schema

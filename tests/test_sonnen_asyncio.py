@@ -14,8 +14,8 @@ from asyncmock import AsyncMock
 from sonnen_api_v2.sonnen import Sonnen as Batterie
 from dotenv import load_dotenv
 
-from mock_sonnenbatterie_charging import __mock_status_charging, __mock_latest_charging, __mock_configurations, __mock_battery, __mock_powermeter, __mock_inverter
-from mock_sonnenbatterie_discharging import __mock_status_discharging, __mock_latest_discharging
+from . mock_sonnenbatterie_charging import __mock_status_charging, __mock_latest_charging, __mock_configurations, __mock_battery, __mock_powermeter, __mock_inverter
+from . mock_sonnenbatterie_discharging import __mock_status_discharging, __mock_latest_discharging
 
 load_dotenv()
 

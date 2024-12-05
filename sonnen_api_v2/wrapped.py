@@ -62,22 +62,27 @@ def get_status(self)-> Union[str, bool]:
     async def _get_status(self):
         self._status_data = await self.fetch_status()
 
-    try:
+#    def _task_done():
+#        self._status_data = task.result()
+#        print(f'status_data: {self._status_data }')
+
+#    try:
         event_loop = asyncio.get_running_loop()
-    except RuntimeError:  # no event loop running:
+$    except RuntimeError:  # no event loop running:
         event_loop = asyncio.new_event_loop()
         asyncio.set_event_loop(event_loop)
         try:
             event_loop.run_until_complete(_get_status(self))
         finally:
             event_loop.close()
-    else:
+#    else:
     #    self._status_data = await self.fetch_status()
-        task =  asyncio.create_task(_get_status(self))
+#        task =  asyncio.create_task(_get_status(self))
+#        task.add_done_callback(_task_done) #, *, context=None)
     #    to_future = asyncio.run_coroutine_threadsafe(_get_status(self), event_loop)
         # wait for the coroutine to finish
-        task.result()
-        print(f'status_data: {self._status_data }')
+    #    task.result()
+    #   print(f'status_data: {self._status_data }')
 #    event_loop = asyncio.new_event_loop()
 #    asyncio.set_event_loop(event_loop)
 #    try:

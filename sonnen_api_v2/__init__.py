@@ -2,13 +2,13 @@
 
 #import asyncio
 #import logging
-from .sonnen import Sonnen as Batterie, BatterieResponse
+from .sonnen import Sonnen as Batterie, BatterieResponse, BatterieError
 
 __version__ = '0.5.12'
 
 __all__ = (
     "real_time_api",
-    "Sonnen"
+    "Batterie"
     "BatterieError",
     "BatterieResponse",
     "RealTimeAPI",

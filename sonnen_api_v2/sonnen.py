@@ -283,6 +283,7 @@ class Sonnen:
         )
 
     async def fetch_status(self) -> Optional[str]:
+    """ Used by sonnenbatterie_v2_api to check connection """
         now = datetime.datetime.now()
         if self.last_status is not None:
             diff = now - self.last_status

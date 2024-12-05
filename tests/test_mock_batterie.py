@@ -15,7 +15,8 @@ from asyncmock import AsyncMock
 from dotenv import load_dotenv
 #from freezegun import freeze_time
 
-from sonnen_api_v2.sonnen import Sonnen as Batterie
+#from sonnen_api_v2.sonnen import Sonnen as Batterie
+from sonnen_api_v2 import Batterie
 
 from . mock_sonnenbatterie_v2_charging import __mock_status_charging, __mock_latest_charging, __mock_configurations, __mock_battery, __mock_powermeter, __mock_inverter
 

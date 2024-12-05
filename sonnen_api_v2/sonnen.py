@@ -70,7 +70,8 @@ class Sonnen:
 #    _schema = vol.Schema({})  # type: vol.Schema
 
     def __init__(self, auth_token: str, ip_address: str, ip_port: str = '80', logger_name: str = None) -> None:
-        self.last_updated = None
+        self.last_updated = None #rate limiters
+        self.last_status = None
 
         logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         if logger_name is not None:
@@ -169,8 +170,15 @@ class Sonnen:
     async def async_update(self) -> bool:
         """Update all battery data from an async caller
         Returns:
-            True when all updates successful
+            True when all updates successful or
+            called again within rate limit interval
         """
+        now = datetime.datetime.now()
+        if self.last_updated is not None:
+            diff = now - self.last_updated
+            if diff.total_seconds() < RATE_LIMIT:
+                return True
+
         self._configurations_data = None
         self._latest_details_data = None
         self._status_data = None
@@ -208,7 +216,7 @@ class Sonnen:
             self._inverter_data = await self.fetch_inverter_data()
             success = (self._inverter_data is not None)
 
-        self.last_updated = datetime.datetime.now() if success else None
+        self.last_updated = now if success else None
         return success
 
     # async def status_update(self) -> bool:
@@ -275,6 +283,14 @@ class Sonnen:
         )
 
     async def fetch_status(self) -> Optional[str]:
+        now = datetime.datetime.now()
+        if self.last_status is not None:
+            diff = now - self.last_status
+            if diff.total_seconds() < RATE_LIMIT:
+                return self._status_data 
+
+        self.last_status = now
+
         return await self._async_fetch_api_endpoint(
             self.status_api_endpoint
         )

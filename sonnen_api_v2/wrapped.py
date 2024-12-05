@@ -72,9 +72,9 @@ def get_status(self)-> Union[str, bool]:
         finally:
             event_loop.close()
     else:
-        self._status_data = await self.fetch_status()
-    #    self._status_data = asyncio.create_task(self.fetch_status())
- 
+    #    self._status_data = await self.fetch_status()
+        self._status_data = asyncio.create_task(self.fetch_status())
+        print(f'status_data: {self._status_data }[])
 #    event_loop = asyncio.new_event_loop()
 #    asyncio.set_event_loop(event_loop)
 #    try:

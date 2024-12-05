@@ -74,6 +74,9 @@ def get_status(self)-> Union[str, bool]:
     else:
     #    self._status_data = await self.fetch_status()
         asyncio.create_task(_get_status(self))
+        to_future = asyncio.run_coroutine_threadsafe(_get_status(self), event_loop)
+        # wait for the coroutine to finish
+        to_future.result()
         print(f'status_data: {self._status_data }')
 #    event_loop = asyncio.new_event_loop()
 #    asyncio.set_event_loop(event_loop)

@@ -68,7 +68,7 @@ def get_status(self)-> Union[str, bool]:
 
 #    try:
         event_loop = asyncio.get_running_loop()
-$    except RuntimeError:  # no event loop running:
+#    except RuntimeError:  # no event loop running:
         event_loop = asyncio.new_event_loop()
         asyncio.set_event_loop(event_loop)
         try:

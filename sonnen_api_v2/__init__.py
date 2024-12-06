@@ -21,6 +21,7 @@ __all__ = (
     "get_battery",
     "get_inverter",
     "get_batterysystem",
+    "sync_fetch_configurations",
 )
 
 #_LOGGER = logging.getLogger(__name__)

@@ -272,6 +272,33 @@ class Sonnen:
             raise BatterieError(f'Endpoint "{url}" error: {error}') from error
         return None
 
+    # sync for use with run_in_executor in existing event loop 
+    def _fetch_api_endpoint(self, url: str) -> Optional[str]:
+        """Fetch API coroutine"""
+        try:
+            with aiohttp.ClientSession(headers=self.header, timeout=self.client_timeouts) as session:
+                return self._fetch(session, url)
+        except Exception as error:
+            self._log_error(f'Coroutine fetch {url} fail: {error}')
+            raise BatterieError(f'Coroutine "{url}"  fail: {error}') from error
+        return None
+
+    def _fetch(self, session: aiohttp.ClientSession, url: str) -> Optional[str]:
+        """Fetch API endpoint with aiohttp client"""
+        try:
+            with session.get(url) as response:
+                return response.json()
+        except aiohttp.ClientError as error:
+            self._log_error(f'Battery: {self.ip_address} is offline? error: {error}')
+            raise BatterieError(f'Client {self.ip_address} error: {error}') from error
+        except asyncio.TimeoutError as error:
+            self._log_error(f'Timeout error while accessing: {url}')
+            raise BatterieError(f'Client Timeout: {error}') from error
+        except Exception as error:
+            self._log_error(f'Error fetching endpoint {url}: {error}')
+            raise BatterieError(f'Endpoint "{url}" error: {error}') from error
+
+
     async def fetch_latest_details(self) -> bool:
         return await self._async_fetch_api_endpoint(
                 self.latest_details_api_endpoint
@@ -282,8 +309,13 @@ class Sonnen:
             self.configurations_api_endpoint
         )
 
+    def sync_fetch_configurations(self) -> Optional[str]:
+        return self._fetch_api_endpoint(
+            self.configurations_api_endpoint
+        )
+
     async def fetch_status(self) -> Optional[str]:
-    """ Used by sonnenbatterie_v2_api to check connection """
+        """ Used by sonnenbatterie_v2_api to check connection """
         now = datetime.datetime.now()
         if self.last_status is not None:
             diff = now - self.last_status

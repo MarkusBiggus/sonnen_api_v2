@@ -1,4 +1,6 @@
-"""Methods to emulate sonnenbatterie (v1) package for sonnenbatterie_v2_api ha component"""
+"""Methods to emulate sonnenbatterie (v1) package for sonnenbatterie_v2_api ha component
+    Uses sync methods called by asyncio.run_in_executor from home assistant
+"""
 from typing import Union
 
 import aiohttp
@@ -21,7 +23,7 @@ def get_latest_data(self)-> Union[str, bool]:
             json response
     """
     async def _get_latest_data(self):
-        self._latest_details_data = await self.fetch_latest_details()
+        self._latest_details_data = await self.async_fetch_latest_details()
 
     event_loop = asyncio.new_event_loop()
     asyncio.set_event_loop(event_loop)
@@ -38,7 +40,7 @@ def get_configurations(self)-> Union[str, bool]:
             json response
     """
     async def _get_configurations(self):
-        self._configurations_data = await self.fetch_configurations()
+        self._configurations_data = await self.async_fetch_configurations()
 
     event_loop = asyncio.new_event_loop()
     asyncio.set_event_loop(event_loop)
@@ -60,7 +62,7 @@ def get_status(self)-> Union[str, bool]:
             json response
     """
     async def _get_status(self):
-        self._status_data = await self.fetch_status()
+        self._status_data = await self.async_fetch_status()
 
 #    def _task_done():
 #        self._status_data = task.result()
@@ -98,7 +100,7 @@ def get_powermeter(self)-> Union[str, bool]:
             json response
     """
     async def _get_powermeter(self):
-        self._powermeter_data = await self.fetch_powermeter()
+        self._powermeter_data = await self.async_fetch_powermeter()
 
     event_loop = asyncio.new_event_loop()
     asyncio.set_event_loop(event_loop)
@@ -116,7 +118,7 @@ def get_battery(self)-> Union[str, bool]:
             json response
     """
     async def _get_battery(self):
-        self._battery_status = await self.fetch_battery_status()
+        self._battery_status = await self.async_fetch_battery_status()
 
     event_loop = asyncio.new_event_loop()
     asyncio.set_event_loop(event_loop)
@@ -148,7 +150,7 @@ def get_inverter(self)-> Union[str, bool]:
             json response
     """
     async def _get_inverter(self):
-        self._inverter_data = await self.fetch_inverter_data()
+        self._inverter_data = await self.async_fetch_inverter_data()
 
     event_loop = asyncio.new_event_loop()
     asyncio.set_event_loop(event_loop)

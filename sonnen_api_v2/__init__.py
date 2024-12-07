@@ -7,21 +7,10 @@ from .sonnen import Sonnen as Batterie, BatterieResponse, BatterieError
 __version__ = '0.5.12'
 
 __all__ = (
-    "real_time_api",
     "Batterie"
     "BatterieError",
     "BatterieResponse",
     "RealTimeAPI",
-    "set_request_connect_timeouts",
-    "get_request_connect_timeouts",
-    "get_latest_data",
-    "get_configurations",
-    "get_status",
-    "get_powermeter",
-    "get_battery",
-    "get_inverter",
-    "get_batterysystem",
-    "sync_fetch_configurations",
 )
 
 #_LOGGER = logging.getLogger(__name__)

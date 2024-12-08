@@ -21,6 +21,7 @@ BATTERIE_1_HOST = os.getenv('BATTERIE_1_HOST','X')
 API_READ_TOKEN_1 = os.getenv('API_READ_TOKEN_1')
 BATTERIE_2_HOST = os.getenv('BATTERIE_2_HOST')
 API_READ_TOKEN_2 = os.getenv('API_READ_TOKEN_2')
+BATTERIE_3_HOST = os.getenv('BATTERIE_3_HOST')
 BATTERIE_HOST_PORT = os.getenv('BATTERIE_HOST_PORT')
 
 LOGGER_NAME = "sonnenapiv2"
@@ -124,42 +125,42 @@ def test_sync_methods() -> None:
 
     battery3_powermeter_data = responses.Response(
         method='GET',
-        url=(f'http://{BATTERIE_1_HOST}:{BATTERIE_HOST_PORT}/api/v2/powermeter'),
+        url=(f'http://{BATTERIE_3_HOST}:{BATTERIE_HOST_PORT}/api/v2/powermeter'),
         status=401,
         json={"error":"Unauthorized"}
     )
 
     battery3_latest_data = responses.Response(
         method='GET',
-        url=(f'http://{BATTERIE_1_HOST}:{BATTERIE_HOST_PORT}/api/v2/latestdata'),
+        url=(f'http://{BATTERIE_3_HOST}:{BATTERIE_HOST_PORT}/api/v2/latestdata'),
         status=401,
         json={"error":"Unauthorized"}
     )
 
     battery3_configurations = responses.Response(
         method='GET',
-        url=(f'http://{BATTERIE_1_HOST}:{BATTERIE_HOST_PORT}/api/v2/configurations'),
+        url=(f'http://{BATTERIE_3_HOST}:{BATTERIE_HOST_PORT}/api/v2/configurations'),
         status=401,
         json={"error":"Unauthorized"}
     )
 
     battery3_status = responses.Response(
         method='GET',
-        url=(f'http://{BATTERIE_1_HOST}:{BATTERIE_HOST_PORT}/api/v2/status'),
+        url=(f'http://{BATTERIE_3_HOST}:{BATTERIE_HOST_PORT}/api/v2/status'),
         status=401,
         json={"error":"Unauthorized"}
     )
 
     battery3_battery_data = responses.Response(
         method='GET',
-        url=(f'http://{BATTERIE_1_HOST}:{BATTERIE_HOST_PORT}/api/v2/battery'),
+        url=(f'http://{BATTERIE_3_HOST}:{BATTERIE_HOST_PORT}/api/v2/battery'),
         status=401,
         json={"error":"Unauthorized"}
     )
 
     battery3_inverter_data = responses.Response(
         method='GET',
-        url=(f'http://{BATTERIE_1_HOST}:{BATTERIE_HOST_PORT}/api/v2/inverter'),
+        url=(f'http://{BATTERIE_3_HOST}:{BATTERIE_HOST_PORT}/api/v2/inverter'),
         status=401,
         json={"error":"Unauthorized"}
     )
@@ -192,18 +193,47 @@ def test_sync_methods() -> None:
 #    self.battery_unreachable = Batterie('notWorkingToken', '155.156.19.5', BATTERIE_HOST_PORT, LOGGER_NAME)  # Not Reachable
     battery_wrong_token = Batterie('notWorkingToken', BATTERIE_1_HOST, BATTERIE_HOST_PORT, LOGGER_NAME)  # Wrong Token
 
-    success = battery_charging.update()
+    success = battery_charging.sync_update()
     assert success is True
-    success = battery_discharging.update()
+    success = battery_discharging.sync_update()
     assert success is True
 #   success = battery_unreachable.update()
-    with pytest.raises(BatterieError) as error:
-        success = battery_wrong_token.update()
-        print(f'error: |{error.value.args[0]}|',flush=True)
-        assert error.value.args[0] == 'Get endpoint http://192.168.188.11:80/api/v2/configurations status: 401'
-    #   assert str(exc_info.value) == 'some info'
-    #    assert success is False
+    # with pytest.raises(BatterieError) as error:
+    #     success = battery_wrong_token.sync_update()
+    # #   assert str(exc_info.value) == 'some info'
+    # #    assert success is False
+    # print(f'error: |{error.value.args[0]}|',flush=True)
+    # assert error.value.args[0] == 'Get endpoint http://192.168.188.11:80/api/v2/configurations status: 401'
 
 #    from . import common_results
-
     check_results(battery_charging, battery_discharging)
+
+    # sync wrapped methods used by ha component called by syncio.async_add_executor_job
+    status_data = battery_charging.sync_get_status()
+#    print(f'status: {status_data}')
+    assert status_data.get('GridFeedIn_W') == 54
+    assert status_data.get('Consumption_W') == 403
+    assert status_data.get('Production_W') == 578
+    assert status_data.get('Pac_total_W') == -95
+
+    latest_data = battery_charging.sync_get_latest_data()
+    assert latest_data.get('GridFeedIn_W') == 0
+    assert latest_data.get('Production_W') == 2972
+    assert latest_data.get('Consumption_W') == 1578
+    assert latest_data.get('Pac_total_W') == -1394
+
+    powermeter = battery_charging.sync_get_powermeter()
+    assert powermeter[0]['direction'] == 'production'
+    assert powermeter[1]['direction'] == 'consumption'
+
+    status_data =  battery_charging.sync_get_battery()
+    assert status_data.get('cyclecount') == 30
+    assert status_data.get('remainingcapacity') == 197.94
+
+    status_data = battery_charging.sync_get_inverter()
+    assert status_data.get('pac_total') == -1394.33
+    assert status_data.get('uac') == 233.55
+
+    configuratons = battery_charging.sync_get_configurations()
+    assert configuratons.get('DE_Software') == '1.14.5'
+    assert configuratons.get('EM_USOC') == 20

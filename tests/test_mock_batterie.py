@@ -232,7 +232,7 @@ def test_get_batterie_wrapped(mocker):
     mocker.patch.object(Batterie, "async_fetch_status", AsyncMock(return_value=__mock_status_discharging()))
     mocker.patch.object(Batterie, "async_fetch_latest_details", AsyncMock(return_value=__mock_latest_discharging()))
     battery_discharging = Batterie(API_READ_TOKEN, BATTERIE_HOST, BATTERIE_PORT, LOGGER_NAME)  # Batterie online
-    success = battery_discharging.sync_update()
+    success = battery_discharging.update()
     assert success is not False
 
     charging_flows = battery_charging.status_flows

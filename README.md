@@ -24,7 +24,7 @@ There are three ways to update from the Batterie:
 2. Async update called from sync method
         def sync_caller()
             batterie = Batterie(API_READ_TOKEN, BATTERIE_HOST, BATTERIE_HOST_PORT, LOGGER_NAME)
-            success = batterie.sync_update()
+            success = batterie.update()
 
     Test:
     same as for async_update, above
@@ -38,7 +38,7 @@ There are three ways to update from the Batterie:
 
         def sync_caller()
             batterie = Batterie(API_READ_TOKEN, BATTERIE_HOST, BATTERIE_HOST_PORT, LOGGER_NAME)
-            success = batterie.update()
+            success = batterie.sync_update()
 
     Test:
 

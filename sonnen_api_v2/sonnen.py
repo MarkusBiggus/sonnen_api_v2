@@ -67,6 +67,7 @@ class Sonnen:
     """Class for managing Sonnen API V2 data"""
     from .wrapped import set_request_connect_timeouts, get_request_connect_timeouts
     from .wrapped import get_latest_data, get_configurations, get_status, get_powermeter, get_battery, get_inverter
+    from .wrapped import sync_get_latest_data, sync_get_configurations, sync_get_status, sync_get_powermeter, sync_get_battery, sync_get_inverter
 
     def __init__(self, auth_token: str, ip_address: str, ip_port: str = '80', logger_name: str = None) -> None:
         self.last_updated = None #rate limiters
@@ -202,7 +203,7 @@ class Sonnen:
     #     self.last_updated = datetime.datetime.now() if success else None
     #     return success
 
-    def sync_update(self) -> bool:
+    def update(self) -> bool:
         """Update battery details Asyncronously from a sequential caller using async methods
         Returns:
             True when all updates successful or
@@ -222,7 +223,7 @@ class Sonnen:
             event_loop.close()
         return (self.last_updated is not None)
 
-    def update(self) -> bool:
+    def sync_update(self) -> bool:
         """Update all battery data from a sequential caller using sync methods
         Returns:
             True when all updates successful or
@@ -368,10 +369,10 @@ class Sonnen:
     async def async_fetch_status(self) -> Optional[str]:
         """ Used by sonnenbatterie_v2_api to check connection """
         now = datetime.datetime.now()
-        # if self.last_status is not None:
-        #     diff = now - self.last_status
-        #     if diff.total_seconds() < RATE_LIMIT:
-        #         return self._status_data
+        if self.last_status is not None:
+            diff = now - self.last_status
+            if diff.total_seconds() < RATE_LIMIT:
+                return self._status_data
 
         self.last_status = now
 

@@ -20,14 +20,14 @@ def __mock_status_charging()-> json:
         'OperatingMode': '2',
         'Pac_total_W': -95,
         'Production_W': 578,
-        'RSOC': 98,
-        'RemainingCapacity_Wh': 68781,
-        'Sac1': 98,
+        'RSOC': 88,
+        'RemainingCapacity_Wh': 34582.79,
+        'Sac1': 88,
         'Sac2': None,
         'Sac3': None,
         'SystemStatus': 'OnGrid',
         'Timestamp': '2022-04-30 17:00:58',
-        'USOC': 98,
+        'USOC': 88,
         'Uac': 245,
         'Ubat': 212,
         'dischargeNotAllowed': False,
@@ -81,15 +81,15 @@ def __mock_battery()-> json:
         "minimummoduledcvoltage":104.15,
         "minimummoduletemperature":-273.15,
         "nominalmoduledcvoltage":102.4,
-        "relativestateofcharge":98.0,
-        "remainingcapacity":197.94,
+        "relativestateofcharge":88.0,
+        "remainingcapacity":177.74,
         "systemalarm":0.0,
         "systemcurrent":0.0,
         "systemdcvoltage":208.3,
-        "systemstatus":49.0,
+        "systemstatus":88.0,
         "systemtime":0.0,
         "systemwarning":0.0,
-        "usableremainingcapacity":183.80
+        "usableremainingcapacity":163.60
     }
 
 def __mock_latest_charging()-> json:
@@ -99,10 +99,10 @@ def __mock_latest_charging()-> json:
         'Production_W': 2972,
         'Consumption_W': 1578,
         'Pac_total_W': -1394,
-        'RSOC': 98,
+        'RSOC': 88,
         'SetPoint_W': -145,
         'Timestamp': '2022-04-30 17:00:58',
-        'USOC': 98,
+        'USOC': 88,
         'UTC_Offet': 2,
         'ic_status': {
             'DC Shutdown Reason': {

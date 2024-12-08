@@ -312,8 +312,6 @@ class Sonnen:
         #  if not isretry and response.status_code == 401:
         #      self._login()
         #      return self._get(what,True)
-
-
         try:
             response = requests.get(
                 url,
@@ -372,10 +370,10 @@ class Sonnen:
     async def async_fetch_status(self) -> Optional[str]:
         """ Used by sonnenbatterie_v2_api to check connection """
         now = datetime.datetime.now()
-        if self.last_status is not None:
-            diff = now - self.last_status
-            if diff.total_seconds() < RATE_LIMIT:
-                return self._status_data
+        # if self.last_status is not None:
+        #     diff = now - self.last_status
+        #     if diff.total_seconds() < RATE_LIMIT:
+        #         return self._status_data
 
         self.last_status = now
 
@@ -842,13 +840,14 @@ class Sonnen:
         return self._battery_status[BATTERY_REMAINING_CAPACITY]
 
     @property
-    @get_item(int)
-    def battery_remaining_capacity_wh(self) -> int:
+    @get_item(float)
+    def battery_remaining_capacity_wh(self) -> float:
         """Remaining capacity Wh calculated from Ah
+            use instead of status RemainingCapacity_Wh which is incorrect
             Returns:
-                Floor Int Wh
+                Int Wh
         """
-        return floor(self.battery_remaining_capacity * self.battery_module_dc_voltage)
+        return self.battery_remaining_capacity * self.battery_module_dc_voltage
 
     @property
     @get_item(float)

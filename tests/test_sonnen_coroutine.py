@@ -1,5 +1,5 @@
-"""pytest tests/test_sonnen_asyncio.py -s -v -x
-1. Async update called from an async method.
+"""pytest tests/test_sonnen_coroutine.py -s -v -x
+3. Sync update called from coroutine passed to asyncio.run_in_executor
 """
 #import datetime
 import os
@@ -35,7 +35,7 @@ if BATTERIE_1_HOST == 'X':
 logging.getLogger("asyncio").setLevel(logging.WARNING)
 
 if LOGGER_NAME is not None:
-    filename=f'/tests/logs/{LOGGER_NAME}.log'
+    filename=f'tests/logs/{LOGGER_NAME}.log'
     logging.basicConfig(filename=filename, level=logging.DEBUG)
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     logger = logging.getLogger(LOGGER_NAME)
@@ -123,7 +123,7 @@ async def test_get_battery(mocker):
     battery = Batterie(API_READ_TOKEN_1, BATTERIE_1_HOST, LOGGER_NAME)
     status_data = await battery.async_fetch_battery_status()
     assert status_data.get('cyclecount') == 30
-    assert status_data.get('remainingcapacity') == 177.74
+    assert status_data.get('remainingcapacity') == 197.94
 
 @pytest.mark.asyncio
 async def test_get_inverter(mocker):

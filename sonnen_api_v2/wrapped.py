@@ -69,14 +69,14 @@ def get_status(self)-> Union[str, bool]:
 #        print(f'status_data: {self._status_data }')
 
 #    try:
-        event_loop = asyncio.get_running_loop()
+#        event_loop = asyncio.get_running_loop()
 #    except RuntimeError:  # no event loop running:
-        event_loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(event_loop)
-        try:
-            event_loop.run_until_complete(_get_status(self))
-        finally:
-            event_loop.close()
+    event_loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(event_loop)
+    try:
+        event_loop.run_until_complete(_get_status(self))
+    finally:
+        event_loop.close()
 #    else:
     #    self._status_data = await self.fetch_status()
 #        task =  asyncio.create_task(_get_status(self))

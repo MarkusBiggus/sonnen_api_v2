@@ -2,7 +2,9 @@
 """
 import datetime
 from sonnen_api_v2.sonnen import Sonnen as Batterie
+import pytest
 
+#@pytest.fixture()
 def check_results(battery_charging: Batterie, battery_discharging: Batterie):
 
     result1 = battery_charging.consumption_average

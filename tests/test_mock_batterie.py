@@ -15,7 +15,6 @@ from asyncmock import AsyncMock
 from dotenv import load_dotenv
 #from freezegun import freeze_time
 
-#from sonnen_api_v2.sonnen import Sonnen as Batterie
 from sonnen_api_v2 import Batterie
 
 from . mock_sonnenbatterie_v2_charging import __mock_status_charging, __mock_latest_charging, __mock_configurations, __mock_battery, __mock_powermeter, __mock_inverter
@@ -59,8 +58,9 @@ if LOGGER_NAME is not None:
 
 @pytest.mark.asyncio
 async def test_get_batterie_charging(mocker):
-
-    """Batterie charging using mock data"""
+    """Batterie charging using mock data
+        1. Async update called from an async method.
+    """
     mocker.patch.object(Batterie, "async_fetch_configurations", AsyncMock(return_value=__mock_configurations()))
     mocker.patch.object(Batterie, "async_fetch_status", AsyncMock(return_value=__mock_status_charging()))
 #    mocker.patch.object(Batterie, "fetch_status", AsyncMock(return_value=status_discharging()))
@@ -117,7 +117,9 @@ async def test_get_batterie_charging(mocker):
 #     assert dod == 93
 
 def test_get_batterie_wrapped(mocker):
-    """sonnenbatterie package Emulated methods using mock data"""
+    """sonnenbatterie package Emulated methods using mock data
+        2. Async update called from sync method
+    """
     mocker.patch.object(Batterie, "async_fetch_configurations", AsyncMock(return_value=__mock_configurations()))
     mocker.patch.object(Batterie, "async_fetch_status", AsyncMock(return_value=__mock_status_charging()))
 #    mocker.patch.object(Batterie, "fetch_status", AsyncMock(return_value=status_discharging()))

@@ -1,13 +1,14 @@
 """pytest tests/test_sonnen_sync.py -s -v -x
 3. Sync update called from sync method
 """
-import datetime
+#import datetime
 import os
 import logging
 import pytest
 from freezegun import freeze_time
 import responses
-from sonnen_api_v2.sonnen import Sonnen as Batterie, BatterieError
+#from sonnen_api_v2.sonnen import Sonnen as Batterie, BatterieError
+from sonnen_api_v2 import Batterie, BatterieError
 from dotenv import load_dotenv
 from . check_results import check_results
 
@@ -31,7 +32,6 @@ if BATTERIE_1_HOST == 'X':
 
 @responses.activate
 @freeze_time("24-05-2022 15:38:23")
-#@pytest.fixture()
 def test_sync_methods() -> None:
     if LOGGER_NAME is not None:
         logging.basicConfig(filename=(f'/tests/logs/{LOGGER_NAME}.log'), level=logging.DEBUG)

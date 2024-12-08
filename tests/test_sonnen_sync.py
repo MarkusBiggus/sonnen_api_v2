@@ -199,9 +199,11 @@ def test_sync_methods() -> None:
 #   success = battery_unreachable.update()
     with pytest.raises(BatterieError) as error:
         success = battery_wrong_token.update()
-        print(f'error: |{error.value.args[0]}|')
+        print(f'error: |{error.value.args[0]}|',flush=True)
         assert error.value.args[0] == 'Get endpoint http://192.168.188.11:80/api/v2/configurations status: 401'
     #   assert str(exc_info.value) == 'some info'
     #    assert success is False
+
+#    from . import common_results
 
     check_results(battery_charging, battery_discharging)

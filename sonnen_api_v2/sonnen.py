@@ -78,7 +78,6 @@ class Sonnen:
         else:
             self.logger = logging.getLogger(__package__)
 
-
         self.ip_address = ip_address
         self.auth_token = auth_token
         self.url = f'http://{ip_address}:{ip_port}'
@@ -175,7 +174,6 @@ class Sonnen:
         if success:
             self._battery_status = await self.async_fetch_battery_status()
             success = (self._battery_status is not None)
-#        print (f'_battery_status: {self._battery_status}')
         if success:
             self._powermeter_data = await self.async_fetch_powermeter()
             if self._powermeter_data is not None:

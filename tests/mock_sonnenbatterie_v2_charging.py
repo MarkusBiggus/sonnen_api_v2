@@ -21,75 +21,17 @@ def __mock_status_charging()-> json:
         'Pac_total_W': -95,
         'Production_W': 578,
         'RSOC': 88,
-        'RemainingCapacity_Wh': 34582.79,
-        'Sac1': 88,
+        'RemainingCapacity_Wh': 40181,
+        'Sac1': 99,
         'Sac2': None,
         'Sac3': None,
         'SystemStatus': 'OnGrid',
         'Timestamp': '2022-04-30 17:00:58',
         'USOC': 88,
-        'Uac': 245,
+        'Uac': 235,
         'Ubat': 212,
         'dischargeNotAllowed': False,
         'generator_autostart': False
-    }
-
-def __mock_configurations()-> json:
-# Economical Charging (default)
-    return {
-        "EM_RE_ENABLE_MICROGRID": 'False',
-        "NVM_PfcIsFixedCosPhiActive": 0,
-        "NVM_PfcFixedCosPhi": 0.8,
-        "IC_BatteryModules": 4,
-        "EM_ToU_Schedule": [],
-        "DE_Software":"1.14.5",
-        "EM_USER_INPUT_TIME_ONE": 0,
-        "NVM_PfcIsFixedCosPhiLagging": 0,
-        "EM_Prognosis_Charging": 1,
-        "EM_USOC": 20,
-        "EM_USER_INPUT_TIME_TWO": 0,
-        "EM_OperatingMode": "2",
-        "SH_HeaterTemperatureMax": 80,
-        "SH_HeaterOperatingMode": 0,
-        "IC_InverterMaxPower_w": 5000,
-        "SH_HeaterTemperatureMin": 0 ,
-        "CM_MarketingModuleCapacity": 5000,
-        "EM_USER_INPUT_TIME_THREE": 0,
-        "CN_CascadingRole": "none",
-        "EM_US_GEN_POWER_SET_POINT": 0,
-        "DepthOfDischargeLimit" : 7
-    }
-
-def __mock_battery()-> json:
-    return {
-        "balancechargerequest":0.0,
-        "chargecurrentlimit":39.97,
-        "cyclecount":30.0,
-        "dischargecurrentlimit":39.97,
-        "fullchargecapacity":201.98,
-        "fullchargecapacitywh":20683.490,
-        "maximumcelltemperature":19.95,
-        "maximumcellvoltage":3.257,
-        "maximumcellvoltagenum":0.0,
-        "maximummodulecurrent":0.0,
-        "maximummoduledcvoltage":104.15,
-        "maximummoduletemperature":-273.15,
-        "minimumcelltemperature":18.95,
-        "minimumcellvoltage":3.251,
-        "minimumcellvoltagenum":0.0,
-        "minimummodulecurrent":0.0,
-        "minimummoduledcvoltage":104.15,
-        "minimummoduletemperature":-273.15,
-        "nominalmoduledcvoltage":102.4,
-        "relativestateofcharge":88.0,
-        "remainingcapacity":177.74,
-        "systemalarm":0.0,
-        "systemcurrent":0.0,
-        "systemdcvoltage":208.3,
-        "systemstatus":88.0,
-        "systemtime":0.0,
-        "systemwarning":0.0,
-        "usableremainingcapacity":163.60
     }
 
 def __mock_latest_charging()-> json:
@@ -187,6 +129,64 @@ def __mock_latest_charging()-> json:
             'stateinverter': 'running',
             'timestamp': 'Sat Apr 30 17:00:57 2022'
         }
+    }
+
+def __mock_configurations()-> json:
+# Economical Charging (default)
+    return {
+        "EM_RE_ENABLE_MICROGRID": 'False',
+        "NVM_PfcIsFixedCosPhiActive": 0,
+        "NVM_PfcFixedCosPhi": 0.8,
+        "IC_BatteryModules": 4,
+        "EM_ToU_Schedule": [],
+        "DE_Software":"1.14.5",
+        "EM_USER_INPUT_TIME_ONE": 0,
+        "NVM_PfcIsFixedCosPhiLagging": 0,
+        "EM_Prognosis_Charging": 1,
+        "EM_USOC": 20,
+        "EM_USER_INPUT_TIME_TWO": 0,
+        "EM_OperatingMode": "2",
+        "SH_HeaterTemperatureMax": 80,
+        "SH_HeaterOperatingMode": 0,
+        "IC_InverterMaxPower_w": 5000,
+        "SH_HeaterTemperatureMin": 0 ,
+        "CM_MarketingModuleCapacity": 5000,
+        "EM_USER_INPUT_TIME_THREE": 0,
+        "CN_CascadingRole": "none",
+        "EM_US_GEN_POWER_SET_POINT": 0,
+        "DepthOfDischargeLimit" : 7
+    }
+
+def __mock_battery()-> json:
+    return {
+        "balancechargerequest":0.0,
+        "chargecurrentlimit":39.97,
+        "cyclecount":30.0,
+        "dischargecurrentlimit":39.97,
+        "fullchargecapacity":201.98,
+        "fullchargecapacitywh":20683.490,
+        "maximumcelltemperature":19.95,
+        "maximumcellvoltage":3.257,
+        "maximumcellvoltagenum":0.0,
+        "maximummodulecurrent":0.0,
+        "maximummoduledcvoltage":104.15,
+        "maximummoduletemperature":-273.15,
+        "minimumcelltemperature":18.95,
+        "minimumcellvoltage":3.251,
+        "minimumcellvoltagenum":0.0,
+        "minimummodulecurrent":0.0,
+        "minimummoduledcvoltage":104.15,
+        "minimummoduletemperature":-273.15,
+        "nominalmoduledcvoltage":102.4,
+        "relativestateofcharge":88.0,
+        "remainingcapacity":177.74,
+        "systemalarm":0.0,
+        "systemcurrent":0.0,
+        "systemdcvoltage":208.3,
+        "systemstatus":88.0,
+        "systemtime":0.0,
+        "systemwarning":0.0,
+        "usableremainingcapacity":163.60
     }
 
 def __mock_powermeter()-> json:

@@ -1,3 +1,4 @@
+"""Mock batterie data also used in package sonnenbatterie_api_v2 & ha component sonnenenbatterie"""
 import json
 def __mock_status_discharging()-> json:
     return {
@@ -19,14 +20,14 @@ def __mock_status_discharging()-> json:
         'OperatingMode': '2',
         'Pac_total_W': 438,
         'Production_W': 102,
-        'RSOC': 99,
+        'RSOC': 88,
         'RemainingCapacity_Wh': 40181,
         'Sac1': 438,
         'Sac2': None,
         'Sac3': None,
         'SystemStatus': 'OnGrid',
-        'Timestamp': '2022-05-06 20:24:39',
-        'USOC': 99,
+        'Timestamp': '2022-04-30 17:00:58',
+        'USOC': 88,
         'Uac': 237,
         'Ubat': 211,
         'dischargeNotAllowed': False,
@@ -40,10 +41,10 @@ def __mock_latest_discharging()-> json:
         'Pac_total_W': 1439,
         'Consumption_W': 1541,
         'Production_W': 102,
-        'RSOC': 99,
+        'RSOC': 88,
         'SetPoint_W': 439,
-        'Timestamp': '2022-05-06 20:24:38',
-        'USOC': 99,
+        'Timestamp': '2022-04-30 17:00:58',
+        'USOC': 88,
         'UTC_Offet': 2,
         'ic_status': {
             'DC Shutdown Reason': {
@@ -126,6 +127,6 @@ def __mock_latest_discharging()-> json:
             'statebms': 'ready',
             'statecorecontrolmodule': 'ongrid',
             'stateinverter': 'running',
-            'timestamp': 'Fri May 6 20:24:36 2022'
+            'timestamp': 'Sat Apr 30 17:00:57 2022'
         }
     }

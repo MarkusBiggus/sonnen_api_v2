@@ -32,14 +32,14 @@ def check_results(battery_charging: Batterie, battery_discharging: Batterie):
 
     # @responses.activate
     # def test_installed_modules(self):
-#    result1 = battery_charging.installed_modules
+    result1 = battery_charging.installed_modules
     #    result2 = battery_unreachable.installed_modules
     #    result3 = battery_wrong_token_charging.installed_modules
-#    result4 = battery_discharging.installed_modules
-#    assert result1 == 4
+    result4 = battery_discharging.installed_modules
+    assert result1 == 4
     #    assert result2 == 0
     #    assert result3 is None
-#    assert result4 == 4
+    assert result4 == 4
 
     # @responses.activate
     # def test_discharging(self):
@@ -124,7 +124,7 @@ def check_results(battery_charging: Batterie, battery_discharging: Batterie):
     assert result1 == 0
     #    assert result2 == 0
     #    assert result3 is None
-    assert result4 == 45533
+    assert result4 == 50707
 
     # @responses.activate
     #@freeze_time("24-05-2022 15:38:23")
@@ -136,7 +136,7 @@ def check_results(battery_charging: Batterie, battery_discharging: Batterie):
     assert result1 is None
     #    assert result2 == '00:00'
     #    assert result3 is None
-    assert result4.strftime('%d.%B.%Y %H:%M') == '25.May.2022 04:17'
+    assert result4.strftime('%d.%B.%Y %H:%M') == '25.May.2022 05:43'
 
     # @responses.activate
     # @freeze_time("24-04-2022 15:38:23")
@@ -178,15 +178,15 @@ def check_results(battery_charging: Batterie, battery_discharging: Batterie):
     # def test_seconds_until_fully_charged(self):
     remaining_charge = battery_charging.battery_full_charge_capacity_wh - battery_charging.battery_remaining_capacity_wh
     assert battery_charging.battery_full_charge_capacity_wh == 20683.49
-    assert battery_charging.battery_remaining_capacity_wh == 18200.576
-    print(f'remaining_charge: {remaining_charge:,.2f}  battery_full_charge_capacity_wh: {battery_charging.battery_full_charge_capacity_wh:,.2f}  battery_remaining_capacity_wh: {battery_charging.battery_remaining_capacity_wh}', flush=True)
+    assert battery_charging.battery_remaining_capacity_wh == 20269
+    print(f'remaining_charge: {remaining_charge:,2f}  battery_full_charge_capacity_wh: {battery_charging.battery_full_charge_capacity_wh:,2f}  battery_remaining_capacity_wh: {battery_charging.battery_remaining_capacity_wh}', flush=True)
     seconds = int(remaining_charge / battery_charging.charging) * 3600 if battery_charging.charging else None
     print(f'charging: {battery_charging.charging}  seconds: {seconds}', flush=True)
     result1 = battery_charging.seconds_until_fully_charged
     #    result2 = battery_unreachable.seconds_until_fully_charged
     #    result3 = battery_wrong_token_charging.seconds_until_fully_charged
     result4 = battery_discharging.seconds_until_fully_charged
-    assert result1 == 3600
+    assert result1 == 10800 # <-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     #    assert result2 == 0
     #    assert result3 == 0
     assert result4 is None
@@ -198,7 +198,7 @@ def check_results(battery_charging: Batterie, battery_discharging: Batterie):
     #    result2 = battery_unreachable.fully_charged_at
     #    result3 = battery_wrong_token_charging.fully_charged_at
     result4 = battery_discharging.fully_charged_at
-    assert result1.strftime('%d.%B.%Y %H:%M') == '24.May.2022 16:38'
+    assert result1.strftime('%d.%B.%Y %H:%M') == '24.May.2022 15:38'
     #    assert result2 == 0
     #    assert result3 is None)
     assert result4 is None

@@ -6,7 +6,7 @@ from typing import Union
 import aiohttp
 import asyncio
 
-from .const import BATTERY_UNUSABLE_RESERVE
+from .const import IC_STATUS, BATTERY_UNUSABLE_RESERVE
 
 def set_request_connect_timeouts(self, request_timeouts: tuple[int, int]):
     self.request_timeouts = request_timeouts
@@ -24,6 +24,10 @@ def get_latest_data(self)-> Union[str, bool]:
     """
     async def _get_latest_data(self):
         self._latest_details_data = await self.async_fetch_latest_details()
+        if self._latest_details_data is not None:
+            self._ic_status = self._latest_details_data[IC_STATUS]  # noqa: F405
+        else:
+            self._ic_status = None
 
     event_loop = asyncio.new_event_loop()
     asyncio.set_event_loop(event_loop)
@@ -101,6 +105,13 @@ def get_powermeter(self)-> Union[str, bool]:
     """
     async def _get_powermeter(self):
         self._powermeter_data = await self.async_fetch_powermeter()
+        if self._powermeter_data is not None:
+            self._powermeter_production = self._powermeter_data[0]
+            self._powermeter_consumption = self._powermeter_data[1]
+            self._powermeter_data = None
+        else:
+            self._powermeter_production = None
+            self._powermeter_consumption = None
 
     event_loop = asyncio.new_event_loop()
     asyncio.set_event_loop(event_loop)

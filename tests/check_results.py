@@ -179,8 +179,8 @@ def check_results(battery_charging: Batterie, battery_discharging: Batterie):
     remaining_charge = battery_charging.battery_full_charge_capacity_wh - battery_charging.battery_remaining_capacity_wh
     assert battery_charging.battery_full_charge_capacity_wh == 20683.49
     assert battery_charging.battery_remaining_capacity_wh == 18200.576
-    print(f'remaining_charge: {remaining_charge:,.2f}  battery_full_charge_capacity_wh: {battery_charging.battery_full_charge_capacity_wh:,.2f}  battery_remaining_capacity_wh: {battery_charging.battery_remaining_capacity_wh}', flush=True)
-    seconds = int(remaining_charge / battery_charging.charging) * 3600 if battery_charging.charging else None
+    print(f'remaining_charge: {remaining_charge:,.2f}Wh  full_charge_capacity: {battery_charging.battery_full_charge_capacity_wh:,.2f}Wh   remaining_capacity: {battery_charging.battery_remaining_capacity_wh:,.2f}:Wh', flush=True)
+    seconds = int(remaining_charge / battery_charging.charging) * 3600 if battery_charging.charging else 0
     print(f'charging: {battery_charging.charging}  seconds: {seconds}', flush=True)
     result1 = battery_charging.seconds_until_fully_charged
     #    result2 = battery_unreachable.seconds_until_fully_charged

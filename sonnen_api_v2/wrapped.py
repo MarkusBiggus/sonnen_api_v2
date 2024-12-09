@@ -42,7 +42,7 @@ def sync_get_latest_data(self)-> Union[str, bool]:
         Returns:
             json response
     """
-    self._latest_details_data =  self.fetch_latest_details()
+    self._latest_details_data = self.fetch_latest_details()
     if self._latest_details_data is not None:
         self._ic_status = self._latest_details_data[IC_STATUS]  # noqa: F405
     else:
@@ -77,7 +77,7 @@ def sync_get_configurations(self)-> Union[str, bool]:
         Returns:
             json response
     """
-    self._configurations_data =  self.fetch_configurations()
+    self._configurations_data = self.fetch_configurations()
 
     if self._configurations_data is not None:
         self._configurations_data['DepthOfDischargeLimit'] = int((1 - BATTERY_UNUSABLE_RESERVE) * 100)
@@ -150,7 +150,6 @@ def get_powermeter(self)-> Union[str, bool]:
     if self._powermeter_data is not None:
         self._powermeter_production = self._powermeter_data[0]
         self._powermeter_consumption = self._powermeter_data[1]
-        self._powermeter_data = None
     else:
         self._powermeter_production = None
         self._powermeter_consumption = None
@@ -166,7 +165,6 @@ def sync_get_powermeter(self)-> Union[str, bool]:
     if self._powermeter_data is not None:
         self._powermeter_production = self._powermeter_data[0]
         self._powermeter_consumption = self._powermeter_data[1]
-        self._powermeter_data = None
     else:
         self._powermeter_production = None
         self._powermeter_consumption = None

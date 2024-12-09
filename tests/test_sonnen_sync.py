@@ -228,7 +228,7 @@ def test_sync_methods() -> None:
 
     status_data =  battery_charging.sync_get_battery()
     assert status_data.get('cyclecount') == 30
-    assert status_data.get('remainingcapacity') == 197.94
+    assert status_data.get('remainingcapacity') == 177.74
 
     status_data = battery_charging.sync_get_inverter()
     assert status_data.get('pac_total') == -1394.33

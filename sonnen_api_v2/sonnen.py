@@ -322,7 +322,7 @@ class Sonnen:
         except Exception as error:
             self._log_error(f'Sync fetch {url} fail: {error}')
             raise BatterieError(f'Sync fetch "{url}"  fail: {error}') from error
-
+        print(f'response: {response}',flush=True)
         if response.status_code != 200:
 #            response.raise_for_status()
             self._log_error(f'Error fetching endpoint {url} status: {response.status_code}')

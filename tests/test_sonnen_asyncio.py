@@ -61,12 +61,10 @@ async def test_get_status_charging(mocker):
     battery = Batterie(API_READ_TOKEN_1, BATTERIE_1_HOST, LOGGER_NAME)
     status_data = await battery.async_fetch_status()
 #    print(f'status: {status_data}')
-    assert status_data.get('GridFeedIn_W') == 54
-    assert status_data.get('Consumption_W') == 403
-    assert status_data.get('Production_W') == 578
-    assert status_data.get('Pac_total_W') == -95
-    # assert battery.grid_in == 54
-    # assert battery.grid_out == 0
+    assert status_data.get('GridFeedIn_W') == 0
+    assert status_data.get('Consumption_W') == 1578
+    assert status_data.get('Production_W') == 2972
+    assert status_data.get('Pac_total_W') == -1394
 
 @pytest.mark.asyncio
 async def test_get_status_discharging(mocker):

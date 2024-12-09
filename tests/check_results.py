@@ -1,8 +1,9 @@
 import datetime
 from sonnen_api_v2.sonnen import Sonnen as Batterie
 import pytest
-
-#@pytest.fixture()
+from freezegun import freeze_time
+@freeze_time("24-05-2022 15:38:23")
+@pytest.fixture
 def check_results(battery_charging: Batterie, battery_discharging: Batterie):
     """Common results for each method of updating
         Batterie object from network device
@@ -77,7 +78,7 @@ def check_results(battery_charging: Batterie, battery_discharging: Batterie):
     #    result2 = battery_unreachable.grid_in
     #    result3 = battery_wrong_token_charging.grid_in
     result4 = battery_discharging.grid_in
-    assert result1 == 54
+    assert result1 == 0
     #    assert result2 == 0
     #    assert result3 is None
     assert result4 == 0
@@ -179,14 +180,16 @@ def check_results(battery_charging: Batterie, battery_discharging: Batterie):
     remaining_charge = battery_charging.battery_full_charge_capacity_wh - battery_charging.battery_remaining_capacity_wh
     assert battery_charging.battery_full_charge_capacity_wh == 20683.49
     assert battery_charging.battery_remaining_capacity_wh == 18200.576
-    print(f'remaining_charge: {remaining_charge:,.2f}Wh  full_charge_capacity: {battery_charging.battery_full_charge_capacity_wh:,.2f}Wh   remaining_capacity: {battery_charging.battery_remaining_capacity_wh:,.2f}:Wh', flush=True)
-    seconds = int(remaining_charge / battery_charging.charging) * 3600 if battery_charging.charging else 0
-    print(f'charging: {battery_charging.charging}  seconds: {seconds}', flush=True)
+    #print(f'remaining_charge: {remaining_charge:,.2f}Wh  full_charge_capacity: {battery_charging.battery_full_charge_capacity_wh:,.2f}Wh   remaining_capacity: {battery_charging.battery_remaining_capacity_wh:,.2f}:Wh', flush=True)
+    seconds = int(remaining_charge / battery_charging.charging * 3600) if battery_charging.charging else 0
+    print(f'remaining_charge: {remaining_charge:,}Wh  charging: {battery_charging.charging:,}W  seconds: {seconds}', flush=True)
+    assert seconds == 6412
+    assert remaining_charge == 2482.9140000000007
     result1 = battery_charging.seconds_until_fully_charged
     #    result2 = battery_unreachable.seconds_until_fully_charged
     #    result3 = battery_wrong_token_charging.seconds_until_fully_charged
     result4 = battery_discharging.seconds_until_fully_charged
-    assert result1 == 3600
+    assert result1 == 6412
     #    assert result2 == 0
     #    assert result3 == 0
     assert result4 is None

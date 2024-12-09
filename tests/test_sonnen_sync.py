@@ -33,7 +33,7 @@ if BATTERIE_1_HOST == 'X':
 
 @responses.activate
 @freeze_time("24-05-2022 15:38:23")
-def test_sync_methods() -> None:
+def test_sync_methods(check_results) -> None:
     if LOGGER_NAME is not None:
         logging.basicConfig(filename=(f'/tests/logs/{LOGGER_NAME}.log'), level=logging.DEBUG)
         logger = logging.getLogger(LOGGER_NAME)
@@ -207,14 +207,16 @@ def test_sync_methods() -> None:
 
 #    from . import common_results
     check_results(battery_charging, battery_discharging)
+    result1 = battery_charging.fully_charged_at
+    assert result1.strftime('%d.%B.%Y %H:%M') == '24.May.2022 16:38'
 
     # sync wrapped methods used by ha component called by syncio.async_add_executor_job
     status_data = battery_charging.sync_get_status()
 #    print(f'status: {status_data}')
-    assert status_data.get('GridFeedIn_W') == 54
-    assert status_data.get('Consumption_W') == 403
-    assert status_data.get('Production_W') == 578
-    assert status_data.get('Pac_total_W') == -95
+    assert status_data.get('GridFeedIn_W') == 0
+    assert status_data.get('Consumption_W') == 1578
+    assert status_data.get('Production_W') == 2972
+    assert status_data.get('Pac_total_W') == -1394
 
     latest_data = battery_charging.sync_get_latest_data()
     assert latest_data.get('GridFeedIn_W') == 0

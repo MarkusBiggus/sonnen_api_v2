@@ -304,13 +304,6 @@ class Sonnen:
     # sync for use with run_in_executor in existing event loop
     def _fetch_api_endpoint(self, url: str) -> Optional[str]:
         """Fetch API coroutine"""
-        #  url = self.baseurl+what
-        #  response=requests.get(url,
-        #      headers={'Auth-Token': self.token}, timeout=self._batteryRequestTimeout
-        #  )
-        #  if not isretry and response.status_code == 401:
-        #      self._login()
-        #      return self._get(what,True)
         try:
             response = requests.get(
                 url,
@@ -322,49 +315,11 @@ class Sonnen:
         except Exception as error:
             self._log_error(f'Sync fetch {url} fail: {error}')
             raise BatterieError(f'Sync fetch "{url}"  fail: {error}') from error
-        print(f'response: {response}',flush=True)
         if response.status_code != 200:
-#            response.raise_for_status()
             self._log_error(f'Error fetching endpoint {url} status: {response.status_code}')
             raise BatterieError(f'Get endpoint "{url}" status: {response.status_code}')
 
         return response.json()
-
-    # def _fetch(self, session: aiohttp.ClientSession, url: str) -> Optional[str]:
-    #     """Fetch API endpoint with aiohttp client"""
-    #     try:
-    #         with session.get(url) as response:
-    #             return response.json()
-    #     except aiohttp.ClientError as error:
-    #         self._log_error(f'Battery: {self.ip_address} is offline? error: {error}')
-    #         raise BatterieError(f'Client {self.ip_address} error: {error}') from error
-    #     except asyncio.TimeoutError as error:
-    #         self._log_error(f'Timeout error while accessing: {url}')
-    #         raise BatterieError(f'Client Timeout: {error}') from error
-    #     except Exception as error:
-    #         self._log_error(f'Error fetching endpoint {url}: {error}')
-    #         raise BatterieError(f'Endpoint "{url}" error: {error}') from error
-
-
-    async def async_fetch_latest_details(self) -> bool:
-        return await self._async_fetch_api_endpoint(
-                self.latest_details_api_endpoint
-        )
-
-    def fetch_latest_details(self) -> bool:
-        return self._fetch_api_endpoint(
-                self.latest_details_api_endpoint
-        )
-
-    async def async_fetch_configurations(self) -> Optional[str]:
-        return await self._async_fetch_api_endpoint(
-            self.configurations_api_endpoint
-        )
-
-    def fetch_configurations(self) -> Optional[str]:
-        return self._fetch_api_endpoint(
-            self.configurations_api_endpoint
-        )
 
     async def async_fetch_status(self) -> Optional[str]:
         """ Used by sonnenbatterie_v2_api to check connection """
@@ -392,6 +347,26 @@ class Sonnen:
 
         return self._fetch_api_endpoint(
             self.status_api_endpoint
+        )
+
+    async def async_fetch_configurations(self) -> Optional[str]:
+        return await self._async_fetch_api_endpoint(
+            self.configurations_api_endpoint
+        )
+
+    def fetch_configurations(self) -> Optional[str]:
+        return self._fetch_api_endpoint(
+            self.configurations_api_endpoint
+        )
+
+    async def async_fetch_latest_details(self) -> bool:
+        return await self._async_fetch_api_endpoint(
+                self.latest_details_api_endpoint
+        )
+
+    def fetch_latest_details(self) -> bool:
+        return self._fetch_api_endpoint(
+                self.latest_details_api_endpoint
         )
 
     async def async_fetch_battery_status(self) -> Optional[str]:
@@ -480,7 +455,7 @@ class Sonnen:
             Returns:
                 Time in seconds
         """
-        seconds = int((self.battery_remaining_capacity_wh / self.discharging) * 3600) if self.discharging else 0
+        seconds = int(self.battery_remaining_capacity_wh / self.discharging * 3600) if self.discharging else 0
 
         return seconds
 
@@ -503,9 +478,9 @@ class Sonnen:
             seconds = int((capacity_until_reserve / self.discharging) * 3600) if self.discharging else None
         else:
             if self.charging:
-                seconds = int((abs(capacity_until_reserve) / self.charging) * 3600)
+                seconds = int(abs(capacity_until_reserve) / self.charging * 3600)
             else:
-                seconds = int((capacity_until_reserve / self.discharging) * 3600) if self.discharging else None
+                seconds = int(capacity_until_reserve / self.discharging * 3600) if self.discharging else None
 
     #    print(f'capacity_until_reserve: {capacity_until_reserve}  Seconds: {seconds}  DischargeW: {self.discharging}')
         return seconds
@@ -632,7 +607,7 @@ class Sonnen:
                 Time in seconds - None when not charging, zero when fully charged
         """
         remaining_charge = self.battery_full_charge_capacity_wh - self.battery_remaining_capacity_wh
-        seconds = int(remaining_charge / self.charging) * 3600 if self.charging else None
+        seconds = int(remaining_charge / self.charging * 3600) if self.charging else None
 
         return seconds if remaining_charge != 0 else 0
 
@@ -915,7 +890,7 @@ class Sonnen:
         return self._configurations_data[CONFIGURATION_EM_OPERATINGMODE]
 
     @property
-    def str_em_operatingmode(self) -> str:
+    def configuration_em_operatingmode_name(self) -> str:
         """Operating Mode code translated
             Returns:
                 string

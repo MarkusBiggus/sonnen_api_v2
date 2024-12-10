@@ -10,7 +10,7 @@ import responses
 #from sonnen_api_v2.sonnen import Sonnen as Batterie, BatterieError
 from sonnen_api_v2 import Batterie, BatterieError
 from dotenv import load_dotenv
-from . check_results import check_results
+from . import check_results
 
 from . mock_sonnenbatterie_v2_charging import __mock_status_charging, __mock_latest_charging, __mock_configurations, __mock_battery, __mock_powermeter, __mock_inverter
 from . mock_sonnenbatterie_v2_discharging import __mock_status_discharging, __mock_latest_discharging

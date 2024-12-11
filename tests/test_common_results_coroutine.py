@@ -1,4 +1,4 @@
-"""pytest tests/test_common_results_sync.py -s -v -x
+"""pytest tests/test_common_results_coroutine.py -s -v -x
 3. Sync update called from sync method
 """
 import datetime
@@ -7,9 +7,9 @@ import pytest
 from freezegun import freeze_time
 import logging
 
-from .battery_charging_sync import fixture_battery_charging
-from .battery_discharging_sync import fixture_battery_discharging
-from .battery_discharging_reserve_sync import fixture_battery_discharging_reserve
+from .battery_charging_coroutine import fixture_battery_charging
+from .battery_discharging_coroutine import fixture_battery_discharging
+from .battery_discharging_reserve_coroutine import fixture_battery_discharging_reserve
 
 LOGGER_NAME = "sonnenapiv2"
 
@@ -23,7 +23,7 @@ def test_common_results(battery_charging: Batterie, battery_discharging: Batteri
     if LOGGER_NAME is not None:
         logging.basicConfig(filename=(f'/tests/logs/{LOGGER_NAME}.log'), level=logging.DEBUG)
         logger = logging.getLogger(LOGGER_NAME)
-        logger.info('Sonnen mock data sync common result checks.')
+        logger.info('Sonnen mock data async coroutine common results.')
 
     """Common results for each method of updating
         Batterie object from network device

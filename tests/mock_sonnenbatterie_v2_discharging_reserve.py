@@ -125,7 +125,7 @@ def __mock_latest_discharging(*args)-> json:
                 'Self test successful finished': False
             },
             'nrbatterymodules': 4,
-            'secondssincefullcharge': 1574,
+            'secondssincefullcharge': 2574,
             'statebms': 'ready',
             'statecorecontrolmodule': 'offgrid',
             'stateinverter': 'running',

@@ -104,14 +104,14 @@ async def test_get_latest_discharging(mocker):
     assert latest_data.get('Pac_total_W') == 1439
 
 @pytest.mark.asyncio
-async def test_get_powermeter(mocker):
-    """Batterie powermeter test using mock data"""
-    mocker.patch.object(Batterie, "async_fetch_powermeter", AsyncMock(return_value=__mock_powermeter()))
+async def test_get_configurations(mocker):
+    """Batterie configurations using mock data"""
+    mocker.patch.object(Batterie, "async_fetch_configurations", AsyncMock(return_value=__mock_configurations()))
 
     battery = Batterie(API_READ_TOKEN_1, BATTERIE_1_HOST, LOGGER_NAME)
-    powermeter = await battery.async_fetch_powermeter()
-    assert powermeter[0]['direction'] == 'production'
-    assert powermeter[1]['direction'] == 'consumption'
+    configuratons = await battery.async_fetch_configurations()
+    assert configuratons.get('DE_Software') == '1.14.5'
+    assert configuratons.get('EM_USOC') == 20
 
 @pytest.mark.asyncio
 async def test_get_battery(mocker):
@@ -124,6 +124,16 @@ async def test_get_battery(mocker):
     assert status_data.get('remainingcapacity') == 177.74
 
 @pytest.mark.asyncio
+async def test_get_powermeter(mocker):
+    """Batterie powermeter test using mock data"""
+    mocker.patch.object(Batterie, "async_fetch_powermeter", AsyncMock(return_value=__mock_powermeter()))
+
+    battery = Batterie(API_READ_TOKEN_1, BATTERIE_1_HOST, LOGGER_NAME)
+    powermeter = await battery.async_fetch_powermeter()
+    assert powermeter[0]['direction'] == 'production'
+    assert powermeter[1]['direction'] == 'consumption'
+
+@pytest.mark.asyncio
 async def test_get_inverter(mocker):
     """Batterie inverter status using mock data"""
     mocker.patch.object(Batterie, "async_fetch_inverter_data", AsyncMock(return_value=__mock_inverter()))
@@ -132,13 +142,3 @@ async def test_get_inverter(mocker):
     status_data = await battery.async_fetch_inverter_data()
     assert status_data.get('pac_total') == -1394.33
     assert status_data.get('uac') == 233.55
-
-@pytest.mark.asyncio
-async def test_get_configurations(mocker):
-    """Batterie configurations using mock data"""
-    mocker.patch.object(Batterie, "async_fetch_configurations", AsyncMock(return_value=__mock_configurations()))
-
-    battery = Batterie(API_READ_TOKEN_1, BATTERIE_1_HOST, LOGGER_NAME)
-    configuratons = await battery.async_fetch_configurations()
-    assert configuratons.get('DE_Software') == '1.14.5'
-    assert configuratons.get('EM_USOC') == 20

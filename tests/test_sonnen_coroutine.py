@@ -12,13 +12,6 @@ import asyncio
 from collections.abc import (
     Callable,
 )
-from typing import (
-    Any,
-    Union,
-    Dict,
-)
-#from asyncmock import AsyncMock
-#import json
 
 #from freezegun import freeze_time
 from sonnen_api_v2 import Batterie
@@ -84,27 +77,27 @@ async def test_executor_job(mocker):
         return task
 
     def test_get_status():
-        """Coroutine to mock the fetch"""
+        """Coroutine to sync fetch"""
         return battery.sync_get_status()
 
     def _test_get_latest_data():
-        """Coroutine to mock the fetch"""
+        """Coroutine to sync fetch"""
         return battery.sync_get_latest_data()
 
     def test_get_configurations():
-        """Coroutine to mock the fetch"""
+        """Coroutine to sync fetch"""
         return battery.sync_get_configurations()
 
     def _test_get_battery():
-        """Coroutine to mock the fetch"""
+        """Coroutine to sync fetch"""
         return battery.sync_get_battery()
 
     def _test_get_powermeter():
-        """Coroutine to mock the fetch"""
+        """Coroutine to sync fetch"""
         return battery.sync_get_powermeter()
 
     def _test_get_inverter():
-        """Coroutine to mock the fetch"""
+        """Coroutine to sync fetch"""
         return battery.sync_get_inverter()
 
     battery = Batterie(API_READ_TOKEN_1, BATTERIE_1_HOST, BATTERIE_HOST_PORT, LOGGER_NAME)

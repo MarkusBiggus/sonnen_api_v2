@@ -1,4 +1,4 @@
-"""pytest tests/test_common_results_sync.py -s -v -x
+"""pytest tests/test_common_results_asyncio.py -s -v -x
 3. Sync update called from sync method
 """
 import datetime
@@ -7,9 +7,9 @@ import pytest
 from freezegun import freeze_time
 import logging
 
-from .battery_charging_sync import fixture_battery_charging
-from .battery_discharging_sync import fixture_battery_discharging
-from .battery_discharging_reserve_sync import fixture_battery_discharging_reserve
+from .battery_charging_asyncio import fixture_battery_charging
+from .battery_discharging_asyncio import fixture_battery_discharging
+from .battery_discharging_reserve_asyncio import fixture_battery_discharging_reserve
 
 LOGGER_NAME = "sonnenapiv2"
 

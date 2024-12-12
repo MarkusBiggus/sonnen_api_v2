@@ -70,7 +70,7 @@ async def test_get_batterie_charging(mocker):
     mocker.patch.object(Batterie, "async_fetch_latest_details", AsyncMock(return_value=__mock_latest_charging()))
     mocker.patch.object(Batterie, "async_fetch_powermeter", AsyncMock(return_value=__mock_powermeter()))
     mocker.patch.object(Batterie, "async_fetch_battery_status", AsyncMock(return_value=__mock_battery()))
-    mocker.patch.object(Batterie, "async_fetch_inverter_data", AsyncMock(return_value=__mock_inverter()))
+    mocker.patch.object(Batterie, "async_fetch_inverter", AsyncMock(return_value=__mock_inverter()))
 
     battery_charging = Batterie(API_READ_TOKEN, BATTERIE_HOST, BATTERIE_PORT, LOGGER_NAME)  # Batterie online
 
@@ -101,7 +101,7 @@ async def test_get_batterie_charging(mocker):
 # #    mocker.patch.object(Batterie, "fetch_latest_details", AsyncMock(return_value=latest_discharging()))
 #     mocker.patch.object(Batterie, "fetch_powermeter", AsyncMock(return_value=mock_powermeter()))
 #     mocker.patch.object(Batterie, "fetch_battery_status", AsyncMock(return_value=mock_battery()))
-#     mocker.patch.object(Batterie, "fetch_inverter_data", AsyncMock(return_value=mock_inverter()))
+#     mocker.patch.object(Batterie, "fetch_inverter", AsyncMock(return_value=mock_inverter()))
 
 #     _battery = Batterie(API_READ_TOKEN, BATTERIE_HOST, BATTERIE_PORT, LOGGER_NAME)  # Batterie online
 
@@ -130,7 +130,7 @@ def test_get_batterie_wrapped(mocker):
 #    mocker.patch.object(Batterie, "asyncfetch_latest_details", AsyncMock(return_value=latest_discharging()))
     mocker.patch.object(Batterie, "async_fetch_powermeter", AsyncMock(return_value=__mock_powermeter()))
     mocker.patch.object(Batterie, "async_fetch_battery_status", AsyncMock(return_value=__mock_battery()))
-    mocker.patch.object(Batterie, "async_fetch_inverter_data", AsyncMock(return_value=__mock_inverter()))
+    mocker.patch.object(Batterie, "async_fetch_inverter", AsyncMock(return_value=__mock_inverter()))
     battery_charging = Batterie(API_READ_TOKEN, BATTERIE_HOST, BATTERIE_PORT, LOGGER_NAME)  # Batterie online
 
 

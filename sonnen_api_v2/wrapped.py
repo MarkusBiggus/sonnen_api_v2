@@ -232,7 +232,7 @@ def get_inverter(self)-> Union[str, bool]:
             json response
     """
     async def _get_inverter(self):
-        self._inverter_data = await self.async_fetch_inverter_data()
+        self._inverter_data = await self.async_fetch_inverter()
 
     event_loop = asyncio.new_event_loop()
     asyncio.set_event_loop(event_loop)
@@ -249,5 +249,5 @@ def sync_get_inverter(self)-> Union[str, bool]:
         Returns:
             json response
     """
-    self._inverter_data = self.fetch_inverter_data()
+    self._inverter_data = self.fetch_inverter()
     return self._inverter_data if self._inverter_data is not None else False

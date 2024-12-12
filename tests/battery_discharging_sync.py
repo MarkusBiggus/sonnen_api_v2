@@ -34,7 +34,7 @@ def fixture_battery_discharging(mocker) -> Batterie:
     mocker.patch.object(Batterie, "fetch_configurations", __mock_configurations)
     mocker.patch.object(Batterie, "fetch_battery_status", __mock_battery)
     mocker.patch.object(Batterie, "fetch_powermeter", __mock_powermeter)
-    mocker.patch.object(Batterie, "fetch_inverter_data", __mock_inverter)
+    mocker.patch.object(Batterie, "fetch_inverter", __mock_inverter)
 
     battery_discharging = Batterie(API_READ_TOKEN_1, BATTERIE_1_HOST, BATTERIE_HOST_PORT, LOGGER_NAME)  # Working and charging
     success = battery_discharging.sync_update()

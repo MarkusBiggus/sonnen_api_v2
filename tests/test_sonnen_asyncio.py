@@ -136,9 +136,9 @@ async def test_get_powermeter(mocker):
 @pytest.mark.asyncio
 async def test_get_inverter(mocker):
     """Batterie inverter status using mock data"""
-    mocker.patch.object(Batterie, "async_fetch_inverter_data", AsyncMock(return_value=__mock_inverter()))
+    mocker.patch.object(Batterie, "async_fetch_inverter", AsyncMock(return_value=__mock_inverter()))
 
     battery = Batterie(API_READ_TOKEN_1, BATTERIE_1_HOST, LOGGER_NAME)
-    status_data = await battery.async_fetch_inverter_data()
+    status_data = await battery.async_fetch_inverter()
     assert status_data.get('pac_total') == -1394.33
     assert status_data.get('uac') == 233.55

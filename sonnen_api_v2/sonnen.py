@@ -186,7 +186,7 @@ class Sonnen:
                 self._powermeter_production = None
                 self._powermeter_consumption = None
         if success:
-            self._inverter_data = await self.async_fetch_inverter_data()
+            self._inverter_data = await self.async_fetch_inverter()
             success = (self._inverter_data is not None)
 
         self.last_updated = now if success else None
@@ -268,7 +268,7 @@ class Sonnen:
                 self._powermeter_production = None
                 self._powermeter_consumption = None
         if success:
-            self._inverter_data = self.fetch_inverter_data()
+            self._inverter_data = self.fetch_inverter()
             success = (self._inverter_data is not None)
 
         self.last_updated = now if success else None
@@ -389,12 +389,12 @@ class Sonnen:
             self.powermeter_api_endpoint
         )
 
-    async def async_fetch_inverter_data(self) -> Optional[str]:
+    async def async_fetch_inverter(self) -> Optional[str]:
         return await self._async_fetch_api_endpoint(
             self.inverter_api_endpoint
         )
 
-    def fetch_inverter_data(self) -> Optional[str]:
+    def fetch_inverter(self) -> Optional[str]:
         return self._fetch_api_endpoint(
             self.inverter_api_endpoint
         )

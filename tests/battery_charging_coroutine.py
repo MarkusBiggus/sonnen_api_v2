@@ -37,7 +37,7 @@ async def fixture_battery_charging(mocker) -> Batterie:
     mocker.patch.object(Batterie, "fetch_configurations", __mock_configurations)
     mocker.patch.object(Batterie, "fetch_battery_status", __mock_battery)
     mocker.patch.object(Batterie, "fetch_powermeter", __mock_powermeter)
-    mocker.patch.object(Batterie, "fetch_inverter_data", __mock_inverter)
+    mocker.patch.object(Batterie, "fetch_inverter", __mock_inverter)
 
     def async_add_executor_job[*_Ts, _T](
         self, target: Callable[[*_Ts], _T], *args: *_Ts

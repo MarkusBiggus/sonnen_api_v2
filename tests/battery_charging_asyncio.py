@@ -33,7 +33,7 @@ async def fixture_battery_charging(mocker) -> Batterie:
     mocker.patch.object(Batterie, "async_fetch_configurations", AsyncMock(return_value=__mock_configurations()))
     mocker.patch.object(Batterie, "async_fetch_battery_status", AsyncMock(return_value=__mock_battery()))
     mocker.patch.object(Batterie, "async_fetch_powermeter", AsyncMock(return_value=__mock_powermeter()))
-    mocker.patch.object(Batterie, "async_fetch_inverter_data", AsyncMock(return_value=__mock_inverter()))
+    mocker.patch.object(Batterie, "async_fetch_inverter", AsyncMock(return_value=__mock_inverter()))
 
     battery_charging = Batterie(API_READ_TOKEN_1, BATTERIE_1_HOST, BATTERIE_HOST_PORT, LOGGER_NAME)  # Working and charging
     success = await battery_charging.async_update()

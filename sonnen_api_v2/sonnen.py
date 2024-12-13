@@ -118,29 +118,6 @@ class Sonnen:
         else:
             print(msg)
 
-    # @classmethod
-    # def sensor_map(self) -> Dict[str, Tuple[int, Measurement]]:
-    #     """
-    #     Return sensor map
-    #     Warning, HA depends on this
-    #     """
-    #     sensors: Dict[str, Tuple[int, Measurement]] = {}
-    #     for name, mapping in self.response_decoder().items():
-    #         unit = Measurement(Units.NONE)
-
-    #         (idx, unit_or_measurement, *_) = mapping
-
-    #         if isinstance(unit_or_measurement, Units):
-    #             unit = Measurement(unit_or_measurement)
-    #         else:
-    #             unit = unit_or_measurement
-    #         if isinstance(idx, tuple):
-    #             sensor_indexes = idx[0]
-    #             first_sensor_index = sensor_indexes[0]
-    #             idx = first_sensor_index
-    #         sensors[name] = (idx, unit)
-    #     return sensors
-
     async def async_update(self) -> bool:
         """Update all battery data from an async caller
         Returns:
@@ -191,17 +168,6 @@ class Sonnen:
 
         self.last_updated = now if success else None
         return success
-
-    # async def status_update(self) -> bool:
-    #     """Updates data from status api of the sonnenBatterie
-    #         USED ONLY FOR TESTING with mock data by test_sonnen_asyncio
-    #         Returns:
-    #             True when update successful
-    #     """
-    #     success = await self.fetch_status()
-
-    #     self.last_updated = datetime.datetime.now() if success else None
-    #     return success
 
     def update(self) -> bool:
         """Update battery details Asyncronously from a sequential caller using async methods
@@ -279,11 +245,16 @@ class Sonnen:
         """Fetch API coroutine"""
         try:
             async with aiohttp.ClientSession(headers=self.header, timeout=self.client_timeouts) as session:
-                return await self._async_fetch(session, url)
+                response = await self._async_fetch(session, url)
         except Exception as error:
             self._log_error(f'Coroutine fetch {url} fail: {error}')
             raise BatterieError(f'Coroutine "{url}"  fail: {error}') from error
-        return None
+
+        if response.status_code != 200:
+            self._log_error(f'Error async fetching endpoint {url} status: {response.status_code}')
+    #        raise BatterieError(f'Get async endpoint "{url}" status: {response.status_code}')
+
+        return response
 
     async def _async_fetch(self, session: aiohttp.ClientSession, url: str) -> Optional[str]:
         """Fetch API endpoint with aiohttp client"""
@@ -299,6 +270,7 @@ class Sonnen:
         except Exception as error:
             self._log_error(f'Error fetching endpoint {url}: {error}')
             raise BatterieError(f'Endpoint "{url}" error: {error}') from error
+
         return None
 
     # sync for use with run_in_executor in existing event loop
@@ -315,9 +287,10 @@ class Sonnen:
         except Exception as error:
             self._log_error(f'Sync fetch {url} fail: {error}')
             raise BatterieError(f'Sync fetch "{url}"  fail: {error}') from error
+
         if response.status_code != 200:
             self._log_error(f'Error fetching endpoint {url} status: {response.status_code}')
-            raise BatterieError(f'Get endpoint "{url}" status: {response.status_code}')
+    #        raise BatterieError(f'Get endpoint "{url}" status: {response.status_code}')
 
         return response.json()
 
@@ -906,6 +879,14 @@ class Sonnen:
         return _EM_OPERATINGMODE[self._configurations_data[CONFIGURATION_EM_OPERATINGMODE]]
 
     @property
+    def configuration_de_software(self) -> str:
+        """Software version
+            Returns:
+                String
+        """
+        return self._configurations_data[CONFIGURATION_DE_SOFTWARE]
+
+    @property
     @get_item(int)
     def configuration_em_usoc(self) -> int:
         """User State Of Charge - BackupBuffer value (includes unusable reserve)
@@ -1041,14 +1022,6 @@ class Sonnen:
         """
         print (f'{self._latest_details_data[IC_STATUS]["timestamp"]}')
         return  datetime.datetime.strptime(self._latest_details_data[IC_STATUS]["timestamp"], '%a %b %d %H:%M:%S %Y')
-
-    @property
-    def configuration_de_software(self) -> str:
-        """Software version
-            Returns:
-                String
-        """
-        return self._configurations_data[CONFIGURATION_DE_SOFTWARE]
 
     @property
     def ic_eclipse_led(self) -> str:

@@ -32,7 +32,7 @@ def get_status(self)-> Union[str, bool]:
     finally:
         event_loop.close()
 
-    return self._status_data if self._status_data is not None else False
+    return self._status_data
 
 def sync_get_status(self)-> Union[str, bool]:
     """Status details for sonnenbatterie wrapper
@@ -41,7 +41,7 @@ def sync_get_status(self)-> Union[str, bool]:
             json response
     """
     self._status_data = self.fetch_status()
-    return self._status_data if self._status_data is not None else False
+    return self._status_data
 
 def get_latest_data(self)-> Union[str, bool]:
     """Latest details for sonnenbatterie wrapper
@@ -59,9 +59,7 @@ def get_latest_data(self)-> Union[str, bool]:
         event_loop.run_until_complete(_get_latest_data(self))
     finally:
         event_loop.close()
-
-    _aug_latest_details(self)
-    return self._latest_details_data if self._latest_details_data is not None else False
+    return _aug_latest_details(self)
 
 def sync_get_latest_data(self)-> Union[str, bool]:
     """Latest details for sonnenbatterie wrapper
@@ -71,8 +69,7 @@ def sync_get_latest_data(self)-> Union[str, bool]:
     """
     self._latest_details_data = None
     self._latest_details_data = self.fetch_latest_details()
-    _aug_latest_details(self)
-    return self._latest_details_data if self._latest_details_data is not None else False
+    return _aug_latest_details(self)
 
 def _aug_latest_details(self):
     """Augment latest_details for sonnenbatterie wrapper
@@ -83,6 +80,7 @@ def _aug_latest_details(self):
         self._ic_status = self._latest_details_data[IC_STATUS]  # noqa: F405
     else:
         self._ic_status = None
+    return self._latest_details_data
 
 def get_configurations(self)-> Union[str, bool]:
     """Configuration details for sonnenbatterie wrapper
@@ -101,8 +99,7 @@ def get_configurations(self)-> Union[str, bool]:
     finally:
         event_loop.close()
 
-    _aug_configurations(self)
-    return self._configurations_data if self._configurations_data is not None else False
+    return _aug_configurations(self)
 
 def sync_get_configurations(self)-> Union[str, bool]:
     """Configuration details for sonnenbatterie wrapper
@@ -112,8 +109,7 @@ def sync_get_configurations(self)-> Union[str, bool]:
     """
     self._configurations_data = None
     self._configurations_data = self.fetch_configurations()
-    _aug_configurations(self)
-    return self._configurations_data
+    return _aug_configurations(self)
 
 def _aug_configurations(self):
     """Augment Configurations for sonnenbatterie wrapper
@@ -122,6 +118,7 @@ def _aug_configurations(self):
     """
     if self._configurations_data is not None:
         self._configurations_data['DepthOfDischargeLimit'] = int((1 - BATTERY_UNUSABLE_RESERVE) * 100)
+    return self._configurations_data
 
 def get_battery(self)-> Union[Dict, bool]:
     """Battery status for sonnenbatterie wrapper
@@ -133,6 +130,8 @@ def get_battery(self)-> Union[Dict, bool]:
     async def _get_battery(self):
         self._battery_status = None
         self._battery_status = await self.async_fetch_battery_status()
+        if self._configurations_data is None:
+            self._configurations_data = await self.async_fetch_configurations()
 
     event_loop = asyncio.new_event_loop()
     asyncio.set_event_loop(event_loop)
@@ -142,15 +141,9 @@ def get_battery(self)-> Union[Dict, bool]:
         event_loop.close()
 
     if self._battery_status is None:
-        return False
+        return None
 
-    self._battery_status['total_installed_capacity'] = 0
-    if self._configurations_data is None:
-        self._configurations_data = self.get_configurations()
-
-    _aug_battery(self)
-
-    return self._battery_status
+    return _aug_battery(self)
 
 def sync_get_battery(self)-> Union[Dict, bool]:
     """Battery status for sonnenbatterie wrapper
@@ -162,14 +155,12 @@ def sync_get_battery(self)-> Union[Dict, bool]:
     self._battery_status = None
     self._battery_status = self.fetch_battery_status()
     if self._battery_status is None:
-        return False
+        return None
 
-    self._battery_status['total_installed_capacity'] = 0
     if self._configurations_data is None:
         self._configurations_data = self.sync_get_configurations()
 
-    _aug_battery(self)
-    return self._battery_status
+    return _aug_battery(self)
 
 def _aug_battery(self):
     """Augment Battery status for sonnenbatterie wrapper
@@ -179,11 +170,15 @@ def _aug_battery(self):
     """
     if self._configurations_data is not None:
         self._battery_status['total_installed_capacity'] = int(self._configurations_data.get('IC_BatteryModules')) * int(self._configurations_data.get('CM_MarketingModuleCapacity'))
+    else:
+        self._battery_status['total_installed_capacity'] = 0
 
     self._battery_status['reserved_capacity'] = self.battery_unusable_capacity_wh
     self._battery_status['remaining_capacity'] = self.battery_remaining_capacity_wh
     self._battery_status['remaining_capacity_usable'] = self.battery_usable_remaining_capacity_wh
     self._battery_status['backup_buffer_usable'] = self.backup_buffer_usable_capacity_wh
+    return self._battery_status
+
 
 def get_powermeter(self)-> Union[str, bool]:
     """powermeter details for sonnenbatterie wrapper
@@ -208,7 +203,7 @@ def get_powermeter(self)-> Union[str, bool]:
         self._powermeter_production = None
         self._powermeter_consumption = None
 
-    return self._powermeter_data if self._powermeter_data is not None else False
+    return self._powermeter_data
 
 def sync_get_powermeter(self)-> Union[str, bool]:
     """powermeter details for sonnenbatterie wrapper
@@ -223,7 +218,7 @@ def sync_get_powermeter(self)-> Union[str, bool]:
     else:
         self._powermeter_production = None
         self._powermeter_consumption = None
-    return self._powermeter_data if self._powermeter_data is not None else False
+    return self._powermeter_data
 
 def get_inverter(self)-> Union[str, bool]:
     """Inverter details for sonnenbatterie wrapper
@@ -241,7 +236,7 @@ def get_inverter(self)-> Union[str, bool]:
     finally:
         event_loop.close()
 
-    return self._inverter_data if self._inverter_data is not None else False
+    return self._inverter_data
 
 def sync_get_inverter(self)-> Union[str, bool]:
     """Inverter details for sonnenbatterie wrapper
@@ -250,4 +245,4 @@ def sync_get_inverter(self)-> Union[str, bool]:
             json response
     """
     self._inverter_data = self.fetch_inverter()
-    return self._inverter_data if self._inverter_data is not None else False
+    return self._inverter_data

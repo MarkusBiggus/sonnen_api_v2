@@ -168,10 +168,10 @@ def _aug_battery(self):
         Returns:
             json response
     """
-    if self._configurations_data is not None:
-        self._battery_status['total_installed_capacity'] = int(self._configurations_data.get('IC_BatteryModules')) * int(self._configurations_data.get('CM_MarketingModuleCapacity'))
-    else:
+    if self._configurations_data is None:
         self._battery_status['total_installed_capacity'] = 0
+    else:
+        self._battery_status['total_installed_capacity'] = int(self._configurations_data.get('IC_BatteryModules')) * int(self._configurations_data.get('CM_MarketingModuleCapacity'))
 
     self._battery_status['reserved_capacity'] = self.battery_unusable_capacity_wh
     self._battery_status['remaining_capacity'] = self.battery_remaining_capacity_wh

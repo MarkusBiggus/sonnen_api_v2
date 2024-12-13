@@ -209,9 +209,11 @@ class Sonnen:
         self._inverter_data = None
 
         self._configurations_data = self.fetch_configurations()
+        print(f'fetch_configurations: {type(self._configurations_data)}')
         success = (self._configurations_data is not None)
         if success:
             self._latest_details_data = self.fetch_latest_details()
+            print(f'fetch_latest_details: {type(self._latest_details_data)}')
             if self._latest_details_data is not None:
                 self._ic_status = self._latest_details_data[IC_STATUS]  # noqa: F405
             else:
@@ -219,12 +221,15 @@ class Sonnen:
                 success = False
         if success:
             self._status_data = self.fetch_status()
+            print(f'fetch_status: {type(self._status_data)}')
             success = (self._status_data is not None)
         if success:
             self._battery_status = self.fetch_battery_status()
+            print(f'fetch_battery_status: {type(self._battery_status)}')
             success = (self._battery_status is not None)
         if success:
             self._powermeter_data = self.fetch_powermeter()
+            print(f'fetch_powermeter: {type(self._powermeter_data)}')
             if self._powermeter_data is not None:
                 self._powermeter_production = self._powermeter_data[0]
                 self._powermeter_consumption = self._powermeter_data[1]
@@ -235,6 +240,7 @@ class Sonnen:
                 self._powermeter_consumption = None
         if success:
             self._inverter_data = self.fetch_inverter()
+            print(f'fetch_inverter: {type(self._inverter_data)}')
             success = (self._inverter_data is not None)
 
         self.last_updated = now if success else None
@@ -1039,28 +1045,28 @@ class Sonnen:
         """
         return self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED]
 
-    @classmethod
-    def sensor_map(cls) -> Dict[str, Tuple[int, Measurement]]:
-        """
-        Return sensor map
-        Warning, HA depends on this
-        """
-        sensors: Dict[str, Tuple[int, Measurement]] = {}
-        for name, mapping in cls.response_decoder().items():
-            unit = Measurement(Units.NONE)
+    # @classmethod
+    # def sensor_map(cls) -> Dict[str, Tuple[int, Measurement]]:
+    #     """
+    #     Return sensor map
+    #     Warning, HA depends on this
+    #     """
+    #     sensors: Dict[str, Tuple[int, Measurement]] = {}
+    #     for name, mapping in cls.response_decoder().items():
+    #         unit = Measurement(Units.NONE)
 
-            (idx, unit_or_measurement, *_) = mapping
+    #         (idx, unit_or_measurement, *_) = mapping
 
-            if isinstance(unit_or_measurement, Units):
-                unit = Measurement(unit_or_measurement)
-            else:
-                unit = unit_or_measurement
-            if isinstance(idx, tuple):
-                sensor_indexes = idx[0]
-                first_sensor_index = sensor_indexes[0]
-                idx = first_sensor_index
-            sensors[name] = (idx, unit)
-        return sensors
+    #         if isinstance(unit_or_measurement, Units):
+    #             unit = Measurement(unit_or_measurement)
+    #         else:
+    #             unit = unit_or_measurement
+    #         if isinstance(idx, tuple):
+    #             sensor_indexes = idx[0]
+    #             first_sensor_index = sensor_indexes[0]
+    #             idx = first_sensor_index
+    #         sensors[name] = (idx, unit)
+    #     return sensors
 
     # @classmethod
     # def schema(cls) -> vol.Schema:

@@ -212,7 +212,6 @@ class Sonnen:
         success = (self._configurations_data is not None)
         if success:
             self._latest_details_data = self.fetch_latest_details()
-            print(f'fetch_latest_details: {type(self._latest_details_data)}')
             if self._latest_details_data is not None:
                 self._ic_status = self._latest_details_data[IC_STATUS]  # noqa: F405
             else:

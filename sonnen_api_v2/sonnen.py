@@ -66,12 +66,13 @@ class BatterieResponse(
 class Sonnen:
     """Class for managing Sonnen API V2 data"""
     from .wrapped import set_request_connect_timeouts, get_request_connect_timeouts
-    from .wrapped import get_latest_data, get_configurations, get_status, get_powermeter, get_battery, get_inverter
-    from .wrapped import sync_get_latest_data, sync_get_configurations, sync_get_status, sync_get_powermeter, sync_get_battery, sync_get_inverter
+    from .wrapped import get_update, get_latest_data, get_configurations, get_status, get_powermeter, get_battery, get_inverter
+    from .wrapped import sync_get_update, sync_get_latest_data, sync_get_configurations, sync_get_status, sync_get_powermeter, sync_get_battery, sync_get_inverter
 
     def __init__(self, auth_token: str, ip_address: str, ip_port: str = '80', logger_name: str = None) -> None:
         self.last_updated = None #rate limiters
-        self.last_status = None
+        self.last_get_updated = None
+        self.last_configurations = None
 
         logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         if logger_name is not None:
@@ -95,14 +96,11 @@ class Sonnen:
         self.inverter_api_endpoint = f'{self.url}/api/v2/inverter'
 
         # api data
-        self._latest_details_data = None
+        self._configurations = None
         self._status_data = None
-        self._ic_status = None
+        self._latest_details_data = None
         self._battery_status = None
         self._powermeter_data = None
-        self._powermeter_production = None
-        self._powermeter_consumption = None
-        self._configurations_data = None
         self._inverter_data = None
         # isal is preferred over zlib_ng if it is available
         aiohttp_fast_zlib.enable()
@@ -130,22 +128,18 @@ class Sonnen:
             if diff.total_seconds() < RATE_LIMIT:
                 return True
 
-        self._configurations_data = None
+        self._configurations = None
         self._latest_details_data = None
         self._status_data = None
         self._battery_status = None
         self._powermeter_data = None
         self._inverter_data = None
 
-        self._configurations_data = await self.async_fetch_configurations()
-        success = (self._configurations_data is not None)
+        self._configurations = await self.async_fetch_configurations()
+        success = (self._configurations is not None)
         if success:
             self._latest_details_data = await self.async_fetch_latest_details()
-            if self._latest_details_data is not None:
-                self._ic_status = self._latest_details_data[IC_STATUS]  # noqa: F405
-            else:
-                self._ic_status = None
-                success = False
+            success = (self._latest_details_data is not None)
         if success:
             self._status_data = await self.async_fetch_status()
             success = (self._status_data is not None)
@@ -154,14 +148,7 @@ class Sonnen:
             success = (self._battery_status is not None)
         if success:
             self._powermeter_data = await self.async_fetch_powermeter()
-            if self._powermeter_data is not None:
-                self._powermeter_production = self._powermeter_data[0]
-                self._powermeter_consumption = self._powermeter_data[1]
-                self._powermeter_data = None
-            else:
-                success = False
-                self._powermeter_production = None
-                self._powermeter_consumption = None
+            success = (self._powermeter_data is not None)
         if success:
             self._inverter_data = await self.async_fetch_inverter()
             success = (self._inverter_data is not None)
@@ -201,45 +188,34 @@ class Sonnen:
             if diff.total_seconds() < RATE_LIMIT:
                 return True
 
-        self._configurations_data = None
+        self._configurations = None
         self._latest_details_data = None
         self._status_data = None
         self._battery_status = None
         self._powermeter_data = None
         self._inverter_data = None
 
-        self._configurations_data = self.fetch_configurations()
-        success = (self._configurations_data is not None)
+        self._configurations = self.fetch_configurations()
+        success = (self._configurations is not None)
         if success:
             self._latest_details_data = self.fetch_latest_details()
-            if self._latest_details_data is not None:
-                self._ic_status = self._latest_details_data[IC_STATUS]  # noqa: F405
-            else:
-                self._ic_status = None
-                success = False
+            success = (self._latest_details_data is not None)
         if success:
             self._status_data = self.fetch_status()
+        #    print(f'status: {self._status_data}')
             success = (self._status_data is not None)
         if success:
             self._battery_status = self.fetch_battery_status()
             success = (self._battery_status is not None)
         if success:
             self._powermeter_data = self.fetch_powermeter()
-            if self._powermeter_data is not None:
-                self._powermeter_production = self._powermeter_data[0]
-                self._powermeter_consumption = self._powermeter_data[1]
-                self._powermeter_data = None
-            else:
-                success = False
-                self._powermeter_production = None
-                self._powermeter_consumption = None
+            success = (self._powermeter_data is not None)
         if success:
             self._inverter_data = self.fetch_inverter()
             success = (self._inverter_data is not None)
 
         self.last_updated = now if success else None
         return success
-
 
     async def _async_fetch_api_endpoint(self, url: str) -> Optional[str]:
         """Fetch API coroutine"""
@@ -296,38 +272,36 @@ class Sonnen:
 
     async def async_fetch_status(self) -> Optional[str]:
         """ Used by sonnenbatterie_v2_api to check connection """
-        now = datetime.datetime.now()
-        if self.last_status is not None:
-            diff = now - self.last_status
-            if diff.total_seconds() < RATE_LIMIT:
-                return self._status_data
-
-        self.last_status = now
-
         return await self._async_fetch_api_endpoint(
             self.status_api_endpoint
         )
 
     def fetch_status(self) -> Optional[str]:
         """ Used by sonnenbatterie_v2_api to check connection """
-        now = datetime.datetime.now()
-        if self.last_status is not None:
-            diff = now - self.last_status
-            if diff.total_seconds() < RATE_LIMIT:
-                return self._status_data
-
-        self.last_status = now
-
         return self._fetch_api_endpoint(
             self.status_api_endpoint
         )
 
     async def async_fetch_configurations(self) -> Optional[str]:
+        now = datetime.datetime.now()
+        if self.last_configurations is not None:
+            diff = now - self.last_configurations
+            if diff.total_seconds() < RATE_LIMIT:
+                return self._configurations
+
+        self.last_configurations = now
         return await self._async_fetch_api_endpoint(
             self.configurations_api_endpoint
         )
 
     def fetch_configurations(self) -> Optional[str]:
+        now = datetime.datetime.now()
+        if self.last_configurations is not None:
+            diff = now - self.last_configurations
+            if diff.total_seconds() < RATE_LIMIT:
+                return self._configurations
+
+        self.last_configurations = now
         return self._fetch_api_endpoint(
             self.configurations_api_endpoint
         )
@@ -386,13 +360,15 @@ class Sonnen:
     @get_item(float)
     def kwh_consumed(self) -> float:
         """Consumed kWh"""
-        return self._powermeter_consumption[POWERMETER_KWH_CONSUMED]
+        return self._powermeter_data[1][POWERMETER_KWH_CONSUMED]
+    #    return self._powermeter_consumption[POWERMETER_KWH_CONSUMED]
 
     @property
     @get_item(float)
     def kwh_produced(self) -> float:
         """Produced kWh"""
-        return self._powermeter_production[POWERMETER_KWH_PRODUCED]
+        return self._powermeter_data[0][POWERMETER_KWH_PRODUCED]
+    #    return self._powermeter_production[POWERMETER_KWH_PRODUCED]
 
     @property
     @get_item(int)
@@ -437,7 +413,7 @@ class Sonnen:
             Returns:
                 Number of modules
         """
-        return self._ic_status[STATUS_MODULES_INSTALLED]
+        return self._latest_details_data[IC_STATUS][STATUS_MODULES_INSTALLED]
 
     @property
     @get_item(int)
@@ -446,7 +422,7 @@ class Sonnen:
             Returns:
                 total installed capacity Wh
         """
-        return self._configurations_data[CONFIGURATION_MODULECAPACITY] * self.installed_modules
+        return self._configurations[CONFIGURATION_MODULECAPACITY] * self.installed_modules
 
     @property
     @get_item(int)
@@ -565,8 +541,6 @@ class Sonnen:
                 seconds = int(abs(capacity_until_reserve) / self.charging * 3600)
             else:
                 seconds = None # int(capacity_until_reserve / self.discharging * 3600)
-
-    #    print(f'capacity_until_reserve: {capacity_until_reserve}  Seconds: {seconds}  DischargeW: {self.discharging}')
         return seconds
 
     @property
@@ -861,7 +835,7 @@ class Sonnen:
             Returns:
                 Integer code
         """
-        return self._configurations_data[CONFIGURATION_EM_OPERATINGMODE]
+        return self._configurations[CONFIGURATION_EM_OPERATINGMODE]
 
     @property
     def configuration_em_operatingmode_name(self) -> str:
@@ -876,7 +850,7 @@ class Sonnen:
             "10": 'Time-Of-Use'
         }
 
-        return _EM_OPERATINGMODE[self._configurations_data[CONFIGURATION_EM_OPERATINGMODE]]
+        return _EM_OPERATINGMODE[self._configurations[CONFIGURATION_EM_OPERATINGMODE]]
 
     @property
     def configuration_de_software(self) -> str:
@@ -884,7 +858,7 @@ class Sonnen:
             Returns:
                 String
         """
-        return self._configurations_data[CONFIGURATION_DE_SOFTWARE]
+        return self._configurations[CONFIGURATION_DE_SOFTWARE]
 
     @property
     @get_item(int)
@@ -893,7 +867,7 @@ class Sonnen:
             Returns:
                 Integer Percent
         """
-        return self._configurations_data[CONFIGURATION_EM_USOC]
+        return self._configurations[CONFIGURATION_EM_USOC]
 
     @property
     @get_item(int)

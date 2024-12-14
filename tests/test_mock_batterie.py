@@ -9,35 +9,15 @@ import sys
 import logging
 import pytest
 
-#import pytest_asyncio
-
-#from pytest_mock import mocker
 from asyncmock import AsyncMock
-#import json
-from dotenv import load_dotenv
 from freezegun import freeze_time
 
 from sonnen_api_v2 import Batterie
-from . check_results import check_results
 
 from . mock_sonnenbatterie_v2_charging import __mock_status_charging, __mock_latest_charging, __mock_configurations, __mock_battery, __mock_powermeter, __mock_inverter
 from . mock_sonnenbatterie_v2_discharging import __mock_status_discharging, __mock_latest_discharging
 
-load_dotenv()
-
-BATTERIE_HOST = os.getenv('BATTERIE_HOST','X')
-BATTERIE_PORT = '80'
-API_READ_TOKEN = os.getenv('API_READ_TOKEN')
-# BATTERIE_1_HOST = os.getenv('BATTERIE_1_HOST','X')
-# API_READ_TOKEN_1 = os.getenv('API_READ_TOKEN_1')
-# BATTERIE_2_HOST = os.getenv('BATTERIE_2_HOST')
-# API_READ_TOKEN_2 = os.getenv('API_READ_TOKEN_2')
-
 LOGGER_NAME = None # "sonnenapiv2" #
-
-
-if BATTERIE_HOST == 'X':
-    raise ValueError('Set BATTERIE_HOST & API_READ_TOKEN in .env See env.example')
 
 logging.getLogger("mock_batterie").setLevel(logging.WARNING)
 
@@ -61,20 +41,22 @@ if LOGGER_NAME is not None:
 
 
 @pytest.mark.asyncio
-async def test_get_batterie_charging(mocker):
+async def test_get_batterie_async(mocker):
     """Batterie charging using mock data
         1. Async update called from an async method.
     """
     mocker.patch.object(Batterie, "async_fetch_configurations", AsyncMock(return_value=__mock_configurations()))
     mocker.patch.object(Batterie, "async_fetch_status", AsyncMock(return_value=__mock_status_charging()))
     mocker.patch.object(Batterie, "async_fetch_latest_details", AsyncMock(return_value=__mock_latest_charging()))
-    mocker.patch.object(Batterie, "async_fetch_powermeter", AsyncMock(return_value=__mock_powermeter()))
     mocker.patch.object(Batterie, "async_fetch_battery_status", AsyncMock(return_value=__mock_battery()))
+    mocker.patch.object(Batterie, "async_fetch_powermeter", AsyncMock(return_value=__mock_powermeter()))
     mocker.patch.object(Batterie, "async_fetch_inverter", AsyncMock(return_value=__mock_inverter()))
 
-    battery_charging = Batterie(API_READ_TOKEN, BATTERIE_HOST, BATTERIE_PORT, LOGGER_NAME)  # Batterie online
+    battery_charging = Batterie('fakeUsername', 'fakeToken', 'fakeHost')
 
-    await battery_charging.async_update()
+    success = await battery_charging.async_update()
+    assert success is not False
+
     version = battery_charging.configuration_de_software # mock_configurations
     status = battery_charging.system_status # latest_charging
     backup_buffer = battery_charging.status_backup_buffer # status_charging
@@ -119,19 +101,20 @@ async def test_get_batterie_charging(mocker):
 #     assert dod == 93
 
 @freeze_time("24-05-2022 15:38:23")
-def test_get_batterie_wrapped(mocker):
-    """sonnenbatterie package Emulated methods using mock data
+def test_get_batterie_sync_wrapped(mocker):
+    """sonnenbatterie Emulator package - using mock data
         2. Async update called from sync method
     """
     mocker.patch.object(Batterie, "async_fetch_configurations", AsyncMock(return_value=__mock_configurations()))
     mocker.patch.object(Batterie, "async_fetch_status", AsyncMock(return_value=__mock_status_charging()))
-#    mocker.patch.object(Batterie, "async_fetch_status", AsyncMock(return_value=status_discharging()))
     mocker.patch.object(Batterie, "async_fetch_latest_details", AsyncMock(return_value=__mock_latest_charging()))
-#    mocker.patch.object(Batterie, "asyncfetch_latest_details", AsyncMock(return_value=latest_discharging()))
-    mocker.patch.object(Batterie, "async_fetch_powermeter", AsyncMock(return_value=__mock_powermeter()))
     mocker.patch.object(Batterie, "async_fetch_battery_status", AsyncMock(return_value=__mock_battery()))
+    mocker.patch.object(Batterie, "async_fetch_powermeter", AsyncMock(return_value=__mock_powermeter()))
     mocker.patch.object(Batterie, "async_fetch_inverter", AsyncMock(return_value=__mock_inverter()))
-    battery_charging = Batterie(API_READ_TOKEN, BATTERIE_HOST, BATTERIE_PORT, LOGGER_NAME)  # Batterie online
+
+    battery_charging = Batterie('fakeUsername', 'fakeToken', 'fakeHost')
+    success = battery_charging.get_update()
+    assert success is not False
 
 
     latestData = {}
@@ -146,16 +129,15 @@ def test_get_batterie_wrapped(mocker):
     # batt_module_count = int(latestData["battery_system"]["modules"])
 
     # assert batt_module_count == 4
+    latestData["latest_data"] = battery_charging.get_latest_data()
+    print(f'latestData: {latestData["status"]}', flush=True)
+    assert latestData["status"]['Timestamp'] == '2022-04-30 17:00:55' #correct test data loaded
+    assert latestData["latest_data"].get('RSOC') == 88
 
-    latestData["powermeter"] = battery_charging.get_powermeter()
-    if(isinstance(latestData["powermeter"],dict)):
-        newPowerMeters=[]
-        for index,dictIndex in enumerate(latestData["powermeter"]):
-            newPowerMeters.append(latestData["powermeter"][dictIndex])
-        print(f'new powermeters: {newPowerMeters}')
 
     latestData["status"] = battery_charging.get_status()
-#    print(f'latestData: {latestData["status"]}', flush=True)
+    assert latestData["status"]['Timestamp'] == '2022-04-30 17:00:55' #correct test data loaded
+
 #    print(f'status type: {type(latestData["status"])}')
 
     if latestData["status"]["BatteryCharging"]:
@@ -168,7 +150,13 @@ def test_get_batterie_wrapped(mocker):
     operatingmode = latestData.get("status", {}).get("OperatingMode")
     print(f'battery_state: {battery_current_state}  RSOC: {rsoc}%  Operating Mode: {operatingmode}', flush=True)
 
-#    print(f'module_capacity: {batt_module_capacity:,}Wh  module_count: {batt_module_count}')
+    latestData["powermeter"] = battery_charging.get_powermeter()
+    if(isinstance(latestData["powermeter"],dict)):
+        newPowerMeters=[]
+        for index,dictIndex in enumerate(latestData["powermeter"]):
+            newPowerMeters.append(latestData["powermeter"][dictIndex])
+        print(f'new powermeters: {newPowerMeters}')
+
     batt_reserved_factor = 7.0
 #    total_installed_capacity = int(batt_module_count * batt_module_capacity)
     # unusable_reserved_capacity = int(
@@ -219,9 +207,6 @@ def test_get_batterie_wrapped(mocker):
     timeouts = battery_charging.set_request_connect_timeouts((15,25))
     assert timeouts == (15,25)
 
-    latestData["latest_data"] = battery_charging.get_latest_data()
-    assert latestData["latest_data"].get('RSOC') == 88
-
     latestData["inverter"] = battery_charging.get_inverter()
     assert latestData["inverter"] .get("pac_total") == -1394.33
 
@@ -231,7 +216,8 @@ def test_get_batterie_wrapped(mocker):
     #discharging
     mocker.patch.object(Batterie, "async_fetch_status", AsyncMock(return_value=__mock_status_discharging()))
     mocker.patch.object(Batterie, "async_fetch_latest_details", AsyncMock(return_value=__mock_latest_discharging()))
-    battery_discharging = Batterie(API_READ_TOKEN, BATTERIE_HOST, BATTERIE_PORT, LOGGER_NAME)  # Batterie online
+
+    battery_discharging = Batterie('fakeUsername', 'fakeToken', 'fakeHost')
     success = battery_discharging.update()
     assert success is not False
 
@@ -243,6 +229,7 @@ def test_get_batterie_wrapped(mocker):
 #    print(f'discharging_flows: {discharging_flows}')
     assert discharging_flows == {'FlowConsumptionBattery': True, 'FlowConsumptionGrid': False, 'FlowConsumptionProduction': True, 'FlowGridBattery': True, 'FlowProductionBattery': False, 'FlowProductionGrid': False}
 
-#    from . import common_results
+    #common tests for all fixture methods
+    from . check_results import check_results
 
     check_results(battery_charging, battery_discharging)

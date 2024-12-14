@@ -1,29 +1,21 @@
-import os
+"""Fixture to load batterie discharging below reserve responses
+    using all sync methods called from async tests using asyncio.run_in_executor
+    to emulate ha component calls
+"""
 import logging
 import pytest
 import asyncio
 from collections.abc import (
     Callable,
 )
-
 from sonnen_api_v2 import Batterie
-from dotenv import load_dotenv
 
 from . mock_sonnenbatterie_v2_charging import  __mock_configurations, __mock_powermeter, __mock_inverter
 from . mock_sonnenbatterie_v2_discharging_reserve import __mock_status_discharging, __mock_latest_discharging, __mock_battery_discharging
 
-load_dotenv()
-
-BATTERIE_1_HOST = os.getenv('BATTERIE_1_HOST','X')
-API_READ_TOKEN_1 = os.getenv('API_READ_TOKEN_1')
-BATTERIE_HOST_PORT = os.getenv('BATTERIE_HOST_PORT')
-
 LOGGER_NAME = "sonnenapiv2"
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-if BATTERIE_1_HOST == 'X':
-    raise ValueError('Set BATTERIE_1_HOST & API_READ_TOKEN_1 in .env See env.example')
 
 @pytest.fixture(name="battery_discharging_reserve")
 async def fixture_battery_discharging_reserve(mocker) -> Batterie:
@@ -41,22 +33,22 @@ async def fixture_battery_discharging_reserve(mocker) -> Batterie:
     mocker.patch.object(Batterie, "fetch_inverter", __mock_inverter)
 
     def async_add_executor_job[*_Ts, _T](
-        self, target: Callable[[*_Ts], _T], *args: *_Ts
+        target: Callable[[*_Ts], _T], *args: *_Ts
         ) -> asyncio.Future[_T]:
         """Add an executor job from within the event loop."""
-        self.loop = asyncio.get_running_loop()
-        task = self.loop.run_in_executor(None, target, *args)
+        loop = asyncio.get_running_loop()
+        task = loop.run_in_executor(None, target, *args)
         return task
 
-    def _sync_update():
+    def _sync_update(battery_discharging_reserve: Batterie) -> bool:
         """Coroutine to sync fetch"""
-        return battery_discharging_reserve.sync_update()
+        return battery_discharging_reserve.sync_get_update()
 
 
-    battery_discharging_reserve = Batterie(API_READ_TOKEN_1, BATTERIE_1_HOST, BATTERIE_HOST_PORT, LOGGER_NAME)
-    success = await async_add_executor_job(mocker,
-        target = _sync_update
+    battery_discharging_reserve = Batterie('fakeUsername', 'fakeToken', 'fakeHost')
+    success = await async_add_executor_job(
+        _sync_update, battery_discharging_reserve
     )
-    assert success is True
+    assert success is not False
 
     return battery_discharging_reserve

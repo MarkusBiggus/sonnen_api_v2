@@ -1,5 +1,39 @@
 import json
-def latest_discharging()-> json:
+def __mock_status_discharging(*args)-> json:
+    return {
+        'Apparent_output': 438,
+        'BackupBuffer': '20',
+        'BatteryCharging': False,
+        'BatteryDischarging': True,
+        'Consumption_Avg': 563,
+        'Consumption_W': 541,
+        'Fac': 50.0167121887207,
+        'FlowConsumptionBattery': True,
+        'FlowConsumptionGrid': False,
+        'FlowConsumptionProduction': True,
+        'FlowGridBattery': False,
+        'FlowProductionBattery': False,
+        'FlowProductionGrid': False,
+        'GridFeedIn_W': 0,
+        'IsSystemInstalled': 1,
+        'OperatingMode': '2',
+        'Pac_total_W': 438,
+        'Production_W': 102,
+        'RSOC': 19,
+        'RemainingCapacity_Wh': 3929,
+        'Sac1': 438,
+        'Sac2': None,
+        'Sac3': None,
+        'SystemStatus': 'OffGrid',
+        'Timestamp': '2023-11-20 17:00:50',
+        'USOC': 19,
+        'Uac': 237,
+        'Ubat': 211,
+        'dischargeNotAllowed': False,
+        'generator_autostart': False
+    }
+
+def __mock_latest_discharging(*args)-> json:
     return {
         'FullChargeCapacity': 20683.490,
         'GridFeedIn_W': 0,
@@ -8,7 +42,7 @@ def latest_discharging()-> json:
         'Production_W': 102,
         'RSOC': 19,
         'SetPoint_W': 439,
-        'Timestamp': '2023-11-20 10:24:38',
+        'Timestamp': '2023-11-20 17:00:50',
         'USOC': 19,
         'UTC_Offet': 2,
         'ic_status': {
@@ -92,6 +126,6 @@ def latest_discharging()-> json:
             'statebms': 'ready',
             'statecorecontrolmodule': 'offgrid',
             'stateinverter': 'running',
-            'timestamp': 'Mon Nov 20 10:24:36 2023'
+            'timestamp': 'Mon Nov 20 17:00:50 2023'
         }
     }

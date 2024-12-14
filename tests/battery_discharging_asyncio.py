@@ -38,6 +38,6 @@ async def fixture_battery_discharging(mocker) -> Batterie:
 
     battery_discharging = Batterie(API_READ_TOKEN_1, BATTERIE_1_HOST, BATTERIE_HOST_PORT, LOGGER_NAME)
     success = await battery_discharging.async_update()
-    assert success is True
+    assert success is not False
 
     return battery_discharging

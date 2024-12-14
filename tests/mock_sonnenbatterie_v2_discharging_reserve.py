@@ -28,7 +28,7 @@ def __mock_status_discharging(*args)-> json:
         'Sac2': None,
         'Sac3': None,
         'SystemStatus': 'OffGrid',
-        'Timestamp': '2022-04-30 17:00:58',
+        'Timestamp': '2023-11-20 17:00:59',
         'USOC': 18,
         'Uac': 237,
         'Ubat': 211,
@@ -45,7 +45,7 @@ def __mock_latest_discharging(*args)-> json:
         'Production_W': 102,
         'RSOC': 18,
         'SetPoint_W': 439,
-        'Timestamp': '2022-04-30 17:00:58',
+        'Timestamp': '2023-11-20 17:00:59',
         'USOC': 18,
         'UTC_Offet': 2,
         'ic_status': {
@@ -129,7 +129,7 @@ def __mock_latest_discharging(*args)-> json:
             'statebms': 'ready',
             'statecorecontrolmodule': 'offgrid',
             'stateinverter': 'running',
-            'timestamp': 'Sat Apr 30 17:00:57 2022'
+            'timestamp': 'Mon Nov 20 17:00:59 2023'
         }
     }
 def __mock_battery_discharging(*args)-> json:

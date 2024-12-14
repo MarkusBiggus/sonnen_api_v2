@@ -34,4 +34,4 @@ class RealTimeAPI:
 
     async def get_data(self) -> BatterieResponse:
         """Query the real time API"""
-        return await self.battery.get_data() # rt_request(self.battery, 3)
+        return await self.battery.get_response() # rt_request(self.battery, 3)

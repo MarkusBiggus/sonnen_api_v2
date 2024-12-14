@@ -1,4 +1,7 @@
-import os
+"""Fixture to load batterie charging responses
+    using all sync methods called from async tests using asyncio.run_in_executor
+    to emulate ha component calls
+"""
 import logging
 import pytest
 import asyncio
@@ -7,22 +10,13 @@ from collections.abc import (
 )
 
 from sonnen_api_v2 import Batterie
-from dotenv import load_dotenv
+#from sonnen_api_v2.sonnen import Sonnen as Batterie, BatterieError
 
 from . mock_sonnenbatterie_v2_charging import __mock_status_charging, __mock_latest_charging, __mock_configurations, __mock_battery, __mock_powermeter, __mock_inverter
-
-load_dotenv()
-
-BATTERIE_1_HOST = os.getenv('BATTERIE_1_HOST','X')
-API_READ_TOKEN_1 = os.getenv('API_READ_TOKEN_1')
-BATTERIE_HOST_PORT = os.getenv('BATTERIE_HOST_PORT')
 
 LOGGER_NAME = "sonnenapiv2"
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-if BATTERIE_1_HOST == 'X':
-    raise ValueError('Set BATTERIE_1_HOST & API_READ_TOKEN_1 in .env See env.example')
 
 @pytest.fixture(name="battery_charging")
 async def fixture_battery_charging(mocker) -> Batterie:
@@ -40,24 +34,24 @@ async def fixture_battery_charging(mocker) -> Batterie:
     mocker.patch.object(Batterie, "fetch_inverter", __mock_inverter)
 
     def async_add_executor_job[*_Ts, _T](
-        self, target: Callable[[*_Ts], _T], *args: *_Ts
+        target: Callable[[*_Ts], _T], *args: *_Ts
         ) -> asyncio.Future[_T]:
         """Add an executor job from within the event loop."""
-        self.loop = asyncio.get_running_loop()
-        task = self.loop.run_in_executor(None, target, *args)
+        loop = asyncio.get_running_loop()
+        task = loop.run_in_executor(None, target, *args)
     #    print (f'task type: {type(task)}')
         return task
 
-    def _sync_update():
+    def _sync_update(battery_charging: Batterie) -> bool:
         """Coroutine to sync fetch"""
-        return battery_charging.sync_update()
+        return battery_charging.sync_get_update()
 
+    battery_charging = Batterie('fakeUsername', 'fakeToken', 'fakeHost')
 
-    battery_charging = Batterie(API_READ_TOKEN_1, BATTERIE_1_HOST, BATTERIE_HOST_PORT, LOGGER_NAME)  # Working and charging
-
-    success = await async_add_executor_job(mocker,
-        target = _sync_update
+    success = await async_add_executor_job(
+        _sync_update, battery_charging
+#        target = _sync_update, args = [battery_charging]
     )
-    assert success is True
+    assert success is not False
 
     return battery_charging

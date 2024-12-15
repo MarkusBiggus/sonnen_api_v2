@@ -798,13 +798,13 @@ class Sonnen:
         return self._battery_status[BATTERY_SYSTEM_VOLTAGE]
 
     @property
-    @get_item(int)
-    def battery_unusable_capacity_wh(self) -> int:
+    @get_item(float)
+    def battery_unusable_capacity_wh(self) -> float:
         """Unusable capacity Wh calculated from Ah
             Returns:
-                Floor Int Wh
+                float Wh
         """
-        return floor(self.battery_full_charge_capacity_wh * BATTERY_UNUSABLE_RESERVE)
+        return self.battery_full_charge_capacity_wh * BATTERY_UNUSABLE_RESERVE
 
     @property
     @get_item(float)
@@ -816,13 +816,13 @@ class Sonnen:
         return self._battery_status[BATTERY_USABLE_REMAINING_CAPACITY]
 
     @property
-    @get_item(int)
-    def battery_usable_remaining_capacity_wh(self) -> int:
+    @get_item(float)
+    def battery_usable_remaining_capacity_wh(self) -> float:
         """Usable Remaining capacity
             Returns:
                 Usable Remaining capacity in Wh
         """
-        return floor(self.battery_usable_remaining_capacity * self.battery_module_dc_voltage)
+        return self.battery_usable_remaining_capacity * self.battery_module_dc_voltage
 
     @property
     @get_item(float)

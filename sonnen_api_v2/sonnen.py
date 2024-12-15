@@ -196,22 +196,27 @@ class Sonnen:
         self._inverter_data = None
 
         self._configurations = self.fetch_configurations()
+        print(f'_configurations: {self._configurations}')
         success = (self._configurations is not None)
         if success:
             self._latest_details_data = self.fetch_latest_details()
+            print(f'_latest_details: {self._latest_details_data}')
             success = (self._latest_details_data is not None)
         if success:
             self._status_data = self.fetch_status()
-        #    print(f'status: {self._status_data}')
+            print(f'status: {self._status_data}')
             success = (self._status_data is not None)
         if success:
             self._battery_status = self.fetch_battery_status()
+            print(f'_battery: {self._battery_status}')
             success = (self._battery_status is not None)
         if success:
             self._powermeter_data = self.fetch_powermeter()
+            print(f'_powermeter: {self._powermeter_data}')
             success = (self._powermeter_data is not None)
         if success:
             self._inverter_data = self.fetch_inverter()
+            print(f'_inverter: {self._inverter_data}')
             success = (self._inverter_data is not None)
 
         self.last_updated = now if success else None

@@ -96,12 +96,12 @@ class Sonnen:
         self.inverter_api_endpoint = f'{self.url}/api/v2/inverter'
 
         # api data
-        self._configurations = None
-        self._status_data = None
-        self._latest_details_data = None
-        self._battery_status = None
-        self._powermeter_data = None
-        self._inverter_data = None
+        self._configurations:Dict = None
+        self._status_data:Dict = None
+        self._latest_details_data:Dict = None
+        self._battery_status:Dict = None
+        self._powermeter_data:Dict = None
+        self._inverter_data:Dict = None
         # isal is preferred over zlib_ng if it is available
         aiohttp_fast_zlib.enable()
 
@@ -217,7 +217,7 @@ class Sonnen:
         self.last_updated = now if success else None
         return success
 
-    async def _async_fetch_api_endpoint(self, url: str) -> Optional[str]:
+    async def _async_fetch_api_endpoint(self, url: str) -> Union[Dict, None]:
         """Fetch API coroutine"""
         try:
             async with aiohttp.ClientSession(headers=self.header, timeout=self.client_timeouts) as session:
@@ -232,7 +232,7 @@ class Sonnen:
 
         return response
 
-    async def _async_fetch(self, session: aiohttp.ClientSession, url: str) -> Optional[str]:
+    async def _async_fetch(self, session: aiohttp.ClientSession, url: str) -> Union[Dict, None]:
         """Fetch API endpoint with aiohttp client"""
         try:
             async with session.get(url) as response:
@@ -250,7 +250,7 @@ class Sonnen:
         return None
 
     # sync for use with run_in_executor in existing event loop
-    def _fetch_api_endpoint(self, url: str) -> Optional[str]:
+    def _fetch_api_endpoint(self, url: str) -> Dict:
         """Fetch API coroutine"""
         try:
             response = requests.get(
@@ -270,19 +270,19 @@ class Sonnen:
 
         return response.json()
 
-    async def async_fetch_status(self) -> Optional[str]:
+    async def async_fetch_status(self) -> Dict:
         """ Used by sonnenbatterie_v2_api to check connection """
         return await self._async_fetch_api_endpoint(
             self.status_api_endpoint
         )
 
-    def fetch_status(self) -> Optional[str]:
+    def fetch_status(self) -> Dict:
         """ Used by sonnenbatterie_v2_api to check connection """
         return self._fetch_api_endpoint(
             self.status_api_endpoint
         )
 
-    async def async_fetch_configurations(self) -> Optional[str]:
+    async def async_fetch_configurations(self) -> Dict:
         now = datetime.datetime.now()
         if self.last_configurations is not None:
             diff = now - self.last_configurations
@@ -294,7 +294,7 @@ class Sonnen:
             self.configurations_api_endpoint
         )
 
-    def fetch_configurations(self) -> Optional[str]:
+    def fetch_configurations(self) -> Dict:
         now = datetime.datetime.now()
         if self.last_configurations is not None:
             diff = now - self.last_configurations
@@ -306,42 +306,42 @@ class Sonnen:
             self.configurations_api_endpoint
         )
 
-    async def async_fetch_latest_details(self) -> bool:
+    async def async_fetch_latest_details(self) -> Dict:
         return await self._async_fetch_api_endpoint(
                 self.latest_details_api_endpoint
         )
 
-    def fetch_latest_details(self) -> bool:
+    def fetch_latest_details(self) -> Dict:
         return self._fetch_api_endpoint(
                 self.latest_details_api_endpoint
         )
 
-    async def async_fetch_battery_status(self) -> Optional[str]:
+    async def async_fetch_battery_status(self) -> Dict:
         return await self._async_fetch_api_endpoint(
             self.battery_api_endpoint
         )
 
-    def fetch_battery_status(self) -> Optional[str]:
+    def fetch_battery_status(self) -> Dict:
         return self._fetch_api_endpoint(
             self.battery_api_endpoint
         )
 
-    async def async_fetch_powermeter(self) -> Optional[str]:
+    async def async_fetch_powermeter(self) -> Dict:
         return await self._async_fetch_api_endpoint(
             self.powermeter_api_endpoint
         )
 
-    def fetch_powermeter(self) -> Optional[str]:
+    def fetch_powermeter(self) -> Dict:
         return self._fetch_api_endpoint(
             self.powermeter_api_endpoint
         )
 
-    async def async_fetch_inverter(self) -> Optional[str]:
+    async def async_fetch_inverter(self) -> Dict:
         return await self._async_fetch_api_endpoint(
             self.inverter_api_endpoint
         )
 
-    def fetch_inverter(self) -> Optional[str]:
+    def fetch_inverter(self) -> Dict:
         return self._fetch_api_endpoint(
             self.inverter_api_endpoint
         )

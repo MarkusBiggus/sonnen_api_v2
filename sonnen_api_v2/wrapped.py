@@ -130,7 +130,7 @@ def sync_get_configurations(self)-> Union[str, bool]:
     self.last_configurations = now
     return _aug_configurations(self)
 
-def _aug_configurations(self):
+def _aug_configurations(self) -> Dict:
     """Augment Configurations for sonnenbatterie wrapper
         Returns:
             json response
@@ -139,7 +139,7 @@ def _aug_configurations(self):
         self._configurations['DepthOfDischargeLimit'] = int((1 - BATTERY_UNUSABLE_RESERVE) * 100)
     return self._configurations
 
-def get_status(self)-> Union[str, bool]:
+def get_status(self) -> Dict:
     """Status details for sonnenbatterie wrapper
         for Sync caller with Async fetch
         Returns:
@@ -157,7 +157,7 @@ def get_status(self)-> Union[str, bool]:
 
     return self._status_data
 
-def sync_get_status(self)-> Union[str, bool]:
+def sync_get_status(self) -> Dict:
     """Status details for sonnenbatterie wrapper
         for Sync caller with Sync fetch
         Returns:
@@ -172,7 +172,7 @@ def sync_get_status(self)-> Union[str, bool]:
     self._status_data = self.fetch_status()
     return self._status_data
 
-def get_latest_data(self)-> Union[str, bool]:
+def get_latest_data(self) -> Dict:
     """Latest details for sonnenbatterie wrapper
         for Sync caller with Async fetch
         Returns:
@@ -190,7 +190,7 @@ def get_latest_data(self)-> Union[str, bool]:
         event_loop.close()
     return self._latest_details_data
 
-def sync_get_latest_data(self)-> Union[str, bool]:
+def sync_get_latest_data(self) -> Dict:
     """Latest details for sonnenbatterie wrapper
         for Sync caller with Sync fetch
         Returns:
@@ -206,7 +206,7 @@ def sync_get_latest_data(self)-> Union[str, bool]:
     self._latest_details_data = self.fetch_latest_details()
     return self._latest_details_data
 
-def get_battery(self)-> Union[Dict, bool]:
+def get_battery(self) -> Dict:
     """Battery status for sonnenbatterie wrapper
         Fake V1 API data used by ha sonnenbatterie component
         for Sync caller with Async fetch
@@ -231,7 +231,7 @@ def get_battery(self)-> Union[Dict, bool]:
 
     return _aug_battery(self)
 
-def sync_get_battery(self)-> Union[Dict, bool]:
+def sync_get_battery(self) -> Dict:
     """Battery status for sonnenbatterie wrapper
         Fake V1 API data used by ha sonnenbatterie component
         for Sync caller with Sync fetch
@@ -254,7 +254,7 @@ def sync_get_battery(self)-> Union[Dict, bool]:
 
     return _aug_battery(self)
 
-def _aug_battery(self):
+def _aug_battery(self) -> Dict:
     """Augment Battery status for sonnenbatterie wrapper
         Fake V1 API data used by ha sonnenbatterie component
         Returns:
@@ -271,7 +271,7 @@ def _aug_battery(self):
     self._battery_status['backup_buffer_usable'] = self.backup_buffer_usable_capacity_wh
     return self._battery_status
 
-def get_powermeter(self)-> Union[str, bool]:
+def get_powermeter(self) -> Dict:
     """powermeter details for sonnenbatterie wrapper
         for Sync caller with Async fetch
         Returns:
@@ -290,7 +290,7 @@ def get_powermeter(self)-> Union[str, bool]:
 
     return self._powermeter_data
 
-def sync_get_powermeter(self)-> Union[str, bool]:
+def sync_get_powermeter(self) -> Dict:
     """powermeter details for sonnenbatterie wrapper
         for Sync caller with Sync fetch
         Returns:
@@ -306,7 +306,7 @@ def sync_get_powermeter(self)-> Union[str, bool]:
     self._powermeter_data = self.fetch_powermeter()
     return self._powermeter_data
 
-def get_inverter(self)-> Union[str, bool]:
+def get_inverter(self) -> Dict:
     """Inverter details for sonnenbatterie wrapper
         for Sync caller with Async fetch
         Returns:
@@ -325,7 +325,7 @@ def get_inverter(self)-> Union[str, bool]:
 
     return self._inverter_data
 
-def sync_get_inverter(self)-> Union[str, bool]:
+def sync_get_inverter(self) -> Dict:
     """Inverter details for sonnenbatterie wrapper
         for Sync caller with Sync fetch
         Returns:

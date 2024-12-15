@@ -74,21 +74,21 @@ async def test_asyncio_methods(battery_charging: Batterie, battery_discharging: 
     assert latest_data.get('Consumption_W') == 1541
     assert latest_data.get('Pac_total_W') == 1439
 
-    configuratons = await battery_charging.async_fetch_configurations()
-    assert configuratons.get('DE_Software') == '1.14.5'
-    assert configuratons.get('EM_USOC') == 20
+    configurations = await battery_charging.async_fetch_configurations()
+    assert configurations.get('DE_Software') == '1.14.5'
+    assert configurations.get('EM_USOC') == 20
 
-    status_data = await battery_charging.async_fetch_battery_status()
-    assert status_data.get('cyclecount') == 30
-    assert status_data.get('remainingcapacity') == 177.74
+    battery_status = await battery_charging.async_fetch_battery_status()
+    assert battery_status.get('cyclecount') == 30
+    assert battery_status.get('remainingcapacity') == 177.74
 
     powermeter = await battery_charging.async_fetch_powermeter()
     assert powermeter[0]['direction'] == 'production'
     assert powermeter[1]['direction'] == 'consumption'
 
-    status_data = await battery_charging.async_fetch_inverter()
-    assert status_data.get('pac_total') == -1394.33
-    assert status_data.get('uac') == 233.55
+    inverter_data = await battery_charging.async_fetch_inverter()
+    assert inverter_data.get('pac_total') == -1394.33
+    assert inverter_data.get('uac') == 233.55
 
     from .check_results import check_results
 

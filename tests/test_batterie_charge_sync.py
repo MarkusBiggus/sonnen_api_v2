@@ -56,9 +56,9 @@ def test_sync_methods(battery_charging: Batterie) -> None:
     assert status_data.get('pac_total') == -1394.33
     assert status_data.get('uac') == 233.55
 
-    configuratons = battery_charging.sync_get_configurations()
-    assert configuratons.get('DE_Software') == '1.14.5'
-    assert configuratons.get('EM_USOC') == 20
+    configurations = battery_charging.sync_get_configurations()
+    assert configurations.get('DE_Software') == '1.14.5'
+    assert configurations.get('EM_USOC') == 20
 
     from .check_results import check_charge_results
 

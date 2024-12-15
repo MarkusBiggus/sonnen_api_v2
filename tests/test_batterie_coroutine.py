@@ -109,16 +109,16 @@ async def test_coroutine_methods(battery_charging: Batterie, battery_discharging
     assert configurations.get('EM_USOC') == 20
     assert configurations.get('DepthOfDischargeLimit') == 93
 
-    battery_info = await async_add_executor_job(
+    battery_status = await async_add_executor_job(
         target=_test_get_battery
     )
-    assert battery_info.get('cyclecount') == 30
-    assert battery_info.get('remainingcapacity') == 177.74
+    assert battery_status.get('cyclecount') == 30
+    assert battery_status.get('remainingcapacity') == 177.74
 
-    assert battery_info.get('total_installed_capacity') == 20000
-    assert battery_info.get('remaining_capacity') == 18200.576
-    assert battery_info.get('remaining_capacity_usable') == 16752
-    assert battery_info.get('backup_buffer_usable') == 2688
+    assert battery_status.get('total_installed_capacity') == 20000
+    assert battery_status.get('remaining_capacity') == 18200.576
+    assert battery_status.get('remaining_capacity_usable') == 16752
+    assert battery_status.get('backup_buffer_usable') == 2688
 
     powermeter = await async_add_executor_job(
         target=_test_get_powermeter

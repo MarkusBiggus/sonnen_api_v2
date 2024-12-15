@@ -63,10 +63,9 @@ def test_sync_methods(battery_discharging: Batterie) -> None:
     assert inverter_data.get('pac_total') == 1438
     assert inverter_data.get('uac') == 233.55
 
-
-    configuratons = battery_discharging.sync_get_configurations()
-    assert configuratons.get('DE_Software') == '1.14.5'
-    assert configuratons.get('EM_USOC') == 20
+    configurations = battery_discharging.sync_get_configurations()
+    assert configurations.get('DE_Software') == '1.14.5'
+    assert configurations.get('EM_USOC') == 20
 
     from .check_results import check_discharge_results
 

@@ -81,17 +81,17 @@ def test_sync_methods(battery_charging: Batterie, battery_discharging: Batterie,
     assert powermeter[0]['direction'] == 'production'
     assert powermeter[1]['direction'] == 'consumption'
 
-    status_data =  battery_charging.sync_get_battery()
-    assert status_data.get('cyclecount') == 30
-    assert status_data.get('remainingcapacity') == 177.74
+    battery_status =  battery_charging.sync_get_battery()
+    assert battery_status.get('cyclecount') == 30
+    assert battery_status.get('remainingcapacity') == 177.74
 
-    status_data = battery_charging.sync_get_inverter()
-    assert status_data.get('pac_total') == -1394.33
-    assert status_data.get('uac') == 233.55
+    inverter_data = battery_charging.sync_get_inverter()
+    assert inverter_data.get('pac_total') == -1394.33
+    assert inverter_data.get('uac') == 233.55
 
-    configuratons = battery_charging.sync_get_configurations()
-    assert configuratons.get('DE_Software') == '1.14.5'
-    assert configuratons.get('EM_USOC') == 20
+    configurations = battery_charging.sync_get_configurations()
+    assert configurations.get('DE_Software') == '1.14.5'
+    assert configurations.get('EM_USOC') == 20
 
     from .check_results import check_results
 

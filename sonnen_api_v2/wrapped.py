@@ -136,7 +136,7 @@ def _aug_configurations(self) -> Dict:
             json response
     """
     if self._configurations is not None:
-        self._configurations['DepthOfDischargeLimit'] = int((1 - BATTERY_UNUSABLE_RESERVE) * 100)
+        self._configurations['DepthOfDischargeLimit'] = int((1.0 - BATTERY_UNUSABLE_RESERVE) * 100)
     return self._configurations
 
 def get_status(self) -> Dict:

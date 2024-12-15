@@ -1,7 +1,7 @@
 """Methods to emulate sonnenbatterie (v1) package for sonnenbatterie_v2_api ha component
     Uses sync methods called by asyncio.run_in_executor from home assistant
 """
-from typing import Union, Dict
+from typing import Dict
 import datetime
 import aiohttp
 import asyncio
@@ -94,7 +94,7 @@ def sync_get_update(self) -> bool:
     self.last_get_updated = now if success else None
     return success
 
-def get_configurations(self)-> Union[str, bool]:
+def get_configurations(self)-> Dict:
     """Configuration details for sonnenbatterie wrapper
         for Sync caller with Async fetch
         Returns:
@@ -113,7 +113,7 @@ def get_configurations(self)-> Union[str, bool]:
 
     return _aug_configurations(self)
 
-def sync_get_configurations(self)-> Union[str, bool]:
+def sync_get_configurations(self)-> Dict:
     """Configuration details for sonnenbatterie wrapper
         for Sync caller with Sync fetch
         Returns:

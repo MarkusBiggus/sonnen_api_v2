@@ -4,12 +4,12 @@
 import json
 def __mock_status_discharging(*args)-> json:
     return {
-        'Apparent_output': 438,
+        'Apparent_output': 1438,
         'BackupBuffer': '20',
         'BatteryCharging': False,
         'BatteryDischarging': True,
-        'Consumption_Avg': 563,
-        'Consumption_W': 541,
+        'Consumption_Avg': 1563,
+        'Consumption_W': 1541,
         'Fac': 50.0167121887207,
         'FlowConsumptionBattery': True,
         'FlowConsumptionGrid': False,
@@ -20,8 +20,8 @@ def __mock_status_discharging(*args)-> json:
         'GridFeedIn_W': 0,
         'IsSystemInstalled': 1,
         'OperatingMode': '2',
-        'Pac_total_W': 438,
-        'Production_W': 102,
+        'Pac_total_W': 1438,
+        'Production_W': 103,
         'RSOC': 18,
         'RemainingCapacity_Wh': 6723,
         'Sac1': 438,
@@ -40,9 +40,9 @@ def __mock_latest_discharging(*args)-> json:
     return {
         'FullChargeCapacity': 20683.490,
         'GridFeedIn_W': 0,
-        'Pac_total_W': 1439,
+        'Pac_total_W': 1438,
         'Consumption_W': 1541,
-        'Production_W': 102,
+        'Production_W': 103,
         'RSOC': 18,
         'SetPoint_W': 439,
         'Timestamp': '2023-11-20 17:00:59',
@@ -162,4 +162,22 @@ def __mock_battery_discharging(*args)-> json:
         "systemtime":0.0,
         "systemwarning":0.0,
         "usableremainingcapacity":22.22
+    }
+
+def __mock_inverter_discharging(*args)-> json:
+    return {
+        "fac": 0.0,
+        "iac_total": 0.39,
+        "ibat": 0.01,
+        "ipv": 0.0,
+        "pac_microgrid": 0.0,
+        "pac_total": 1438,
+        "pbat": -0.14,
+        "phi": -0.82,
+        "ppv": 0.0,
+        "sac_total": 0.0,
+        "tmax": 55.53,
+        "uac": 233.55,
+        "ubat": 209.18,
+        "upv": 0.0
     }

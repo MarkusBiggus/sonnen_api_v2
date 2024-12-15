@@ -637,15 +637,6 @@ class Sonnen:
 
     @property
     @get_item(float)
-    def battery_full_charge_capacity(self) -> float:
-        """Fullcharge capacity
-            Returns:
-                Fullcharge capacity in Ah
-        """
-        return self._battery_status[BATTERY_FULL_CHARGE_CAPACITY_AH]
-
-    @property
-    @get_item(float)
     def battery_max_cell_temp(self) -> float:
         """Max cell temperature
             Returns:
@@ -742,6 +733,15 @@ class Sonnen:
                 Relative state of charge in %
         """
         return self._battery_status[BATTERY_RSOC]
+
+    @property
+    @get_item(float)
+    def battery_full_charge_capacity(self) -> float:
+        """Fullcharge capacity
+            Returns:
+                Fullcharge capacity in Ah
+        """
+        return self._battery_status[BATTERY_FULL_CHARGE_CAPACITY_AH]
 
     @property
     @get_item(float)

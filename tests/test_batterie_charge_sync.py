@@ -60,6 +60,6 @@ def test_sync_methods(battery_charging: Batterie) -> None:
     assert configuratons.get('DE_Software') == '1.14.5'
     assert configuratons.get('EM_USOC') == 20
 
-    from .check_results import check_results
+    from .check_results import check_charge_results
 
-#    check_results(battery_charging, battery_discharging, battery_discharging_reserve)
+    check_charge_results(battery_charging)

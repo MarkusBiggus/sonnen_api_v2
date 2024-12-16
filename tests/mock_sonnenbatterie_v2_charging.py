@@ -26,7 +26,7 @@ def __mock_status_charging(*args)-> json:
         'Sac2': None,
         'Sac3': None,
         'SystemStatus': 'OnGrid',
-        'Timestamp': '2022-04-30 17:00:55',
+        'Timestamp': '2023-11-20 17:00:55',
         'USOC': 88,
         'Uac': 235,
         'Ubat': 212,
@@ -43,7 +43,7 @@ def __mock_latest_charging(*args)-> json:
         'Pac_total_W': -1394,
         'RSOC': 88,
         'SetPoint_W': -145,
-        'Timestamp': '2022-04-30 17:00:55',
+        'Timestamp': '2023-11-20 17:00:55',
         'USOC': 88,
         'UTC_Offet': 2,
         'ic_status': {
@@ -127,7 +127,7 @@ def __mock_latest_charging(*args)-> json:
             'statebms': 'ready',
             'statecorecontrolmodule': 'ongrid',
             'stateinverter': 'running',
-            'timestamp': 'Sat Apr 30 17:00:55 2022'
+            'timestamp': 'Mon Nov 20 17:00:55 2023'
         }
     }
 
@@ -153,7 +153,9 @@ def __mock_configurations(*args)-> json:
         "CM_MarketingModuleCapacity": 5000,
         "EM_USER_INPUT_TIME_THREE": 0,
         "CN_CascadingRole": "none",
-        "EM_US_GEN_POWER_SET_POINT": 0
+        "EM_US_GEN_POWER_SET_POINT": 0,
+        "DepthOfDischargeLimit": 93
+
     }
 
 def __mock_battery(*args)-> json:

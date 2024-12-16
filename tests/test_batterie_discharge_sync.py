@@ -1,4 +1,4 @@
-"""pytest tests/test_batterie_sync.py -s -v -x
+"""pytest tests/test_batterie_discharge_sync.py -s -v -x
 3. Sync update called from sync method
 """
 import datetime
@@ -58,9 +58,8 @@ def test_sync_methods(battery_discharging: Batterie) -> None:
     assert battery_status.get('remainingcapacity') == 177.74
 
     inverter_data = battery_discharging.sync_get_inverter()
-    assert status_data.get('Pac_total_W') == inverter_data.get('pac_total')
-
-    assert inverter_data.get('pac_total') == 1438
+    assert  int(inverter_data.get('pac_total')) == status_data.get('Pac_total_W')
+    assert inverter_data.get('pac_total') == 1438.67
     assert inverter_data.get('uac') == 233.55
 
     configurations = battery_discharging.sync_get_configurations()

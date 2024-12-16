@@ -1,4 +1,4 @@
-"""pytest tests/test_batterie_sync.py -s -v -x
+"""pytest tests/test_batterie_charge_sync.py -s -v -x
 3. Sync update called from sync method
 """
 import datetime
@@ -31,14 +31,14 @@ def test_sync_methods(battery_charging: Batterie) -> None:
     # sync wrapped methods used by ha component
     status_data = battery_charging.sync_get_status()
     #print(f'status: {status_data}')
-    assert status_data.get('Timestamp') == '2022-04-30 17:00:55'
+    assert status_data.get('Timestamp') == '2023-11-20 17:00:55'
     assert status_data.get('GridFeedIn_W') == 0
     assert status_data.get('Consumption_W') == 1578
     assert status_data.get('Production_W') == 2972
     assert status_data.get('Pac_total_W') == -1394
 
     latest_data = battery_charging.sync_get_latest_data()
-    assert latest_data.get('Timestamp') == '2022-04-30 17:00:55'
+    assert latest_data.get('Timestamp') == '2023-11-20 17:00:55'
     assert latest_data.get('GridFeedIn_W') == 0
     assert latest_data.get('Consumption_W') == 1578
     assert latest_data.get('Production_W') == 2972
@@ -48,13 +48,14 @@ def test_sync_methods(battery_charging: Batterie) -> None:
     assert powermeter[0]['direction'] == 'production'
     assert powermeter[1]['direction'] == 'consumption'
 
-    status_data =  battery_charging.sync_get_battery()
-    assert status_data.get('cyclecount') == 30
-    assert status_data.get('remainingcapacity') == 177.74
+    battery_status =  battery_charging.sync_get_battery()
+    assert battery_status.get('cyclecount') == 30
+    assert battery_status.get('remainingcapacity') == 177.74
 
-    status_data = battery_charging.sync_get_inverter()
-    assert status_data.get('pac_total') == -1394.33
-    assert status_data.get('uac') == 233.55
+    inverter_data = battery_charging.sync_get_inverter()
+    assert  int(inverter_data.get('pac_total')) == status_data.get('Pac_total_W')
+    assert inverter_data.get('pac_total') == -1394.33
+    assert inverter_data.get('uac') == 233.55
 
     configurations = battery_charging.sync_get_configurations()
     assert configurations.get('DE_Software') == '1.14.5'

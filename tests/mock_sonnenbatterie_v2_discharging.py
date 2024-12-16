@@ -140,7 +140,7 @@ def __mock_inverter_discharging(*args)-> json:
         "ibat": 0.01,
         "ipv": 0.0,
         "pac_microgrid": 0.0,
-        "pac_total": 1438,
+        "pac_total": 1438.67,
         "pbat": -0.14,
         "phi": -0.82,
         "ppv": 0.0,

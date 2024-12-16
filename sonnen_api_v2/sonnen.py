@@ -366,14 +366,12 @@ class Sonnen:
     def kwh_consumed(self) -> float:
         """Consumed kWh"""
         return self._powermeter_data[1][POWERMETER_KWH_CONSUMED]
-    #    return self._powermeter_consumption[POWERMETER_KWH_CONSUMED]
 
     @property
     @get_item(float)
     def kwh_produced(self) -> float:
         """Produced kWh"""
         return self._powermeter_data[0][POWERMETER_KWH_PRODUCED]
-    #    return self._powermeter_production[POWERMETER_KWH_PRODUCED]
 
     @property
     @get_item(int)
@@ -513,7 +511,6 @@ class Sonnen:
             Returns:
                 Datetime or None when not charging
         """
-        #    return final_time.strftime('%d.%B.%Y %H:%M')
         return (datetime.datetime.now() + datetime.timedelta(seconds=self.seconds_until_fully_charged)) if self.charging else None
 
     @property
@@ -582,7 +579,6 @@ class Sonnen:
             Returns:
                 Inverter load in watt
         """
-#        print (f'DETAIL_PAC_TOTAL_W: {self._latest_details_data[DETAIL_PAC_TOTAL_W]}')
         return self._latest_details_data[DETAIL_PAC_TOTAL_W]
 
     @property
@@ -601,7 +597,6 @@ class Sonnen:
             Returns:
                 Discharging value in watt
         """
-#        print (f'self.pac_total: {self.pac_total}')
         return self.pac_total if self.pac_total > 0 else 0
 
     @property
@@ -1017,33 +1012,3 @@ class Sonnen:
                 JSON String
         """
         return self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED]
-
-    # @classmethod
-    # def sensor_map(cls) -> Dict[str, Tuple[int, Measurement]]:
-    #     """
-    #     Return sensor map
-    #     Warning, HA depends on this
-    #     """
-    #     sensors: Dict[str, Tuple[int, Measurement]] = {}
-    #     for name, mapping in cls.response_decoder().items():
-    #         unit = Measurement(Units.NONE)
-
-    #         (idx, unit_or_measurement, *_) = mapping
-
-    #         if isinstance(unit_or_measurement, Units):
-    #             unit = Measurement(unit_or_measurement)
-    #         else:
-    #             unit = unit_or_measurement
-    #         if isinstance(idx, tuple):
-    #             sensor_indexes = idx[0]
-    #             first_sensor_index = sensor_indexes[0]
-    #             idx = first_sensor_index
-    #         sensors[name] = (idx, unit)
-    #     return sensors
-
-    # @classmethod
-    # def schema(cls) -> vol.Schema:
-    #     """
-    #     Return schema
-    #     """
-    #     return cls._schema

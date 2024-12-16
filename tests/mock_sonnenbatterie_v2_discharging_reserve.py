@@ -1,5 +1,5 @@
 """Mock batterie data also used in package sonnenbatterie_api_v2 & ha component sonnenenbatterie
-    Discharging above reserve (OnGrid)
+    Discharging below reserve (OffGrid)
 """
 import json
 def __mock_status_discharging(*args)-> json:
@@ -22,14 +22,14 @@ def __mock_status_discharging(*args)-> json:
         'OperatingMode': '2',
         'Pac_total_W': 1438,
         'Production_W': 103,
-        'RSOC': 88,
-        'RemainingCapacity_Wh': 40181,
+        'RSOC': 18,
+        'RemainingCapacity_Wh': 6723,
         'Sac1': 438,
         'Sac2': None,
         'Sac3': None,
-        'SystemStatus': 'OnGrid',
-        'Timestamp': '2023-11-20 17:00:58',
-        'USOC': 88,
+        'SystemStatus': 'OffGrid',
+        'Timestamp': '2023-11-20 17:00:59',
+        'USOC': 18,
         'Uac': 237,
         'Ubat': 211,
         'dischargeNotAllowed': False,
@@ -43,10 +43,10 @@ def __mock_latest_discharging(*args)-> json:
         'Pac_total_W': 1438,
         'Consumption_W': 1541,
         'Production_W': 103,
-        'RSOC': 88,
+        'RSOC': 18,
         'SetPoint_W': 439,
-        'Timestamp': '2023-11-20 17:00:58',
-        'USOC': 88,
+        'Timestamp': '2023-11-20 17:00:59',
+        'USOC': 18,
         'UTC_Offet': 2,
         'ic_status': {
             'DC Shutdown Reason': {
@@ -105,7 +105,7 @@ def __mock_latest_discharging(*args)-> json:
                 'Over Discharge Current': False,
                 'Peak Power Violation': False,
                 'Protect is activated': False,
-                'Transition to Ongrid Pending': False
+                'Transition to Ongrid Pending': True
             },
             'Setpoint Priority': {
                 'BMS': False,
@@ -125,12 +125,43 @@ def __mock_latest_discharging(*args)-> json:
                 'Self test successful finished': False
             },
             'nrbatterymodules': 4,
-            'secondssincefullcharge': 574,
+            'secondssincefullcharge': 2574,
             'statebms': 'ready',
-            'statecorecontrolmodule': 'ongrid',
+            'statecorecontrolmodule': 'offgrid',
             'stateinverter': 'running',
-            'timestamp': 'Mon Nov 20 17:00:58 2023'
+            'timestamp': 'Mon Nov 20 17:00:59 2023'
         }
+    }
+def __mock_battery_discharging(*args)-> json:
+    return {
+        "balancechargerequest":0.0,
+        "chargecurrentlimit":39.97,
+        "cyclecount":30.0,
+        "dischargecurrentlimit":39.97,
+        "fullchargecapacity":201.98,
+        "fullchargecapacitywh":20683.490,
+        "maximumcelltemperature":19.95,
+        "maximumcellvoltage":3.257,
+        "maximumcellvoltagenum":0.0,
+        "maximummodulecurrent":0.0,
+        "maximummoduledcvoltage":104.15,
+        "maximummoduletemperature":-273.15,
+        "minimumcelltemperature":18.95,
+        "minimumcellvoltage":3.251,
+        "minimumcellvoltagenum":0.0,
+        "minimummodulecurrent":0.0,
+        "minimummoduledcvoltage":104.15,
+        "minimummoduletemperature":-273.15,
+        "nominalmoduledcvoltage":102.4,
+        "relativestateofcharge":88.0,
+        "remainingcapacity":36.36,
+        "systemalarm":0.0,
+        "systemcurrent":0.0,
+        "systemdcvoltage":208.3,
+        "systemstatus":88.0,
+        "systemtime":0.0,
+        "systemwarning":0.0,
+        "usableremainingcapacity":22.22
     }
 
 def __mock_inverter_discharging(*args)-> json:

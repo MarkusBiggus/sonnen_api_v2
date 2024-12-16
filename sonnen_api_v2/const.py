@@ -69,10 +69,12 @@ STATUS_SYSTEMSTATUS = 'SystemStatus'
 STATUS_TIMESTAMP = 'Timestamp'
 INVERTER_PAC_TOTAL = 'pac_total'
 
-# default timeout
+# default timeout (seconds)
 TIMEOUT = 20
 TIMEOUT_CONNECT=0
 TIMEOUT_REQUEST=1
+
+RATE_LIMIT = 3 #seconds
 
 # Manufacturer reserve 7%
 BATTERY_UNUSABLE_RESERVE = .07

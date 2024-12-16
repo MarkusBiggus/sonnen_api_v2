@@ -7,20 +7,10 @@ from .sonnen import Sonnen as Batterie, BatterieResponse, BatterieError
 __version__ = '0.5.12'
 
 __all__ = (
-    "real_time_api",
     "Batterie"
     "BatterieError",
     "BatterieResponse",
     "RealTimeAPI",
-    "set_request_connect_timeouts",
-    "get_request_connect_timeouts",
-    "get_latest_data",
-    "get_configurations",
-    "get_status",
-    "get_powermeter",
-    "get_battery",
-    "get_inverter",
-    "get_batterysystem",
 )
 
 #_LOGGER = logging.getLogger(__name__)
@@ -44,4 +34,4 @@ class RealTimeAPI:
 
     async def get_data(self) -> BatterieResponse:
         """Query the real time API"""
-        return await self.battery.get_data() # rt_request(self.battery, 3)
+        return await self.battery.get_response() # rt_request(self.battery, 3)

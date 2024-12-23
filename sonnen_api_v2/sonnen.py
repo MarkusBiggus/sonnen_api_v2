@@ -40,7 +40,7 @@ def get_item(_type):
     return decorator
 
 class BatterieError(Exception):
-    """Indicates error communicating with batterie"""
+    """Indicates error communicating with batterie."""
     pass
 
 class BatterieResponse(
@@ -50,21 +50,20 @@ class BatterieResponse(
             "serial_number",
             "version",
             "last_updated",
-            "latestdata",
-            "status",
-            "battery",
-            "powermeter_production",
-            "powermeter_consumption",
             "configurations",
-            "inverter"
+#            "status",
+#            "latestdata",
+#            "battery",
+#            "powermeter",
+#            "inverter"
         ],
     )
 ):
-    """Sonnen Batterie response for ha component"""
+    """Sonnen Batterie response for ha component."""
 
 
 class Sonnen:
-    """Class for managing Sonnen API V2 data"""
+    """Class for managing Sonnen API V2 data."""
     from .wrapped import set_request_connect_timeouts, get_request_connect_timeouts
     from .wrapped import get_update, get_latest_data, get_configurations, get_status, get_powermeter, get_battery, get_inverter
     from .wrapped import sync_get_update, sync_get_latest_data, sync_get_configurations, sync_get_status, sync_get_powermeter, sync_get_battery, sync_get_inverter
@@ -350,6 +349,11 @@ class Sonnen:
         return self._fetch_api_endpoint(
             self.inverter_api_endpoint
         )
+
+    @property
+    def configurations(self) -> Dict:
+        """latest Configurations fetched from batterie"""
+        return self._configurations
 
     @property
     def last_updated(self) -> Optional[datetime.datetime]:

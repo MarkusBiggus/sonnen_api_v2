@@ -17,7 +17,7 @@ __all__ = (
 
 
 async def real_time_api(auth_token, ip_address, port=80):
-    battery = await Batterie(auth_token, ip_address, port) # , return_when=asyncio.FIRST_COMPLETED)
+    battery = Batterie(auth_token, ip_address, port) # , return_when=asyncio.FIRST_COMPLETED)
     return RealTimeAPI(battery)
 
 
@@ -30,8 +30,20 @@ class RealTimeAPI:
 
     def __init__(self, battery: Batterie):
         """Initialize the API client."""
-        self.battery = battery
+        self.battery = Batterie(auth_token, ip_address, port)
 
     async def get_data(self) -> BatterieResponse:
         """Query the real time API"""
-        return await self.battery.get_response() # rt_request(self.battery, 3)
+        success = await self.battery.async_update()) # rt_request(self.battery, 3)
+        return BatterieResponse(
+        "BatterieResponse": [
+            "serial_number": 'xXx',
+            "version": self.battery.configuration_de_software,
+            "last_updated": self.battery.last_updated,
+            "configurations": self.battery.configurations,
+#            "status": self.battery.,
+#            "latestdata": self.battery.,
+#            "battery": self.battery.,
+#            "powermeter": self.battery.,
+#            "inverter": self.battery.
+        ]

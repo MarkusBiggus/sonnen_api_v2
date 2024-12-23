@@ -10,13 +10,13 @@ __all__ = (
     "Batterie"
     "BatterieError",
     "BatterieResponse",
-    "RealTimeAPI",
+    "BatterieBackup",
 )
 
 _LOGGER = logging.getLogger(__name__)
 
 
-class RealTimeAPI:
+class BatterieBackup:
     """Sonnen Batterie real time API
         Used by home assistant component
     """
@@ -27,12 +27,12 @@ class RealTimeAPI:
         """Initialize the API client."""
         self.battery = Batterie(auth_token, ip_address, port)
 
-    async def get_data(self) -> BatterieResponse:
+    async def get_response(self) -> BatterieResponse:
         """Query the real time API."""
         success = await self.battery.async_update()
         if success is False:
-            _LOGGER.error('RealTimeAPI: Error updating batterie data!')
-            raise BatterieError('RealTimeAPI: Error updating batterie data!')
+            _LOGGER.error('BatterieBackup: Error updating batterie data!')
+            raise BatterieError('BatterieBackup: Error updating batterie data!')
 
         return BatterieResponse(
             serial_number = 'xXx', #comes from config entry

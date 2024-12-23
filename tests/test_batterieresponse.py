@@ -8,7 +8,7 @@ import logging
 import pytest
 from freezegun import freeze_time
 
-from sonnen_api_v2 import Batterie, BatterieResponse, RealTimeAPI
+from sonnen_api_v2 import Batterie, BatterieBackup, BatterieResponse
 
 from .battery_charging_asyncio import fixture_battery_charging
 
@@ -49,9 +49,9 @@ async def test_batterieresponse(battery_charging: Batterie) -> None:
     assert status_data.get('Production_W') == 2972
     assert status_data.get('Pac_total_W') == -1394
 
-    _batterie = RealTimeAPI('fakeUsername', 'fakeToken', 'fakeHost')
+    _batterie = BatterieBackup('fakeUsername', 'fakeToken', 'fakeHost')
 
-    response = await _batterie.get_data()
+    response = await _batterie.get_response()
 
     #print(f'response: {response}')
 

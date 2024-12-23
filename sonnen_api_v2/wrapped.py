@@ -1,5 +1,6 @@
-"""Methods to emulate sonnenbatterie (v1) package for sonnenbatterie_v2_api ha component
-    Uses sync methods called by asyncio.run_in_executor from home assistant
+"""Methods to emulate sonnenbatterie (v1) package for sonnenbatterie_v2_api ha component.
+
+    Uses sync methods called by asyncio.run_in_executor from home assistant.
 """
 from typing import Dict
 import datetime
@@ -18,24 +19,9 @@ def set_request_connect_timeouts(self, request_timeouts: tuple[int, int]):
 def get_request_connect_timeouts(self) -> tuple[int, int]:
     return self.request_timeouts
 
-# def get_response(self) -> tuple[int, int]:
-#     """BatterieResponse used by ha component"""
-#     try:
-#         self.sync_get_update()
-#     except Exception as error:
-#         self._log_error(f'BatterieResponse error: {error}')
-#         raise BatterieError(f'BatterieResponse error: {error}') from error
-#     return BatteryResponse(
-#         data=self.map_response(response),
-#         # data=self.map_response(response[_KEY_DATA]),
-#         # dongle_serial_number=self.dongle_serial_number_getter(response),
-#         # version=response.get(_KEY_VER, response.get(_KEY_VERSION)),
-#         # type=response[_KEY_TYPE],
-#         # Battery_serial_number=self.Battery_serial_number_getter(response),
-#     )
-
 def get_update(self) -> bool:
-    """Update battery details Asyncronously from a sequential caller using async methods
+    """Update battery details Asyncronously from a sequential caller using async methods.
+
     Returns:
         True when all updates successful or
         called again within rate limit interval
@@ -55,8 +41,9 @@ def get_update(self) -> bool:
 
 def sync_get_update(self) -> bool:
     """Update all battery data from a sequential caller using sync methods
-        with extended data needed for ha component
-    Returns:
+        with extended data needed for ha component.
+
+        Returns:
         True when all updates successful or
         called again within rate limit interval
     """
@@ -96,7 +83,8 @@ def sync_get_update(self) -> bool:
 
 def get_configurations(self)-> Dict:
     """Configuration details for sonnenbatterie wrapper
-        for Sync caller with Async fetch
+        for Sync caller with Async fetch.
+
         Returns:
             json response
     """
@@ -115,7 +103,8 @@ def get_configurations(self)-> Dict:
 
 def sync_get_configurations(self)-> Dict:
     """Configuration details for sonnenbatterie wrapper
-        for Sync caller with Sync fetch
+        for Sync caller with Sync fetch.
+
         Returns:
             json response
     """
@@ -131,7 +120,8 @@ def sync_get_configurations(self)-> Dict:
     return _aug_configurations(self)
 
 def _aug_configurations(self) -> Dict:
-    """Augment Configurations for sonnenbatterie wrapper
+    """Augment Configurations for sonnenbatterie wrapper.
+
         Returns:
             json response
     """

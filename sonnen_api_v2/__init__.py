@@ -1,4 +1,4 @@
-""" SonnenBatterie API V2 module """
+"""Sonnen Batterie API V2 module."""
 
 #import asyncio
 import logging
@@ -17,8 +17,9 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class BatterieBackup:
-    """Sonnen Batterie real time API
-        Used by home assistant component
+    """Sonnen Batterie real time API.
+
+        Used by home assistant component sonnenbackup
     """
 
     # pylint: disable=too-few-public-methods

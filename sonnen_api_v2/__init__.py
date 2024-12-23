@@ -1,37 +1,47 @@
-""" SonnenBatterie API V2 module """
+"""Sonnen Batterie API V2 module."""
 
-#import asyncio
-#import logging
-from .sonnen import Sonnen as Batterie, BatterieResponse, BatterieError
+import logging
+from sonnen_api_v2 import Batterie, BatterieResponse, BatterieError
 
-__version__ = '0.5.12'
+__version__ = '1.0.0'
 
 __all__ = (
     "Batterie"
     "BatterieError",
     "BatterieResponse",
-    "RealTimeAPI",
+    "BatterieBackup",
 )
 
-#_LOGGER = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
 
-async def real_time_api(auth_token, ip_address, port=80):
-    battery = await Batterie(auth_token, ip_address, port) # , return_when=asyncio.FIRST_COMPLETED)
-    return RealTimeAPI(battery)
+class BatterieBackup:
+    """Sonnen Batterie real time API.
 
-
-class RealTimeAPI:
-    """Sonnen Batterie real time API
-        Used by home assistant component
+        Used by home assistant component sonnenbackup
     """
 
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, battery: Batterie):
+    def __init__(self, auth_token:str , ip_address:str, port=None):
         """Initialize the API client."""
-        self.battery = battery
+        self.battery = Batterie(auth_token, ip_address, port)
 
-    async def get_data(self) -> BatterieResponse:
-        """Query the real time API"""
-        return await self.battery.get_response() # rt_request(self.battery, 3)
+    async def get_response(self) -> BatterieResponse:
+        """Query the real time API."""
+        success = await self.battery.async_update()
+        if success is False:
+            _LOGGER.error('BatterieBackup: Error updating batterie data!')
+            raise BatterieError('BatterieBackup: Error updating batterie data!')
+
+        return BatterieResponse(
+            serial_number = 'xXx', #comes from config entry
+            version = self.battery.configuration_de_software,
+            last_updated = self.battery.last_updated,
+            configurations = self.battery.configurations,
+#            "status": self.battery.,
+#            "latestdata": self.battery.,
+#            "battery": self.battery.,
+#            "powermeter": self.battery.,
+#            "inverter": self.battery.
+        )

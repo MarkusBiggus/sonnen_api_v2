@@ -1,8 +1,7 @@
-""" SonnenAPI v2 module """
+"""SonnenAPI v2 module."""
 
 from functools import wraps
 from typing import Any, Dict, Optional, Union, Tuple
-from math import floor
 from collections import namedtuple
 
 import datetime
@@ -40,7 +39,7 @@ def get_item(_type):
     return decorator
 
 class BatterieError(Exception):
-    """Indicates error communicating with batterie"""
+    """Indicates error communicating with batterie."""
     pass
 
 class BatterieResponse(
@@ -50,21 +49,20 @@ class BatterieResponse(
             "serial_number",
             "version",
             "last_updated",
-            "latestdata",
-            "status",
-            "battery",
-            "powermeter_production",
-            "powermeter_consumption",
             "configurations",
-            "inverter"
+#            "status",
+#            "latestdata",
+#            "battery",
+#            "powermeter",
+#            "inverter"
         ],
     )
 ):
-    """Sonnen Batterie response for ha component"""
+    """Sonnen Batterie response for ha component."""
 
 
 class Sonnen:
-    """Class for managing Sonnen API V2 data"""
+    """Class for managing Sonnen API V2 data."""
     from .wrapped import set_request_connect_timeouts, get_request_connect_timeouts
     from .wrapped import get_update, get_latest_data, get_configurations, get_status, get_powermeter, get_battery, get_inverter
     from .wrapped import sync_get_update, sync_get_latest_data, sync_get_configurations, sync_get_status, sync_get_powermeter, sync_get_battery, sync_get_inverter
@@ -107,7 +105,7 @@ class Sonnen:
 
     @property
     def status_api_url(self) -> str:
-        """Return api_endpoint url"""
+        """Return api_endpoint url."""
         return self.status_api_endpoint
 
     def _log_error(self, msg):
@@ -117,10 +115,10 @@ class Sonnen:
             print(msg)
 
     async def async_update(self) -> bool:
-        """Update all battery data from an async caller
+        """Update all battery data from an async caller.
         Returns:
             True when all updates successful or
-            called again within rate limit interval
+            called again within rate limit interval.
         """
         now = datetime.datetime.now()
         if self.last_updated is not None:
@@ -157,10 +155,10 @@ class Sonnen:
         return success
 
     def update(self) -> bool:
-        """Update battery details Asyncronously from a sequential caller using async methods
+        """Update battery details Asyncronously from a sequential caller using async methods.
         Returns:
             True when all updates successful or
-            called again within rate limit interval
+            called again within rate limit interval.
         """
         # event_loop = asyncio.get_event_loop()
         # if event_loop is not None:
@@ -177,7 +175,7 @@ class Sonnen:
         return (self.last_updated is not None)
 
     def sync_update(self) -> bool:
-        """Update all battery data from a sequential caller using sync methods
+        """Update all battery data from a sequential caller using sync methods.
         Returns:
             True when all updates successful or
             called again within rate limit interval
@@ -223,7 +221,7 @@ class Sonnen:
         return success
 
     async def _async_fetch_api_endpoint(self, url: str) -> Union[Dict, None]:
-        """Fetch API coroutine"""
+        """Fetch API coroutine."""
         try:
             async with aiohttp.ClientSession(headers=self.header, timeout=self.client_timeouts) as session:
                 response = await self._async_fetch(session, url)
@@ -238,7 +236,7 @@ class Sonnen:
         return response
 
     async def _async_fetch(self, session: aiohttp.ClientSession, url: str) -> Union[Dict, None]:
-        """Fetch API endpoint with aiohttp client"""
+        """Fetch API endpoint with aiohttp client."""
         try:
             async with session.get(url) as response:
                 return await response.json()
@@ -256,7 +254,7 @@ class Sonnen:
 
     # sync for use with run_in_executor in existing event loop
     def _fetch_api_endpoint(self, url: str) -> Dict:
-        """Fetch API coroutine"""
+        """Fetch API coroutine."""
         try:
             response = requests.get(
                 url,
@@ -276,13 +274,13 @@ class Sonnen:
         return response.json()
 
     async def async_fetch_status(self) -> Dict:
-        """ Used by sonnenbatterie_v2_api to check connection """
+        """Used by sonnenbatterie_v2_api to check connection."""
         return await self._async_fetch_api_endpoint(
             self.status_api_endpoint
         )
 
     def fetch_status(self) -> Dict:
-        """ Used by sonnenbatterie_v2_api to check connection """
+        """Used by sonnenbatterie_v2_api to check connection."""
         return self._fetch_api_endpoint(
             self.status_api_endpoint
         )
@@ -352,13 +350,18 @@ class Sonnen:
         )
 
     @property
+    def configurations(self) -> Dict:
+        """latest Configurations fetched from batterie."""
+        return self._configurations
+
+    @property
     def last_updated(self) -> Optional[datetime.datetime]:
-        """Last time data fetched from batterie"""
+        """Last time data fetched from batterie."""
         return self._last_updated
 
     @last_updated.setter
     def last_updated(self, last_updated: datetime.datetime = None):
-        """Last time data fetched from batterie"""
+        """Last time data fetched from batterie."""
         self._last_updated = last_updated
 
     @property

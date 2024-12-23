@@ -1,10 +1,9 @@
 """Sonnen Batterie API V2 module."""
 
-#import asyncio
 import logging
-from .sonnen import Sonnen as Batterie, BatterieResponse, BatterieError
+from sonnen_api_v2 import Batterie, BatterieResponse, BatterieError
 
-__version__ = '0.5.12'
+__version__ = '1.0.0'
 
 __all__ = (
     "Batterie"

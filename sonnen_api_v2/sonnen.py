@@ -42,6 +42,10 @@ class BatterieError(Exception):
     """Indicates error communicating with batterie."""
     pass
 
+class BatterieAuthError(Exception):
+    """Indicates error authorising with batterie."""
+    pass
+
 class BatterieResponse(
     namedtuple(
         "BatterieResponse",
@@ -232,6 +236,8 @@ class Sonnen:
         if response.status_code != 200:
             self._log_error(f'Error async fetching endpoint {url} status: {response.status_code}')
     #        raise BatterieError(f'Get async endpoint "{url}" status: {response.status_code}')
+            if response.status_code in [401, 403]:
+                raise BatterieAuthError
 
         return response
 

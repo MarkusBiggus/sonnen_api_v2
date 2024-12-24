@@ -28,11 +28,12 @@ setup(
     description=read_file('README.md'),
     install_requires=[
         'requests~=2.32.3',
-        'aiohttp>=3.11.11',
+        'aiohttp~=3.11.11',
         'isal==1.7.1',
         'aiohttp-fast-zlib>=0.2.0,<4.0.0',
         'urllib3>=1.26.20,<2.0.0',
         'asyncio>=3.4.3',
-        'yarl>=1.16.0'
+        'yarl>=1.18.3',
+        "setuptools==75.1.0",
     ]
 )

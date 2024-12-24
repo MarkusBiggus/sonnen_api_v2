@@ -1,13 +1,14 @@
 """Sonnen Batterie API V2 module."""
 
 import logging
-from sonnen_api_v2 import Batterie, BatterieResponse, BatterieError
+from sonnen_api_v2 import Batterie, BatterieResponse, BatterieError, BatterieAuthError
 
 __version__ = '1.0.0'
 
 __all__ = (
     "Batterie"
     "BatterieError",
+    "BatterieAuthError",
     "BatterieResponse",
     "BatterieBackup",
 )

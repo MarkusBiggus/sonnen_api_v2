@@ -1,9 +1,11 @@
 """Sonnen Batterie API V2 module."""
 
+import datetime
 import logging
 from sonnen_api_v2 import Batterie, BatterieResponse, BatterieError, BatterieAuthError
+from sonnen_api_v2.const import CONFIGURATION_DE_SOFTWARE
 
-__version__ = '1.0.0'
+__version__ = '0.5.12'
 
 __all__ = (
     "Batterie"
@@ -36,10 +38,27 @@ class BatterieBackup:
             raise BatterieError('BatterieBackup: Error updating batterie data!')
 
         return BatterieResponse(
-            serial_number = 'xXx', #comes from config entry
             version = self.battery.configuration_de_software,
             last_updated = self.battery.last_updated,
             configurations = self.battery.configurations,
+#            "status": self.battery.,
+#            "latestdata": self.battery.,
+#            "battery": self.battery.,
+#            "powermeter": self.battery.,
+#            "inverter": self.battery.
+        )
+    async def validate_token(self) -> BatterieResponse:
+        """Query the real time API."""
+
+        configurations = await self.battery.async_fetch_configurations()
+        if configurations is None:
+            _LOGGER.error('BatterieBackup: Error updating batterie data!')
+            raise BatterieError('BatterieBackup: Error updating batterie data!')
+
+        return BatterieResponse(
+            version = configurations[CONFIGURATION_DE_SOFTWARE],
+            last_updated = self.battery.last_configurations,
+            configurations = configurations,
 #            "status": self.battery.,
 #            "latestdata": self.battery.,
 #            "battery": self.battery.,

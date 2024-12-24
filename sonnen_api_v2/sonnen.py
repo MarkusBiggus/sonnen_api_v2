@@ -50,7 +50,6 @@ class BatterieResponse(
     namedtuple(
         "BatterieResponse",
         [
-            "serial_number",
             "version",
             "last_updated",
             "configurations",
@@ -72,9 +71,9 @@ class Sonnen:
     from .wrapped import sync_get_update, sync_get_latest_data, sync_get_configurations, sync_get_status, sync_get_powermeter, sync_get_battery, sync_get_inverter
 
     def __init__(self, auth_token: str, ip_address: str, ip_port: str = '80', logger_name: str = None) -> None:
-        self.last_updated = None #rate limiters
+        self._last_updated = None #rate limiters
         self.last_get_updated = None
-        self.last_configurations = None
+        self._last_configurations = None
 
         logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         if logger_name is not None:
@@ -125,8 +124,8 @@ class Sonnen:
             called again within rate limit interval.
         """
         now = datetime.datetime.now()
-        if self.last_updated is not None:
-            diff = now - self.last_updated
+        if self._last_updated is not None:
+            diff = now - self._last_updated
             if diff.total_seconds() < RATE_LIMIT:
                 return True
 
@@ -155,7 +154,7 @@ class Sonnen:
             self._inverter_data = await self.async_fetch_inverter()
             success = (self._inverter_data is not None)
 
-        self.last_updated = now if success else None
+        self._last_updated = now if success else None
         return success
 
     def update(self) -> bool:
@@ -176,7 +175,7 @@ class Sonnen:
             event_loop.run_until_complete(self.async_update())
         finally:
             event_loop.close()
-        return (self.last_updated is not None)
+        return (self._last_updated is not None)
 
     def sync_update(self) -> bool:
         """Update all battery data from a sequential caller using sync methods.
@@ -185,8 +184,8 @@ class Sonnen:
             called again within rate limit interval
         """
         now = datetime.datetime.now()
-        if self.last_updated is not None:
-            diff = now - self.last_updated
+        if self._last_updated is not None:
+            diff = now - self._last_updated
             if diff.total_seconds() < RATE_LIMIT:
                 return True
 
@@ -221,7 +220,7 @@ class Sonnen:
     #        print(f'_inverter: {self._inverter_data}')
             success = (self._inverter_data is not None)
 
-        self.last_updated = now if success else None
+        self._last_updated = now if success else None
         return success
 
     async def _async_fetch_api_endpoint(self, url: str) -> Union[Dict, None]:
@@ -293,24 +292,24 @@ class Sonnen:
 
     async def async_fetch_configurations(self) -> Dict:
         now = datetime.datetime.now()
-        if self.last_configurations is not None:
-            diff = now - self.last_configurations
+        if self._last_configurations is not None:
+            diff = now - self._last_configurations
             if diff.total_seconds() < RATE_LIMIT:
                 return self._configurations
 
-        self.last_configurations = now
+        self._last_configurations = now
         return await self._async_fetch_api_endpoint(
             self.configurations_api_endpoint
         )
 
     def fetch_configurations(self) -> Dict:
         now = datetime.datetime.now()
-        if self.last_configurations is not None:
-            diff = now - self.last_configurations
+        if self._last_configurations is not None:
+            diff = now - self._last_configurations
             if diff.total_seconds() < RATE_LIMIT:
                 return self._configurations
 
-        self.last_configurations = now
+        self._last_configurations = now
         return self._fetch_api_endpoint(
             self.configurations_api_endpoint
         )
@@ -359,6 +358,11 @@ class Sonnen:
     def configurations(self) -> Dict:
         """latest Configurations fetched from batterie."""
         return self._configurations
+
+    @property
+    def last_configurations(self) -> Optional[datetime.datetime]:
+        """Last time data fetched from batterie."""
+        return self._last_configurations
 
     @property
     def last_updated(self) -> Optional[datetime.datetime]:

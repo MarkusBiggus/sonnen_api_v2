@@ -12,13 +12,13 @@ __all__ = (
     "BatterieError",
     "BatterieAuthError",
     "BatterieResponse",
-    "BatterieBackup",
+    "SonnenBatterie",
 )
 
 _LOGGER = logging.getLogger(__name__)
 
 
-class BatterieBackup:
+class SonnenBatterie:
     """Sonnen Batterie real time API.
 
         Used by home assistant component sonnenbackup
@@ -28,14 +28,15 @@ class BatterieBackup:
 
     def __init__(self, auth_token:str , ip_address:str, port=None):
         """Initialize the API client."""
+
         self.battery = Batterie(auth_token, ip_address, port)
 
     async def get_response(self) -> BatterieResponse:
         """Query the real time API."""
         success = await self.battery.async_update()
         if success is False:
-            _LOGGER.error('BatterieBackup: Error updating batterie data!')
-            raise BatterieError('BatterieBackup: Error updating batterie data!')
+            _LOGGER.error('SonnenBatterie: Error updating batterie data!')
+            raise BatterieError('SonnenBatterie: Error updating batterie data!')
 
         return BatterieResponse(
             version = self.battery.configuration_de_software,
@@ -47,13 +48,14 @@ class BatterieBackup:
 #            "powermeter": self.battery.,
 #            "inverter": self.battery.
         )
+
     async def validate_token(self) -> BatterieResponse:
         """Query the real time API."""
 
         configurations = await self.battery.async_fetch_configurations()
         if configurations is None:
-            _LOGGER.error('BatterieBackup: Error updating batterie data!')
-            raise BatterieError('BatterieBackup: Error updating batterie data!')
+            _LOGGER.error('SonnenBatterie: Error updating batterie data!')
+            raise BatterieError('SonnenBatterie: Error updating batterie data!')
 
         return BatterieResponse(
             version = configurations[CONFIGURATION_DE_SOFTWARE],

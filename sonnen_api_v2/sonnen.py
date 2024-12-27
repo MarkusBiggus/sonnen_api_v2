@@ -42,11 +42,15 @@ def get_item(_type):
     return decorator
 
 class BatterieError(Exception):
-    """Indicates error communicating with batterie."""
+    """Indicates network error communicating with batterie."""
     pass
 
 class BatterieAuthError(Exception):
     """Indicates error authorising with batterie."""
+    pass
+
+class BatterieHTTPError(Exception):
+    """Indicates (internal?) HTTP error with batterie."""
     pass
 
 class BatterieResponse(
@@ -232,15 +236,15 @@ class Sonnen:
             async with aiohttp.ClientSession(headers=self.header, timeout=self.client_timeouts) as session:
                 response = await self._async_fetch(session, url)
         except Exception as error:
-            self._log_error(f'Coroutine fetch "{url}" fail: {error}')
-            raise BatterieError(f'Coroutine "{url}"  fail: {error}') from error
+            self._log_error(f'Coroutine fetch "{url}"  fail: {error}')
+            raise BatterieError(f'Coroutine fetch "{url}"  fail: {error}') from error
 
-        if response.status_code != 200:
-            self._log_error(f'Error async fetching endpoint "{url}" status: {response.status_code}')
-            if response.status_code in [401, 403]:
-                raise BatterieAuthError(f'Error fetching endpoint "{url}" status: {response.status_code}')
+        if response.status > 299:
+            self._log_error(f'Error fetching endpoint "{url}" status: {response.status}')
+            if response.status in [401, 403]:
+                raise BatterieAuthError(f'Auth error fetching endpoint "{url}" status: {response.status}')
             else:
-                raise BatterieError(f'Error fetching endpoint "{url}" status: {response.status_code}')
+                raise BatterieHTTPError(f'HTTP error fetching endpoint "{url}" status: {response.status}')
 
         return response
 
@@ -250,14 +254,14 @@ class Sonnen:
             async with session.get(url) as response:
                 return await response.json()
         except aiohttp.ClientError as error:
-            self._log_error(f'Battery: {self.ip_address} offline? accessing: "{url}" error: {error}')
-            raise BatterieError(f'Battery {self.ip_address} offline? accessing: "{url}" error: {error}') from error
+            self._log_error(f'Battery: {self.ip_address} offline? accessing: "{url}"  error: {error}')
+            raise BatterieError(f'Battery {self.ip_address} offline? accessing: "{url}"  error: {error}') from error
         except asyncio.TimeoutError as error:
-            self._log_error(f'Syncio Timeout accessing: "{url}" error: {error}')
-            raise BatterieError(f'Syncio Timeout accessing: "{url}" error: {error}') from error
+            self._log_error(f'Syncio Timeout accessing: "{url}"  error: {error}')
+            raise BatterieError(f'Syncio Timeout accessing: "{url}"  error: {error}') from error
         except Exception as error:
-            self._log_error(f'Fetching endpoint "{url}" error: {error}')
-            raise BatterieError(f'Fetching endpoint "{url}" error: {error}') from error
+            self._log_error(f'Failed Fetching endpoint "{url}"  error: {error}')
+            raise BatterieError(f'Failed Fetching endpoint "{url}"  error: {error}') from error
 
         return None
 
@@ -269,24 +273,19 @@ class Sonnen:
                 url,
                 headers=self.header, timeout=TIMEOUT
             )
-        # except NewConnectionError as error:
-        #     self._log_error(f'Invalid hostname: "{url}" fail: {error}')
-        #     raise BatterieAuthError(f'Invalid hostname: "{url}"   fail: {error}') from error
         except requests.ConnectionError as error:
-        #    print(dir(error))
-        #    print(f'errno {error.strerror}   args: {error.args}')
-            self._log_error(f'Connection error to: "{url}" fail: {error}')
-            raise BatterieError(f'Connection error to: "{url}"   fail: {error}') from error
+            self._log_error(f'Connection failed to: "{url}"  error: {error}')
+            raise BatterieError(f'Connection failed to: "{url}"  error: {error}') from error
         except Exception as error:
-            self._log_error(f'Sync fetch "{url}" fail: {error}')
-            raise BatterieError(f'Sync fetch "{url}"  fail: {error}') from error
+            self._log_error(f'Failed Sync fetch "{url}"  error: {error}')
+            raise BatterieError(f'Failed Sync fetch "{url}"  error: {error}') from error
 
-        if response.status_code != 200:
-            self._log_error(f'Error fetching endpoint "{url}" status: {response.status_code}')
-            if response.status_code in [401, 403]:
-                raise BatterieAuthError(f'Error fetching endpoint "{url}" status: {response.status_code}')
+        if response.status > 299:
+            self._log_error(f'Error fetching endpoint "{url}" status: {response.status}')
+            if response.status in [401, 403]:
+                raise BatterieAuthError(f'Auth error fetching endpoint "{url}" status: {response.status}')
             else:
-                raise BatterieError(f'Error fetching endpoint "{url}" status: {response.status_code}')
+                raise BatterieHTTPError(f'HTTP error fetching endpoint "{url}" status: {response.status}')
 
         return response.json()
 
@@ -300,13 +299,11 @@ class Sonnen:
 
         conn = urllib3.connection_from_url(self.configurations_api_endpoint,headers=self.header, retries=False)
         try:
-            response = conn.urlopen('GET', self.configurations_api_endpoint, None, self.header, False)
-            # response = urllib3.request("GET",
-            #                 self.configurations_api_endpoint,
-            #                 retries=False,
-            #                 timeout=urllib3.Timeout(connect=3.0, read=2.0),
-            #                 headers=self.header,
-            #                 )
+            response = conn.urlopen('GET',
+                            self.configurations_api_endpoint,
+                            None,
+                            self.header,
+                            False)
 
         except urllib3.exceptions.NewConnectionError:
             self._log_error(f'Invalid hostname "{self.configurations_api_endpoint}"')
@@ -314,13 +311,12 @@ class Sonnen:
         except Exception as error:
             self._log_error(f'Sync fetch "{self.configurations_api_endpoint}" fail: {error}')
             raise BatterieError(f'Sync fetch "{self.configurations_api_endpoint}"  fail: {error}') from error
+
         #print(f'resp: {response.body}')
         if response.status in [401, 403]:
             raise BatterieAuthError(f'Invalid token "{self.auth_token}" status: {response.status}')
-        # else:
-        #     response.raise_for_status()
-        # elif response.status > 299:
-        #     raise BatterieError(f'HTTP Error fetching endpoint "{self.configurations_api_endpoint}" status: {response.status}')
+        elif response.status > 299:
+            raise BatterieHTTPError(f'HTTP Error fetching endpoint "{self.configurations_api_endpoint}" status: {response.status}')
 
         self._configurations = json.loads(response.body) #json() #await self.async_fetch_configurations()
         return True #self._configurations

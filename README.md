@@ -7,6 +7,25 @@ Does not use the default user login to authenticate API, only the token.
 
 Parameters to run tests for batterie IP address and API token are specified in .env file. See env.example for template.
 
+Token & IP can be validated after creating Batterie object.
+This is achieved by fetching configuration details and raising errors depending on
+error or status returned from usrllib3.
+
+    from sonnen_api_v2 import Batterie, BatterieAuthError, BatterieError, BatterieHTTPError
+
+    battery_charging = Batterie('fakeToken', 'fakeHost')
+    try:
+        success = battery_discharging.sync_validate_token()
+    except BatterieAuthError as error:
+        print('Token or IP are not valid')
+    except BatterieHTTPError as error:
+        print('HTTP error status not in [401, 403]')
+    except BatterieError as error:
+        print('Connection error accessing Batterie API endpoint')
+
+    assert success is not False
+
+
 There are three ways to update from the Batterie:
 
 1. Async caller uses Async update

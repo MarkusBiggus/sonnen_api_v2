@@ -26,18 +26,17 @@ def get_update(self) -> bool:
         True when all updates successful or
         called again within rate limit interval
     """
-    async def _aync_update() -> bool:
-        return self.sync_get_update
+    async def _aync_update(self) -> bool:
+        return self.sync_get_update()
 
     event_loop = asyncio.new_event_loop()
     asyncio.set_event_loop(event_loop)
 
     try:
-        event_loop.run_until_complete(_aync_update())
+        event_loop.run_until_complete(_aync_update(self))
     finally:
         event_loop.close()
-    return (self.last_updated is not None)
-
+    return (self._last_get_updated is not None)
 
 def sync_get_update(self) -> bool:
     """Update all battery data from a sequential caller using sync methods
@@ -48,8 +47,8 @@ def sync_get_update(self) -> bool:
         called again within rate limit interval
     """
     now = datetime.datetime.now()
-    if self.last_get_updated is not None:
-        diff = now - self.last_get_updated
+    if self._last_get_updated is not None:
+        diff = now - self._last_get_updated
         if diff.total_seconds() < RATE_LIMIT:
             return True
 
@@ -78,7 +77,7 @@ def sync_get_update(self) -> bool:
         self.sync_get_inverter()
         success = (self._inverter_data is not None)
 
-    self.last_get_updated = now if success else None
+    self._last_get_updated = now if success else None
     return success
 
 def get_configurations(self)-> Dict:
@@ -109,14 +108,14 @@ def sync_get_configurations(self)-> Dict:
             json response
     """
     now = datetime.datetime.now()
-    if self.last_configurations is not None:
-        diff = now - self.last_configurations
+    if self._last_configurations is not None:
+        diff = now - self._last_configurations
         if diff.total_seconds() < RATE_LIMIT:
             return self._configurations
 
     self._configurations = None
     self._configurations = self.fetch_configurations()
-    self.last_configurations = now
+    self._last_configurations = now
     return _aug_configurations(self)
 
 def _aug_configurations(self) -> Dict:
@@ -154,8 +153,8 @@ def sync_get_status(self) -> Dict:
             json response
     """
     now = datetime.datetime.now()
-    if self.last_get_updated is not None:
-        diff = now - self.last_get_updated
+    if self._last_get_updated is not None:
+        diff = now - self._last_get_updated
         if diff.total_seconds() < RATE_LIMIT:
             return self._status_data
 
@@ -187,8 +186,8 @@ def sync_get_latest_data(self) -> Dict:
             json response
     """
     now = datetime.datetime.now()
-    if self.last_get_updated is not None:
-        diff = now - self.last_get_updated
+    if self._last_get_updated is not None:
+        diff = now - self._last_get_updated
         if diff.total_seconds() < RATE_LIMIT:
             return self._latest_details_data
 
@@ -229,8 +228,8 @@ def sync_get_battery(self) -> Dict:
             json response
     """
     now = datetime.datetime.now()
-    if self.last_get_updated is not None:
-        diff = now - self.last_get_updated
+    if self._last_get_updated is not None:
+        diff = now - self._last_get_updated
         if diff.total_seconds() < RATE_LIMIT:
             return self._battery_status
 
@@ -287,8 +286,8 @@ def sync_get_powermeter(self) -> Dict:
             json response
     """
     now = datetime.datetime.now()
-    if self.last_get_updated is not None:
-        diff = now - self.last_get_updated
+    if self._last_get_updated is not None:
+        diff = now - self._last_get_updated
         if diff.total_seconds() < RATE_LIMIT:
             return self._powermeter_data
 
@@ -322,8 +321,8 @@ def sync_get_inverter(self) -> Dict:
             json response
     """
     now = datetime.datetime.now()
-    if self.last_get_updated is not None:
-        diff = now - self.last_get_updated
+    if self._last_get_updated is not None:
+        diff = now - self._last_get_updated
         if diff.total_seconds() < RATE_LIMIT:
             return self._inverter_data
 

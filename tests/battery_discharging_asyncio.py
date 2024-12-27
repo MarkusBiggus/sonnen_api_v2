@@ -26,7 +26,7 @@ async def fixture_battery_discharging(mocker) -> Batterie:
     mocker.patch.object(Batterie, "async_fetch_powermeter", AsyncMock(return_value=__mock_powermeter()))
     mocker.patch.object(Batterie, "async_fetch_inverter", AsyncMock(return_value=__mock_inverter()))
 
-    battery_discharging = Batterie('fakeUsername', 'fakeToken', 'fakeHost')
+    battery_discharging = Batterie('fakeToken', 'fakeHost')
     success = await battery_discharging.async_update()
     assert success is not False
 

@@ -45,7 +45,7 @@ async def fixture_battery_discharging_reserve(mocker) -> Batterie:
         return battery_discharging_reserve.sync_get_update()
 
 
-    battery_discharging_reserve = Batterie('fakeUsername', 'fakeToken', 'fakeHost')
+    battery_discharging_reserve = Batterie('fakeToken', 'fakeHost')
     success = await async_add_executor_job(
         _sync_update, battery_discharging_reserve
     )

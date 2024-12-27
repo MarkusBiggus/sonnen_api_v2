@@ -3,7 +3,7 @@
 from functools import wraps
 from typing import Any, Dict, Optional, Union, Tuple
 from collections import namedtuple
-
+import json
 import datetime
 
 import aiohttp
@@ -11,6 +11,9 @@ import asyncio
 import aiohttp_fast_zlib
 
 import requests
+import urllib3 #import request
+from urllib3.exceptions import NewConnectionError
+
 #import voluptuous as vol
 from .units import Measurement, Units
 
@@ -72,7 +75,7 @@ class Sonnen:
 
     def __init__(self, auth_token: str, ip_address: str, ip_port: str = '80', logger_name: str = None) -> None:
         self._last_updated = None #rate limiters
-        self.last_get_updated = None
+        self._last_get_updated = None
         self._last_configurations = None
 
         logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -106,10 +109,10 @@ class Sonnen:
         # isal is preferred over zlib_ng if it is available
         aiohttp_fast_zlib.enable()
 
-    @property
-    def status_api_url(self) -> str:
-        """Return api_endpoint url."""
-        return self.status_api_endpoint
+    # @property
+    # def status_api_url(self) -> str:
+    #     """Return api_endpoint url."""
+    #     return self.status_api_endpoint
 
     def _log_error(self, msg):
         if self.logger:
@@ -229,14 +232,15 @@ class Sonnen:
             async with aiohttp.ClientSession(headers=self.header, timeout=self.client_timeouts) as session:
                 response = await self._async_fetch(session, url)
         except Exception as error:
-            self._log_error(f'Coroutine fetch {url} fail: {error}')
+            self._log_error(f'Coroutine fetch "{url}" fail: {error}')
             raise BatterieError(f'Coroutine "{url}"  fail: {error}') from error
 
         if response.status_code != 200:
-            self._log_error(f'Error async fetching endpoint {url} status: {response.status_code}')
-    #        raise BatterieError(f'Get async endpoint "{url}" status: {response.status_code}')
+            self._log_error(f'Error async fetching endpoint "{url}" status: {response.status_code}')
             if response.status_code in [401, 403]:
-                raise BatterieAuthError
+                raise BatterieAuthError(f'Error fetching endpoint "{url}" status: {response.status_code}')
+            else:
+                raise BatterieError(f'Error fetching endpoint "{url}" status: {response.status_code}')
 
         return response
 
@@ -246,14 +250,14 @@ class Sonnen:
             async with session.get(url) as response:
                 return await response.json()
         except aiohttp.ClientError as error:
-            self._log_error(f'Battery: {self.ip_address} is offline? error: {error}')
-            raise BatterieError(f'Client {self.ip_address} error: {error}') from error
+            self._log_error(f'Battery: {self.ip_address} offline? accessing: "{url}" error: {error}')
+            raise BatterieError(f'Battery {self.ip_address} offline? accessing: "{url}" error: {error}') from error
         except asyncio.TimeoutError as error:
-            self._log_error(f'Timeout error while accessing: {url}')
-            raise BatterieError(f'Client Timeout: {error}') from error
+            self._log_error(f'Syncio Timeout accessing: "{url}" error: {error}')
+            raise BatterieError(f'Syncio Timeout accessing: "{url}" error: {error}') from error
         except Exception as error:
-            self._log_error(f'Error fetching endpoint {url}: {error}')
-            raise BatterieError(f'Endpoint "{url}" error: {error}') from error
+            self._log_error(f'Fetching endpoint "{url}" error: {error}')
+            raise BatterieError(f'Fetching endpoint "{url}" error: {error}') from error
 
         return None
 
@@ -265,32 +269,76 @@ class Sonnen:
                 url,
                 headers=self.header, timeout=TIMEOUT
             )
+        # except NewConnectionError as error:
+        #     self._log_error(f'Invalid hostname: "{url}" fail: {error}')
+        #     raise BatterieAuthError(f'Invalid hostname: "{url}"   fail: {error}') from error
         except requests.ConnectionError as error:
-            self._log_error(f'Connection error to: {url} fail: {error}')
+        #    print(dir(error))
+        #    print(f'errno {error.strerror}   args: {error.args}')
+            self._log_error(f'Connection error to: "{url}" fail: {error}')
             raise BatterieError(f'Connection error to: "{url}"   fail: {error}') from error
         except Exception as error:
-            self._log_error(f'Sync fetch {url} fail: {error}')
+            self._log_error(f'Sync fetch "{url}" fail: {error}')
             raise BatterieError(f'Sync fetch "{url}"  fail: {error}') from error
 
         if response.status_code != 200:
-            self._log_error(f'Error fetching endpoint {url} status: {response.status_code}')
-    #        raise BatterieError(f'Get endpoint "{url}" status: {response.status_code}')
+            self._log_error(f'Error fetching endpoint "{url}" status: {response.status_code}')
+            if response.status_code in [401, 403]:
+                raise BatterieAuthError(f'Error fetching endpoint "{url}" status: {response.status_code}')
+            else:
+                raise BatterieError(f'Error fetching endpoint "{url}" status: {response.status_code}')
 
         return response.json()
 
+    async def async_validate_token(self) -> Dict:
+        """Used to check valid hostname & token can make connection."""
+
+        return self.sync_validate_token()
+
+    def sync_validate_token(self) -> Dict:
+        """Used to check valid hostname & token can make connection."""
+
+        conn = urllib3.connection_from_url(self.configurations_api_endpoint,headers=self.header, retries=False)
+        try:
+            response = conn.urlopen('GET', self.configurations_api_endpoint, None, self.header, False)
+            # response = urllib3.request("GET",
+            #                 self.configurations_api_endpoint,
+            #                 retries=False,
+            #                 timeout=urllib3.Timeout(connect=3.0, read=2.0),
+            #                 headers=self.header,
+            #                 )
+
+        except urllib3.exceptions.NewConnectionError:
+            self._log_error(f'Invalid hostname "{self.configurations_api_endpoint}"')
+            raise BatterieAuthError(f'Invalid hostname "{self.configurations_api_endpoint}"')
+        except Exception as error:
+            self._log_error(f'Sync fetch "{self.configurations_api_endpoint}" fail: {error}')
+            raise BatterieError(f'Sync fetch "{self.configurations_api_endpoint}"  fail: {error}') from error
+        #print(f'resp: {response.body}')
+        if response.status in [401, 403]:
+            raise BatterieAuthError(f'Invalid token "{self.auth_token}" status: {response.status}')
+        # else:
+        #     response.raise_for_status()
+        # elif response.status > 299:
+        #     raise BatterieError(f'HTTP Error fetching endpoint "{self.configurations_api_endpoint}" status: {response.status}')
+
+        self._configurations = json.loads(response.body) #json() #await self.async_fetch_configurations()
+        return True #self._configurations
+
     async def async_fetch_status(self) -> Dict:
-        """Used by sonnenbatterie_v2_api to check connection."""
+        """Wait for Fetch Status endpoint."""
         return await self._async_fetch_api_endpoint(
             self.status_api_endpoint
         )
 
     def fetch_status(self) -> Dict:
-        """Used by sonnenbatterie_v2_api to check connection."""
+        """Fetch Status endpoint."""
         return self._fetch_api_endpoint(
             self.status_api_endpoint
         )
 
     async def async_fetch_configurations(self) -> Dict:
+        """Wait for Fetch Configurations endpoint."""
         now = datetime.datetime.now()
         if self._last_configurations is not None:
             diff = now - self._last_configurations
@@ -303,6 +351,7 @@ class Sonnen:
         )
 
     def fetch_configurations(self) -> Dict:
+        """Fetch Configurations endpoint."""
         now = datetime.datetime.now()
         if self._last_configurations is not None:
             diff = now - self._last_configurations
@@ -315,41 +364,49 @@ class Sonnen:
         )
 
     async def async_fetch_latest_details(self) -> Dict:
+        """Wait for Fetch Latest_Details endpoint."""
         return await self._async_fetch_api_endpoint(
                 self.latest_details_api_endpoint
         )
 
     def fetch_latest_details(self) -> Dict:
+        """Fetch Latest_Details endpoint."""
         return self._fetch_api_endpoint(
                 self.latest_details_api_endpoint
         )
 
     async def async_fetch_battery_status(self) -> Dict:
+        """Wait for Fetch Battery endpoint."""
         return await self._async_fetch_api_endpoint(
             self.battery_api_endpoint
         )
 
     def fetch_battery_status(self) -> Dict:
+        """Fetch Battery endpoint."""
         return self._fetch_api_endpoint(
             self.battery_api_endpoint
         )
 
     async def async_fetch_powermeter(self) -> Dict:
+        """Wait for Powermeter Status endpoint."""
         return await self._async_fetch_api_endpoint(
             self.powermeter_api_endpoint
         )
 
     def fetch_powermeter(self) -> Dict:
+        """Fetch Powermeter endpoint."""
         return self._fetch_api_endpoint(
             self.powermeter_api_endpoint
         )
 
     async def async_fetch_inverter(self) -> Dict:
+        """Wait for Fetch Inverter endpoint."""
         return await self._async_fetch_api_endpoint(
             self.inverter_api_endpoint
         )
 
     def fetch_inverter(self) -> Dict:
+        """Fetch Inverter endpoint."""
         return self._fetch_api_endpoint(
             self.inverter_api_endpoint
         )
@@ -361,18 +418,28 @@ class Sonnen:
 
     @property
     def last_configurations(self) -> Optional[datetime.datetime]:
-        """Last time data fetched from batterie."""
+        """Last time configurations fetched (token validated) from batterie."""
         return self._last_configurations
+
+    # @last_configurations.setter
+    # def last_configurations(self, last_configurations: datetime.datetime = None):
+    #     """Last time configurations fetched (token validated) from batterie."""
+    #     self._last_configurations = last_configurations
+
+    @property
+    def last_get_updated(self) -> Optional[datetime.datetime]:
+        """Last time emulated method sync fetched from batterie."""
+        return self._last_get_updated
 
     @property
     def last_updated(self) -> Optional[datetime.datetime]:
-        """Last time data fetched from batterie."""
+        """Last time data successfully fetched from batterie."""
         return self._last_updated
 
-    @last_updated.setter
-    def last_updated(self, last_updated: datetime.datetime = None):
-        """Last time data fetched from batterie."""
-        self._last_updated = last_updated
+    # @last_updated.setter
+    # def last_updated(self, last_updated: datetime.datetime = None):
+    #     """Last time data fetched from batterie."""
+    #     self._last_updated = last_updated
 
     @property
     @get_item(float)

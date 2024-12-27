@@ -27,7 +27,7 @@ def fixture_battery_discharging(mocker) -> Batterie:
     mocker.patch.object(Batterie, "fetch_powermeter", __mock_powermeter)
     mocker.patch.object(Batterie, "fetch_inverter", __mock_inverter_discharging)
 
-    battery_discharging = Batterie('fakeUsername', 'fakeToken', 'fakeHost')
+    battery_discharging = Batterie('fakeToken', 'fakeHost')
     success = battery_discharging.sync_update()
     assert success is not False
 

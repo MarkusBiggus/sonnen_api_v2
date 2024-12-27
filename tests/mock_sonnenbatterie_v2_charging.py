@@ -155,7 +155,6 @@ def __mock_configurations(*args)-> json:
         "CN_CascadingRole": "none",
         "EM_US_GEN_POWER_SET_POINT": 0,
         "DepthOfDischargeLimit": 93
-
     }
 
 def __mock_battery(*args)-> json:

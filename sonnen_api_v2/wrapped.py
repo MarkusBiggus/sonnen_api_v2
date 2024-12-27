@@ -1,6 +1,6 @@
 """Methods to emulate sonnenbatterie (v1) package for sonnenbatterie_v2_api ha component.
 
-    Uses sync methods called by asyncio.run_in_executor from home assistant.
+    home assistant component uses only sync methods called by asyncio.run_in_executor.
 """
 from typing import Dict
 import datetime
@@ -27,7 +27,48 @@ def get_update(self) -> bool:
         called again within rate limit interval
     """
     async def _aync_update(self) -> bool:
-        return self.sync_get_update()
+        now = datetime.datetime.now()
+        if self._last_get_updated is not None:
+            diff = now - self._last_get_updated
+            if diff.total_seconds() < RATE_LIMIT:
+                return True
+
+        self._configurations = None
+        self._latest_details_data = None
+        self._status_data = None
+        self._battery_status = None
+        self._powermeter_data = None
+        self._inverter_data = None
+
+        self._configurations = await self.async_fetch_configurations()
+        success = (self._configurations is not None)
+    #    print (f'config: {self._configurations}')
+        if success:
+            _aug_configurations(self)
+            self._status_data = await self.async_fetch_status()
+            success = (self._status_data is not None)
+    #    print (f'status: {self._status_data}')
+        if success:
+            self._latest_details_data = await self.async_fetch_latest_details()
+            success = (self._latest_details_data is not None)
+    #    print (f'lastest: {self._latest_details_data}')
+        if success:
+            self._battery_status = await self.async_fetch_battery_status()
+            success = (self._battery_status is not None)
+    #    print (f'batterystats: {self._battery_status}')
+        if success:
+            _aug_battery(self)
+            self._powermeter_data = await self.async_fetch_powermeter()
+            success = (self._powermeter_data is not None)
+    #    print (f'powerm: {self._powermeter_data}')
+        if success:
+            self._inverter_data = await self.async_fetch_inverter()
+            success = (self._inverter_data is not None)
+
+    #    print (f'invertr: {self._inverter_data}')
+        self._last_get_updated = now if success else None
+    #    print (f'succ: {success}')
+        return success
 
     event_loop = asyncio.new_event_loop()
     asyncio.set_event_loop(event_loop)
@@ -115,7 +156,6 @@ def sync_get_configurations(self)-> Dict:
 
     self._configurations = None
     self._configurations = self.fetch_configurations()
-    self._last_configurations = now
     return _aug_configurations(self)
 
 def _aug_configurations(self) -> Dict:

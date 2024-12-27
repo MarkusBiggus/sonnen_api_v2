@@ -77,7 +77,10 @@ class Sonnen:
     from .wrapped import get_update, get_latest_data, get_configurations, get_status, get_powermeter, get_battery, get_inverter
     from .wrapped import sync_get_update, sync_get_latest_data, sync_get_configurations, sync_get_status, sync_get_powermeter, sync_get_battery, sync_get_inverter
 
+
     def __init__(self, auth_token: str, ip_address: str, ip_port: str = '80', logger_name: str = None) -> None:
+        """Cache manager Sonnen API V2 data."""
+
         self._last_updated = None #rate limiters
         self._last_get_updated = None
         self._last_configurations = None
@@ -235,6 +238,9 @@ class Sonnen:
         try:
             async with aiohttp.ClientSession(headers=self.header, timeout=self.client_timeouts) as session:
                 response = await self._async_fetch(session, url)
+        except aiohttp.ClientConnectorDNSError as error:
+            self._log_error(f'Battery: {self.ip_address} badIP? accessing: "{url}"  error: {error}')
+            raise BatterieAuthError(f'Battery {self.ip_address} badIP? accessing: "{url}"  error: {error}') from error
         except Exception as error:
             self._log_error(f'Coroutine fetch "{url}"  fail: {error}')
             raise BatterieError(f'Coroutine fetch "{url}"  fail: {error}') from error
@@ -256,6 +262,9 @@ class Sonnen:
         except aiohttp.ClientError as error:
             self._log_error(f'Battery: {self.ip_address} offline? accessing: "{url}"  error: {error}')
             raise BatterieError(f'Battery {self.ip_address} offline? accessing: "{url}"  error: {error}') from error
+        except aiohttp.ClientConnectorDNSError as error:
+            self._log_error(f'Battery: {self.ip_address} badIP? accessing: "{url}"  error: {error}')
+            raise BatterieAuthError(f'Battery {self.ip_address} badIP? accessing: "{url}"  error: {error}') from error
         except asyncio.TimeoutError as error:
             self._log_error(f'Syncio Timeout accessing: "{url}"  error: {error}')
             raise BatterieError(f'Syncio Timeout accessing: "{url}"  error: {error}') from error
@@ -319,7 +328,7 @@ class Sonnen:
             raise BatterieHTTPError(f'HTTP Error fetching endpoint "{self.configurations_api_endpoint}" status: {response.status}')
 
         self._configurations = json.loads(response.body) #json() #await self.async_fetch_configurations()
-        return True #self._configurations
+        return True
 
     async def async_fetch_status(self) -> Dict:
         """Wait for Fetch Status endpoint."""

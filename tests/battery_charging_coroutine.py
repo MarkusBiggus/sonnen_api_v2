@@ -46,7 +46,7 @@ async def fixture_battery_charging(mocker) -> Batterie:
         """Coroutine to sync fetch"""
         return battery_charging.sync_get_update()
 
-    battery_charging = Batterie('fakeUsername', 'fakeToken', 'fakeHost')
+    battery_charging = Batterie('fakeToken', 'fakeHost')
 
     success = await async_add_executor_job(
         _sync_update, battery_charging

@@ -17,12 +17,13 @@ from asyncmock import AsyncMock
 from freezegun import freeze_time
 from urllib3_mock import Responses
 
-from sonnen_api_v2 import Batterie, BatterieAuthError, BatterieError
+from sonnen_api_v2 import Batterie, BatterieAuthError, BatterieHTTPError, BatterieError
 
 from . mock_sonnenbatterie_v2_charging import __mock_status_charging, __mock_latest_charging, __mock_configurations, __mock_battery, __mock_powermeter, __mock_inverter
 from . mock_sonnenbatterie_v2_discharging import __mock_status_discharging, __mock_latest_discharging
 
-from .battery_charging_sync import fixture_battery_charging
+from .battery_charging_asyncio import fixture_battery_charging
+#from .battery_charging_sync import fixture_battery_charging
 from .battery_discharging_sync import fixture_battery_discharging
 
 LOGGER_NAME = None # "sonnenapiv2" #
@@ -152,13 +153,13 @@ def test_get_batterie_charging_wrapped(battery_charging):
 
     # assert batt_module_count == 4
     latestData["latest_data"] = battery_charging.get_latest_data()
-    print(f'latestData: {latestData["status"]}', flush=True)
-    assert latestData["status"]['Timestamp'] == '2022-04-30 17:00:55' #correct test data loaded
+    #print(f'latestData: {latestData["latest_data"]}', flush=True)
+    assert latestData["latest_data"]['Timestamp'] == '2023-11-20 17:00:55' #correct test data loaded
     assert latestData["latest_data"].get('RSOC') == 88
 
 
     latestData["status"] = battery_charging.get_status()
-    assert latestData["status"]['Timestamp'] == '2022-04-30 17:00:55' #correct test data loaded
+    assert latestData["status"]['Timestamp'] == '2023-11-20 17:00:55' #correct test data loaded
 
 #    print(f'status type: {type(latestData["status"])}')
 
@@ -217,12 +218,12 @@ def test_get_batterie_charging_wrapped(battery_charging):
 #    print(f'Reserved (raw): {reserved_capacity_raw:,}Wh  total_usable (calc): {total_capacity_usable:,}Wh')
     assert total_capacity_raw == 20683.490
 #    assert total_capacity_usable == 18553
-    assert reserved_capacity_raw == 1447
+    assert f'{reserved_capacity_raw:.3f}' == '1447.844'
     remaining_capacity = latestData.get("battery_info", {}).get("remaining_capacity")
     remaining_capacity_usable = latestData.get("battery_info", {}).get("remaining_capacity_usable")
     print(f'remaining_capacity (raw): {remaining_capacity:,}Wh  remaining_usable (raw): {remaining_capacity_usable:,}Wh', flush=True)
     assert remaining_capacity == 18200.576
-    assert remaining_capacity_usable == 16752
+    assert f'{remaining_capacity_usable:.2f}' == '16752.64'
 
     timeouts = battery_charging.get_request_connect_timeouts()
     assert timeouts == (20,20)
@@ -249,7 +250,7 @@ def test_get_batterie_discharging_wrapped(battery_discharging):
         Fake good token returns configs data
     """
 
-#    battery_charging = Batterie('fakeToken', 'fakeHost')
+#    battery_discharging = Batterie('fakeToken', 'fakeHost')
     success = battery_discharging.sync_validate_token()
     assert success is not False
     success = battery_discharging.update()
@@ -289,8 +290,6 @@ def __battery_configurations_unauth401(self, _method, _url, _body, _headers, _re
     #print(f'resp: {resp.body}')
     return resp
 
-#@responses.activate
-@freeze_time("24-05-2022 15:38:23")
 @pytest.mark.usefixtures("battery_discharging")
 @patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_configurations_unauth401)
 def test_batterie_unauth_token401(battery_discharging):
@@ -314,12 +313,30 @@ def __battery_configurations_unauth403(self, _method, _url, _body, _headers, _re
     #print(f'resp: {resp.body}')
     return resp
 
-#@responses.activate
-@freeze_time("24-05-2022 15:38:23")
 @pytest.mark.usefixtures("battery_discharging")
 @patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_configurations_unauth403)
 def test_batterie_unauth_token403(battery_discharging):
     """sonnenbatterie Emulator package - using mock data.
     """
     with pytest.raises(BatterieAuthError, match='Invalid token "fakeToken" status: 403'):
+        success = battery_discharging.sync_validate_token()
+
+def __battery_HTTPError_303(self, _method, _url, _body, _headers, _retries):
+    """No Mock configurations for HTTPerror
+    """
+    resp = responses.Response(
+        method=_method, #'GET',
+        url=_url, #(f'http://fakeHost:80/api/v2/configurations'),
+    #    json=__mock_configurations(),
+        status=303,
+        headers=_headers,
+    )
+    return resp
+
+@pytest.mark.usefixtures("battery_discharging")
+@patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_HTTPError_303)
+def test_batterie_HTTPerror303(battery_discharging):
+    """sonnenbatterie Emulator package - using mock data.
+    """
+    with pytest.raises(BatterieHTTPError, match='HTTP Error fetching endpoint "http://fakeHost:80/api/v2/configurations" status: 303'):
         success = battery_discharging.sync_validate_token()

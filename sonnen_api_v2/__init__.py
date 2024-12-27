@@ -51,18 +51,18 @@ class BatterieBackup:
     async def validate_token(self) -> BatterieResponse:
         """Query the real time API."""
         # try:
-        configurations = await self.battery.async_validate_token()
+        success = await self.battery.async_validate_token()
         # except Exception as error:
         #     raise BatterieError from error
 
-        if configurations is None:
+        if success is not True:
             _LOGGER.error('BatterieBackup: Error updating batterie data!')
             raise BatterieError('BatterieBackup: Error updating batterie data!')
 
         return BatterieResponse(
             version = self.battery.configuration_de_software,
             last_updated = self.battery.last_configurations,
-            configurations = configurations,
+            configurations = self.battery.configurations,
 #            "status": self.battery.,
 #            "latestdata": self.battery.,
 #            "battery": self.battery.,

@@ -63,6 +63,7 @@ class BatterieBackup:
             version = self.battery.configuration_de_software,
             last_updated = self.battery.last_configurations,
             configurations = self.battery.configurations,
+            )
 #            "status": self.battery.,
 #            "latestdata": self.battery.,
 #            "battery": self.battery.,

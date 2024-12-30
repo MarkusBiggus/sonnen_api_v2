@@ -245,7 +245,7 @@ def test_get_batterie_charging_wrapped(battery_charging):
 @freeze_time("24-05-2022 15:38:23")
 @pytest.mark.usefixtures("battery_discharging")
 @patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_configurations)
-def test_get_batterie_discharging_wrapped(battery_discharging):
+def test_batterie_discharging_wrapped(battery_discharging):
     """sonnenbatterie Emulator package - using mock data
         Fake good token returns configs data
     """
@@ -254,6 +254,35 @@ def test_get_batterie_discharging_wrapped(battery_discharging):
     success = battery_discharging.sync_validate_token()
     assert success is not False
     success = battery_discharging.update()
+    assert success is not False
+
+    discharging_flows = battery_discharging.status_flows
+#    print(f'discharging_flows: {discharging_flows}')
+    assert discharging_flows == {'FlowConsumptionBattery': True, 'FlowConsumptionGrid': False, 'FlowConsumptionProduction': True, 'FlowGridBattery': True, 'FlowProductionBattery': False, 'FlowProductionGrid': False}
+
+    #common tests for all fixture methods
+    from . check_results import check_discharge_results
+
+    check_discharge_results(battery_discharging)
+
+@pytest.mark.asyncio
+@freeze_time("24-05-2022 15:38:23")
+@pytest.mark.usefixtures("battery_discharging")
+@patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_configurations)
+async def test_batterie_discharging_async(battery_discharging):
+    """sonnenbatterie Emulator package - using mock data
+        Fake good token returns configs data
+    """
+
+    async def _validate_token(self):
+        return await battery_discharging.async_update(self)
+    
+    
+#    battery_discharging = Batterie('fakeToken', 'fakeHost')
+    success = await battery_discharging.async_validate_token()
+    assert success is not False
+#    success = _validate_token() # await battery_discharging.async_update()
+    success = await battery_discharging.async_update()
     assert success is not False
 
     discharging_flows = battery_discharging.status_flows

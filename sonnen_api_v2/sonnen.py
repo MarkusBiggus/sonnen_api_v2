@@ -328,6 +328,7 @@ class Sonnen:
             raise BatterieHTTPError(f'HTTP Error fetching endpoint "{self.configurations_api_endpoint}" status: {response.status}')
 
         self._configurations = json.loads(response.body) #json() #await self.async_fetch_configurations()
+        self._last_configurations = datetime.datetime.now()
         return True
 
     async def async_fetch_status(self) -> Dict:

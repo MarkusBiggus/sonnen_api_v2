@@ -3,7 +3,7 @@
 import logging
 from sonnen_api_v2.sonnen import Sonnen as Batterie, BatterieResponse, BatterieError, BatterieAuthError, BatterieHTTPError
 
-__version__ = '0.5.12'
+__version__ = '0.5.13'
 
 __all__ = (
     "Batterie"
@@ -68,4 +68,3 @@ class BatterieBackup:
 #            "battery": self.battery.,
 #            "powermeter": self.battery.,
 #            "inverter": self.battery.
-        )

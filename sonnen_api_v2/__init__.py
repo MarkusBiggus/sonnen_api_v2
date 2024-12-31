@@ -31,7 +31,7 @@ class BatterieBackup:
 
         self.battery = Batterie(auth_token, ip_address, port)
 
-    async def refresh_response(self) -> BatterieResponse:
+    async def refresh_response(self):
         """Query the real time API."""
 
         success = await self.battery.async_update()
@@ -46,7 +46,7 @@ class BatterieBackup:
             configurations = self.battery.configurations,
         )
 
-    async def validate_token(self) -> BatterieResponse:
+    async def validate_token(self):
         """Query the real time API."""
 
         success = await self.battery.async_validate_token()

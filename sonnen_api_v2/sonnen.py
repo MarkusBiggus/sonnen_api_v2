@@ -127,6 +127,39 @@ class Sonnen:
         else:
             print(msg)
 
+    def sync_validate_token(self) -> bool:
+        """Used to check valid ip address & token can make connection."""
+
+        conn = urllib3.connection_from_url(self.configurations_api_endpoint,headers=self.header, retries=False)
+        try:
+            response = conn.urlopen('GET',
+                            self.configurations_api_endpoint,
+                            None,
+                            self.header,
+                            False)
+
+        except urllib3.exceptions.NewConnectionError:
+            self._log_error(f'Invalid ip address "{self.configurations_api_endpoint}"')
+            raise BatterieAuthError(f'Invalid ip address "{self.configurations_api_endpoint}"')
+        except Exception as error:
+            self._log_error(f'Sync fetch "{self.configurations_api_endpoint}" fail: {error}')
+            raise BatterieError(f'Sync fetch "{self.configurations_api_endpoint}"  fail: {error}') from error
+
+        #print(f'resp: {response.body}')
+        if response.status in [401, 403]:
+            raise BatterieAuthError(f'Invalid token "{self.auth_token}" status: {response.status}')
+        elif response.status > 299:
+            raise BatterieHTTPError(f'HTTP Error fetching endpoint "{self.configurations_api_endpoint}" status: {response.status}')
+
+        self._configurations = json.loads(response.body) #json() #await self.async_fetch_configurations()
+        self._last_configurations = datetime.datetime.now()
+        return True
+
+    async def async_validate_token(self) -> bool:
+        """Used to check valid ip address & token can make connection."""
+
+        return self.sync_validate_token()
+
     async def async_update(self) -> bool:
         """Update all battery data from an async caller.
         Returns:
@@ -297,39 +330,6 @@ class Sonnen:
                 raise BatterieHTTPError(f'HTTP error fetching endpoint "{url}" status: {response.status}')
 
         return response.json()
-
-    async def async_validate_token(self) -> Dict:
-        """Used to check valid hostname & token can make connection."""
-
-        return self.sync_validate_token()
-
-    def sync_validate_token(self) -> Dict:
-        """Used to check valid hostname & token can make connection."""
-
-        conn = urllib3.connection_from_url(self.configurations_api_endpoint,headers=self.header, retries=False)
-        try:
-            response = conn.urlopen('GET',
-                            self.configurations_api_endpoint,
-                            None,
-                            self.header,
-                            False)
-
-        except urllib3.exceptions.NewConnectionError:
-            self._log_error(f'Invalid hostname "{self.configurations_api_endpoint}"')
-            raise BatterieAuthError(f'Invalid hostname "{self.configurations_api_endpoint}"')
-        except Exception as error:
-            self._log_error(f'Sync fetch "{self.configurations_api_endpoint}" fail: {error}')
-            raise BatterieError(f'Sync fetch "{self.configurations_api_endpoint}"  fail: {error}') from error
-
-        #print(f'resp: {response.body}')
-        if response.status in [401, 403]:
-            raise BatterieAuthError(f'Invalid token "{self.auth_token}" status: {response.status}')
-        elif response.status > 299:
-            raise BatterieHTTPError(f'HTTP Error fetching endpoint "{self.configurations_api_endpoint}" status: {response.status}')
-
-        self._configurations = json.loads(response.body) #json() #await self.async_fetch_configurations()
-        self._last_configurations = datetime.datetime.now()
-        return True
 
     async def async_fetch_status(self) -> Dict:
         """Wait for Fetch Status endpoint."""

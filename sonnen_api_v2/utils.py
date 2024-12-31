@@ -57,11 +57,10 @@ def startswith(something):
     return inner
 
 
- def div10(val):
+def div10(val):
      return val / 10
 
-
- def div100(val):
+def div100(val):
      return val / 100
 
 def div1K(val):

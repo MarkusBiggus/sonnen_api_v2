@@ -1,6 +1,8 @@
 """Sonnen Batterie API V2 module."""
 
 import logging
+from collections.abc import Awaitable
+
 from sonnen_api_v2.sonnen import Sonnen as Batterie, BatterieResponse, BatterieError, BatterieAuthError, BatterieHTTPError
 from .const import DEFAULT_PORT
 
@@ -31,7 +33,7 @@ class BatterieBackup:
 
         self.battery = Batterie(auth_token, ip_address, port)
 
-    async def refresh_response(self):
+    async def refresh_response(self) -> Awaitable[BatterieResponse]:
         """Query the real time API."""
 
         success = await self.battery.async_update()
@@ -46,7 +48,7 @@ class BatterieBackup:
             configurations = self.battery.configurations,
         )
 
-    async def validate_token(self):
+    async def validate_token(self) -> Awaitable[BatterieResponse]:
         """Query the real time API."""
 
         success = await self.battery.async_validate_token()

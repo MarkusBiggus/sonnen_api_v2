@@ -15,7 +15,7 @@ from unittest.mock import patch
 from sonnen_api_v2 import Batterie, BatterieBackup, BatterieResponse
 
 from .battery_charging_asyncio import fixture_battery_charging
-from . mock_battery_configurations import __battery_configurations
+from . mock_battery_configurations import __battery_configurations_auth200
 
 LOGGER_NAME = None # "sonnenapiv2" #
 
@@ -43,7 +43,7 @@ if LOGGER_NAME is not None:
 @pytest.mark.asyncio
 @pytest.mark.usefixtures("battery_charging")
 @freeze_time("20-11-2023 17:00:00")
-@patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_configurations)
+@patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_configurations_auth200)
 async def test_batterieresponse(battery_charging: Batterie) -> None:
     """Batterie Response using mock data"""
 

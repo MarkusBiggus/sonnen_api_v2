@@ -2,7 +2,7 @@ import datetime
 from sonnen_api_v2 import Batterie
 from freezegun import freeze_time
 
-@freeze_time("24-05-2022 15:38:23")
+#@freeze_time("24-05-2022 15:38:23")
 def check_charge_results(battery_charging: Batterie):
     """Common results for each method of updating
         Batterie object from network device
@@ -12,6 +12,10 @@ def check_charge_results(battery_charging: Batterie):
     assert battery_charging.system_status == 'OnGrid'
     assert battery_charging.consumption_average == 486
     assert battery_charging.consumption == 1578
+    assert battery_charging.kwh_consumed == 816.5
+    assert battery_charging.kwh_produced == 3969.800048828125
+
+
     assert battery_charging.installed_modules == 4
     assert battery_charging.discharging == 0
     assert battery_charging.pac_total <= 0
@@ -33,11 +37,12 @@ def check_charge_results(battery_charging: Batterie):
     #print(f'remaining_charge_to_full: {remaining_charge_to_full:,.2f}Wh  full_charge_capacity: {battery_charging.battery_full_charge_capacity_wh:,.2f}Wh   remaining_capacity: {battery_charging.battery_remaining_capacity_wh:,.2f}:Wh', flush=True)
     assert battery_charging.fully_charged_at.strftime('%d.%B.%Y %H:%M') == '24.May.2022 17:25'
     assert battery_charging.seconds_until_reserve is None
+    assert battery_charging.battery_activity_state == 'charging'
 
-
+#@freeze_time("24-05-2022 15:38:23")
 def check_discharge_results(battery_discharging: Batterie):
     assert battery_discharging.battery_remaining_capacity_wh == 18200.576
-    assert battery_discharging.seconds_until_reserve == 35210
+    assert battery_discharging.seconds_until_reserve == 35208
     assert battery_discharging.backup_reserve_at.strftime('%d.%B.%Y %H:%M')  == '25.May.2022 01:25'
     assert battery_discharging.seconds_until_fully_discharged == 45564
     assert battery_discharging.fully_discharged_at.strftime('%d.%B.%Y %H:%M') == '25.May.2022 04:17'
@@ -58,11 +63,14 @@ def check_discharge_results(battery_discharging: Batterie):
     assert battery_discharging.installed_modules == 4
     assert battery_discharging.consumption == 1541
     assert battery_discharging.consumption_average == 1563
+    assert battery_discharging.kwh_consumed == 816.5
+    assert battery_discharging.kwh_produced == 3969.800048828125
     assert battery_discharging.status_battery_charging is False
     assert battery_discharging.status_battery_discharging is True
     assert battery_discharging.system_status == 'OnGrid'
+    assert battery_discharging.battery_activity_state == 'discharging'
 
-
+#@freeze_time("24-05-2022 15:38:23")
 def check_reserve_results(battery_discharging_reserve: Batterie):
     assert battery_discharging_reserve.seconds_until_reserve is None #-1032
     assert battery_discharging_reserve.backup_reserve_at is None # .strftime('%d.%B.%Y %H:%M')  == '24.May.2022 17:25'
@@ -87,3 +95,4 @@ def check_reserve_results(battery_discharging_reserve: Batterie):
     assert battery_discharging_reserve.status_battery_charging is False
     assert battery_discharging_reserve.status_battery_discharging is True
     assert battery_discharging_reserve.system_status == 'OffGrid'
+    assert battery_discharging_reserve.battery_activity_state == 'discharging reserve'

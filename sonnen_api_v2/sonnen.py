@@ -457,7 +457,7 @@ class Sonnen:
     @get_item(float)
     def kwh_produced(self) -> float:
         """Produced kWh"""
-        return self._powermeter_data[0][POWERMETER_KWH_PRODUCED]
+        return self._powermeter_data[0][POWERMETER_KWH_CONSUMED]
 
     @property
     @get_item(int)
@@ -467,15 +467,6 @@ class Sonnen:
                 house consumption in Watt
         """
         return self._latest_details_data[STATUS_CONSUMPTION_W]
-
-    @property
-    @get_item(int)
-    def consumption_average(self) -> int:
-        """Average consumption in watt
-           Returns:
-               average consumption in watt
-        """
-        return self._status_data[STATUS_CONSUMPTION_AVG]
 
     @property
     @get_item(int)
@@ -506,15 +497,6 @@ class Sonnen:
 
     @property
     @get_item(int)
-    def installed_capacity(self) -> int:
-        """Battery modules installed in the system
-            Returns:
-                total installed capacity Wh
-        """
-        return self._configurations[CONFIGURATION_MODULECAPACITY] * self.installed_modules
-
-    @property
-    @get_item(int)
     def u_soc(self) -> int:
         """User state of charge (usable charge)
             Returns:
@@ -530,17 +512,6 @@ class Sonnen:
                 Integer Percent
         """
         return self._latest_details_data[DETAIL_RSOC]
-
-    @property
-    @get_item(int)
-    def remaining_capacity_wh(self) -> int:
-        """ Remaining capacity in watt-hours
-        IMPORTANT NOTE: Why is this double as high as it should be???
-            use battery_remaining_capacity_wh for calculated value
-            Returns:
-                Remaining USABLE capacity of the battery in Wh
-        """
-        return self._status_data[STATUS_REMAININGCAPACITY_WH]
 
     @property
     @get_item(int)
@@ -568,78 +539,22 @@ class Sonnen:
         return datetime.datetime.now() - self.time_since_full
 
     @property
-    @get_item(int)
-    def seconds_until_fully_charged(self) -> Union[int, None]:
-        """Time remaining until fully charged
-            Returns:
-                Time in seconds - None when not charging, zero when fully charged
-        """
-        remaining_charge = self.battery_full_charge_capacity_wh - self.battery_remaining_capacity_wh
-        seconds = int(remaining_charge / self.charging * 3600) if self.charging else None
-
-        return seconds if remaining_charge != 0 else 0
-
-    @property
-    @get_item(int)
-    def seconds_until_fully_discharged(self) -> Union[int, None]:
-        """Time remaining until fully discharged
-            Returns:
-                Time in seconds - None when not discharging, zero when fully discharged
-        """
-        remaining_charge = self.battery_remaining_capacity_wh
-        seconds = int(remaining_charge / self.discharging * 3600) if self.discharging else None
-
-        return seconds if remaining_charge != 0 else 0
-
-    @property
-    def fully_charged_at(self) -> Optional[datetime.datetime]:
-        """ Calculate time until fully charged
-            Returns:
-                Datetime or None when not charging
-        """
-        return (datetime.datetime.now() + datetime.timedelta(seconds=self.seconds_until_fully_charged)) if self.charging else None
-
-    @property
-    def fully_discharged_at(self) -> Optional[datetime.datetime]:
-        """Future time battery is fully discharged
-            Returns:
-                Datetime discharged or None when not discharging
-        """
-        return (datetime.datetime.now() + datetime.timedelta(seconds=self.seconds_until_fully_discharged)) if self.discharging else None
-
-    @property
-    @get_item(int)
-    def seconds_until_reserve(self) -> Union[int, None]:
-        """Time until battery capacity at backup reserve
-            Above reserve:
-                Charging - None
-                Discharging - seconds to reserve
-            Below Reserve
-                Charging - seconds to reserve
-                Discharging - None (negative seconds since reserve?)
-                Standby - None
-            Returns:
-                Time in seconds or None
-        """
-        capacity_until_reserve = self.battery_remaining_capacity_wh - self.backup_buffer_capacity_wh
-        if capacity_until_reserve > 0:
-            seconds = int((capacity_until_reserve / self.discharging) * 3600) if self.discharging else None
-        else:
-            if self.charging:
-                seconds = int(abs(capacity_until_reserve) / self.charging * 3600)
-            else:
-                seconds = None # int(capacity_until_reserve / self.discharging * 3600)
-        return seconds
-
-    @property
-    @get_item(int)
-    def using_reserve(self) -> int:
+    @get_item(bool)
+    def using_reserve(self) -> bool:
         """Is backup reserve being used
             Returns:
                 Bool - true when reserve in use
         """
-        capacity_until_reserve = self.battery_remaining_capacity_wh - self.backup_buffer_capacity_wh
-        return capacity_until_reserve < 0
+        return self.capacity_until_reserve < 0
+
+    @property
+    @get_item(float)
+    def capacity_until_reserve(self) -> float:
+        """Capacity until reserve is reached (battery goes standby)
+            Returns:
+                Wh
+        """
+        return self.battery_remaining_capacity_wh - self.backup_buffer_capacity_wh
 
     @property
     def backup_reserve_at(self) -> Optional[datetime.datetime]:
@@ -686,22 +601,12 @@ class Sonnen:
         return self.pac_total if self.pac_total > 0 else 0
 
     @property
-    @get_item(int)
-    def grid_in(self) -> int:
-        """Actual grid feed in value
+    def validation_timestamp(self) -> datetime.datetime:
+        """Timestamp: "Wed Sep 18 12:26:06 2024"
             Returns:
-                Value in watt
+                datetime
         """
-        return self._status_data[STATUS_GRIDFEEDIN_W] if self._status_data[STATUS_GRIDFEEDIN_W] > 0 else 0
-
-    @property
-    @get_item(int)
-    def grid_out(self) -> int:
-        """Actual grid out value
-            Returns:
-                Value in watt
-        """
-        return abs(self._status_data[STATUS_GRIDFEEDIN_W]) if self._status_data[STATUS_GRIDFEEDIN_W] < 0 else 0
+        return  datetime.datetime.strptime(self._latest_details_data[IC_STATUS]["timestamp"], '%a %b %d %H:%M:%S %Y')
 
     @property
     @get_item(int)
@@ -840,6 +745,15 @@ class Sonnen:
 
     @property
     @get_item(float)
+    def battery_unusable_capacity_wh(self) -> float:
+        """Unusable capacity Wh calculated from Ah
+            Returns:
+                float Wh
+        """
+        return self.battery_full_charge_capacity_wh * BATTERY_UNUSABLE_RESERVE
+
+    @property
+    @get_item(float)
     def battery_remaining_capacity(self) -> float:
         """Remaining capacity
             Returns:
@@ -853,7 +767,7 @@ class Sonnen:
         """Remaining capacity Wh calculated from Ah
             use instead of status RemainingCapacity_Wh which is incorrect
             Returns:
-                Int Wh
+                Wh
         """
         return self.battery_remaining_capacity * self.battery_module_dc_voltage
 
@@ -877,15 +791,6 @@ class Sonnen:
                 Voltage in Volt
         """
         return self._battery_status[BATTERY_SYSTEM_VOLTAGE]
-
-    @property
-    @get_item(float)
-    def battery_unusable_capacity_wh(self) -> float:
-        """Unusable capacity Wh calculated from Ah
-            Returns:
-                float Wh
-        """
-        return self.battery_full_charge_capacity_wh * BATTERY_UNUSABLE_RESERVE
 
     @property
     @get_item(float)
@@ -913,6 +818,70 @@ class Sonnen:
                 System current in Ampere
         """
         return self._battery_status[BATTERY_SYSTEM_CURRENT]
+
+    @property
+    @get_item(int)
+    def seconds_until_fully_charged(self) -> Union[int, None]:
+        """Time remaining until fully charged
+            Returns:
+                Time in seconds - None when not charging, zero when fully charged
+        """
+        remaining_charge = self.battery_full_charge_capacity_wh - self.battery_remaining_capacity_wh
+        seconds = int(remaining_charge / self.charging * 3600) if self.charging else None
+
+        return seconds if remaining_charge != 0 else 0
+
+    @property
+    @get_item(int)
+    def seconds_until_fully_discharged(self) -> Union[int, None]:
+        """Time remaining until fully discharged
+            Returns:
+                Time in seconds - None when not discharging, zero when fully discharged
+        """
+        remaining_charge = self.battery_remaining_capacity_wh
+        seconds = int(remaining_charge / self.discharging * 3600) if self.discharging else None
+
+        return seconds if remaining_charge != 0 else 0
+
+    @property
+    def fully_charged_at(self) -> Optional[datetime.datetime]:
+        """ Calculate time until fully charged
+            Returns:
+                Datetime or None when not charging
+        """
+        return (datetime.datetime.now() + datetime.timedelta(seconds=self.seconds_until_fully_charged)) if self.charging else None
+
+    @property
+    def fully_discharged_at(self) -> Optional[datetime.datetime]:
+        """Future time battery is fully discharged
+            Returns:
+                Datetime discharged or None when not discharging
+        """
+        return (datetime.datetime.now() + datetime.timedelta(seconds=self.seconds_until_fully_discharged)) if self.discharging else None
+
+    @property
+    @get_item(int)
+    def seconds_until_reserve(self) -> Union[int, None]:
+        """Time until battery capacity at backup reserve
+            Above reserve:
+                Charging - None
+                Discharging - seconds to reserve
+            Below Reserve
+                Charging - seconds to reserve
+                Discharging - None (negative seconds since reserve?)
+                Standby - None
+            Returns:
+                Time in seconds or None
+        """
+        capacity_until_reserve = self.battery_remaining_capacity_wh - self.backup_buffer_capacity_wh
+        if capacity_until_reserve > 0:
+            seconds = int((capacity_until_reserve / self.discharging) * 3600) if self.discharging else None
+        else:
+            if self.charging:
+                seconds = int(abs(capacity_until_reserve) / self.charging * 3600)
+            else:
+                seconds = None # int(capacity_until_reserve / self.discharging * 3600)
+        return seconds
 
     @property
     @get_item(int)
@@ -948,12 +917,59 @@ class Sonnen:
 
     @property
     @get_item(int)
+    def installed_capacity(self) -> int:
+        """Battery modules installed in the system
+            Returns:
+                total installed capacity Wh
+        """
+        return self._configurations[CONFIGURATION_MODULECAPACITY] * self.installed_modules
+
+    @property
+    @get_item(int)
     def configuration_em_usoc(self) -> int:
         """User State Of Charge - BackupBuffer value (includes unusable reserve)
             Returns:
                 Integer Percent
         """
         return self._configurations[CONFIGURATION_EM_USOC]
+
+    @property
+    @get_item(int)
+    def consumption_average(self) -> int:
+        """Average consumption in watt
+           Returns:
+               average consumption in watt
+        """
+        return self._status_data[STATUS_CONSUMPTION_AVG]
+
+    @property
+    @get_item(int)
+    def remaining_capacity_wh(self) -> int:
+        """ Remaining capacity in watt-hours
+        IMPORTANT NOTE: Why is this double as high as it should be???
+            use battery_remaining_capacity_wh for calculated value
+            Returns:
+                Remaining USABLE capacity of the battery in Wh
+        """
+        return self._status_data[STATUS_REMAININGCAPACITY_WH]
+
+    @property
+    @get_item(int)
+    def grid_in(self) -> int:
+        """Actual grid feed in value
+            Returns:
+                Value in watt
+        """
+        return self._status_data[STATUS_GRIDFEEDIN_W] if self._status_data[STATUS_GRIDFEEDIN_W] > 0 else 0
+
+    @property
+    @get_item(int)
+    def grid_out(self) -> int:
+        """Actual grid out value
+            Returns:
+                Value in watt
+        """
+        return abs(self._status_data[STATUS_GRIDFEEDIN_W]) if self._status_data[STATUS_GRIDFEEDIN_W] < 0 else 0
 
     @property
     @get_item(int)
@@ -1018,27 +1034,27 @@ class Sonnen:
         return self._status_data[STATUS_DISCHARGE_NOT_ALLOWED]
 
     @property
-    @get_item(int)
-    def backup_buffer_capacity_wh(self) -> int:
+    @get_item(float)
+    def backup_buffer_capacity_wh(self) -> float:
         """Backup Buffer capacity (includes 7% unusable)
             Returns:
                 Backup Buffer in Wh
         """
-        buffer_percent = self.configuration_em_usoc
+        buffer_percent = self.status_backup_buffer / 100 #self.configuration_em_usoc
         full_charge = self.battery_full_charge_capacity_wh
 
-        return int(full_charge * buffer_percent / 100)
+        return full_charge * buffer_percent
 
     @property
-    @get_item(int)
-    def backup_buffer_usable_capacity_wh(self) -> int:
+    @get_item(float)
+    def backup_buffer_usable_capacity_wh(self) -> float:
         """Backup Buffer usable capacity (excludes BATTERY_UNUSABLE_RESERVE)
             Returns:
                 Usable Backup Buffer in Wh
         """
         buffer_percent = self.status_backup_buffer / 100 #configuration_em_usoc
 
-        return int(self.battery_full_charge_capacity_wh * (buffer_percent - BATTERY_UNUSABLE_RESERVE)) if buffer_percent > BATTERY_UNUSABLE_RESERVE else 0
+        return self.battery_full_charge_capacity_wh * (buffer_percent - BATTERY_UNUSABLE_RESERVE) if buffer_percent > BATTERY_UNUSABLE_RESERVE else 0
 
     @property
     def state_core_control_module(self) -> str:
@@ -1066,22 +1082,37 @@ class Sonnen:
         return  datetime.datetime.fromisoformat(self._status_data[STATUS_TIMESTAMP])
 
     @property
+    def battery_activity_state(self) -> str:
+        """Battery current state of activity"""
+
+        if self.configurations is None:
+            return "unavailable"
+
+        """ current_state index of: ["standby", "charging", "discharging", "discharging reserve", "charged", "discharged"] """
+        if self.status_battery_charging:
+            battery_status = "charging"
+        elif self.status_battery_discharging:
+            if self.battery_remaining_capacity_wh > self.backup_buffer_capacity_wh:
+                battery_status = "discharging"
+            else:
+                battery_status = "discharging reserve"
+        elif self.battery_rsoc > 98: # look at usable capacity over long term?
+            battery_status = "charged"
+        elif self.battery_usable_remaining_capacity < 2:
+            battery_status = "discharged"
+        else:
+            battery_status = "standby"
+
+        return battery_status
+
+    @property
     @get_item(float)
     def inverter_pac_total(self) -> float:
         """Inverter PAC total"
             Returns:
-                float
+                Watts
         """
         return  self._inverter_data[INVERTER_PAC_TOTAL]
-
-    @property
-    def validation_timestamp(self) -> datetime.datetime:
-        """Timestamp: "Wed Sep 18 12:26:06 2024"
-            Returns:
-                datetime
-        """
-        print (f'{self._latest_details_data[IC_STATUS]["timestamp"]}')
-        return  datetime.datetime.strptime(self._latest_details_data[IC_STATUS]["timestamp"], '%a %b %d %H:%M:%S %Y')
 
     @property
     def ic_eclipse_led(self) -> str:

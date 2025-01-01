@@ -192,7 +192,8 @@ def __mock_battery(*args)-> json:
 def __mock_powermeter(*args)-> json:
     return [
         {
-            'a_l1': 2.4730000495910645, 'a_l2': 0,
+            'a_l1': 2.4730000495910645,
+            'a_l2': 0,
             'a_l3': 0,
             'channel': 1,
             'deviceid': 4,

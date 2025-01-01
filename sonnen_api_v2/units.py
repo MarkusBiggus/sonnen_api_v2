@@ -37,5 +37,10 @@ class DailyTotal(Measurement):
 
     resets_daily: bool = True
 
+class BatteryCapacity(Measurement):
+    """A Measurement of Battery Capacity."""
+
+    unit: Units = Units.KWH
+    storage: bool = True
 
 SensorUnit = Union[Measurement, Total]

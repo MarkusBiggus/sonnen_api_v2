@@ -68,6 +68,7 @@ STATUS_REMAININGCAPACITY_WH = 'RemainingCapacity_Wh'
 STATUS_SYSTEMSTATUS = 'SystemStatus'
 STATUS_TIMESTAMP = 'Timestamp'
 INVERTER_PAC_TOTAL = 'pac_total'
+INVERTER_UAC = 'uac'
 
 # default timeout (seconds)
 TIMEOUT = 20

@@ -264,7 +264,7 @@ def test_nobatterie_sync_wrapped():
         success = battery_charging.sync_validate_token()
 
 
-def __battery_configurations_unauth401(self, _method, _url, _body, _headers, _retries):
+def __battery_AuthError_401(self, _method, _url, _body, _headers, _retries):
     """No Mock configurations for invalid Auth: token
         Fake bad token returns status 401.
     """
@@ -280,7 +280,7 @@ def __battery_configurations_unauth401(self, _method, _url, _body, _headers, _re
     return resp
 
 @pytest.mark.usefixtures("battery_discharging")
-@patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_configurations_unauth401)
+@patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_AuthError_401)
 def test_batterie_unauth_token401(battery_discharging):
     """sonnenbatterie Emulator package - using mock data.
     """
@@ -288,7 +288,7 @@ def test_batterie_unauth_token401(battery_discharging):
         success = battery_discharging.sync_validate_token()
 
 
-def __battery_configurations_unauth403(self, _method, _url, _body, _headers, _retries):
+def __battery_AuthError_403(self, _method, _url, _body, _headers, _retries):
     """No Mock configurations for invalid Auth: token
         Fake forbidden token returns status 403.
     """
@@ -304,7 +304,7 @@ def __battery_configurations_unauth403(self, _method, _url, _body, _headers, _re
     return resp
 
 @pytest.mark.usefixtures("battery_discharging")
-@patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_configurations_unauth403)
+@patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_AuthError_403)
 def test_batterie_unauth_token403(battery_discharging):
     """sonnenbatterie Emulator package - using mock data.
     """

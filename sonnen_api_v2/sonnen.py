@@ -460,6 +460,50 @@ class Sonnen:
         return self._powermeter_data[0][POWERMETER_KWH_CONSUMED]
 
     @property
+    @get_item(float)
+    def production_total_w(self) -> float:
+        """Produced W"""
+        return self._powermeter_data[0][POWERMETER_WATTS_TOTAL]
+
+    @property
+    @get_item(float)
+    def production_reactive_power(self) -> float:
+        """Reactive Produced W"""
+        return self._powermeter_data[0][POWERMETER_REACTIVE_POWER]
+
+    @property
+    @get_item(float)
+    def production_power_factor(self) -> float:
+        """Production Power Factor
+        Apparent Power = Real Power + Reactive Power
+        Power Factor = Real Power / Apparent Power
+        """
+        apparent_power = self.production_total_w + self.production_reactive_power
+        return self.production_total_w / apparent_power if apparent_power > 0 else 0
+
+    @property
+    @get_item(float)
+    def consumption_total_w(self) -> float:
+        """Consumed W"""
+        return self._powermeter_data[1][POWERMETER_WATTS_TOTAL]
+
+    @property
+    @get_item(float)
+    def consumption_reactive_power(self) -> float:
+        """Reactive Consumed W"""
+        return self._powermeter_data[1][POWERMETER_REACTIVE_POWER]
+
+    @property
+    @get_item(float)
+    def consumption_power_factor(self) -> float:
+        """Consumption Power Factor
+        Apparent Power = Real Power + Reactive Power
+        Power Factor = Real Power / Apparent Power
+        """
+        apparent_power = self.consumption_total_w + self.consumption_reactive_power
+        return self.consumption_total_w / apparent_power if apparent_power > 0 else 0
+
+    @property
     @get_item(int)
     def consumption(self) -> int:
         """Consumption of the household
@@ -572,11 +616,19 @@ class Sonnen:
             return (datetime.datetime.now() + datetime.timedelta(seconds=seconds)) if self.discharging else None
 
     @property
+    def state_core_control_module(self) -> str:
+        """State of control module: config, ongrid, offgrid, critical error, ...
+            Returns:
+                String
+        """
+        return self._latest_details_data[IC_STATUS][DETAIL_STATE_CORECONTROL_MODULE]
+
+    @property
     @get_item(int)
     def pac_total(self) -> int:
         """ Battery inverter load
-            Negative if charging
-            Positive if discharging
+            Negative is charging
+            Positive is discharging
             Returns:
                 Inverter load in watt
         """
@@ -943,6 +995,32 @@ class Sonnen:
         return self._status_data[STATUS_CONSUMPTION_AVG]
 
     @property
+    def system_status(self) -> str:
+        """System Status: Config, OnGrid, OffGrid, Critical Error, ...
+            Returns:
+                String
+        """
+        return self._status_data[STATUS_SYSTEMSTATUS]
+
+    @property
+    def system_status_timestamp(self) -> datetime.datetime:
+        """Timestamp: "2024-10-09 14:00:07"
+            Returns:
+                datetime
+        """
+        print (f'{self._status_data[STATUS_TIMESTAMP]}')
+        return  datetime.datetime.fromisoformat(self._status_data[STATUS_TIMESTAMP])
+
+    @property
+    @get_item(float)
+    def status_frequency(self) -> float:
+        """AC Frequency
+           Returns:
+              Hz
+        """
+        return self._status_data[STATUS_FREQUENCY]
+
+    @property
     @get_item(int)
     def remaining_capacity_wh(self) -> int:
         """ Remaining capacity in watt-hours
@@ -974,9 +1052,9 @@ class Sonnen:
     @property
     @get_item(int)
     def status_backup_buffer(self) -> int:
-        """BackupBuffer value from Status api
+        """BackupBuffer proportion reserved for OffGrid use
             Returns:
-                Integer Percent
+                Percent of capacity
         """
         return self._status_data[STATUS_BACKUPBUFFER]
 
@@ -985,7 +1063,7 @@ class Sonnen:
     def status_battery_charging(self) -> bool:
         """BatteryCharging
             Returns:
-                Bool
+                true when charging
         """
         return self._status_data[STATUS_BATTERY_CHARGING]
 
@@ -994,7 +1072,7 @@ class Sonnen:
     def status_battery_discharging(self) -> bool:
         """BatteryDischarging
             Returns:
-                Bool
+                true when discharging
         """
         return self._status_data[STATUS_BATTERY_DISCHARGING]
 
@@ -1055,31 +1133,6 @@ class Sonnen:
         buffer_percent = self.status_backup_buffer / 100 #configuration_em_usoc
 
         return self.battery_full_charge_capacity_wh * (buffer_percent - BATTERY_UNUSABLE_RESERVE) if buffer_percent > BATTERY_UNUSABLE_RESERVE else 0
-
-    @property
-    def state_core_control_module(self) -> str:
-        """State of control module: config, ongrid, offgrid, critical error, ...
-            Returns:
-                String
-        """
-        return self._latest_details_data[IC_STATUS][DETAIL_STATE_CORECONTROL_MODULE]
-
-    @property
-    def system_status(self) -> str:
-        """System Status: Config, OnGrid, OffGrid, Critical Error, ...
-            Returns:
-                String
-        """
-        return self._status_data[STATUS_SYSTEMSTATUS]
-
-    @property
-    def system_status_timestamp(self) -> datetime.datetime:
-        """Timestamp: "2024-10-09 14:00:07"
-            Returns:
-                datetime
-        """
-        print (f'{self._status_data[STATUS_TIMESTAMP]}')
-        return  datetime.datetime.fromisoformat(self._status_data[STATUS_TIMESTAMP])
 
     @property
     def battery_activity_state(self) -> str:

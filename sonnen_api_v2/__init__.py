@@ -33,6 +33,11 @@ class BatterieBackup:
 
         self.battery = Batterie(auth_token, ip_address, port)
 
+    def get_sensor_value(self, sensor_name:str):
+        """Get sensor names from battery attributes"""
+
+        return getattr(self.battery, sensor_name)
+
     async def refresh_response(self) -> Awaitable[BatterieResponse]:
         """Query the real time API."""
 

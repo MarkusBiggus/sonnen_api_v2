@@ -35,12 +35,14 @@ class Total(Measurement):
 class DailyTotal(Measurement):
     """A Measurement where the values are reset daily."""
 
+    is_monotonic: bool = False
     resets_daily: bool = True
 
 class BatteryCapacity(Measurement):
     """A Measurement of Battery Capacity."""
 
     unit: Units = Units.KWH
+    is_monotonic: bool = False
     storage: bool = True
 
 SensorUnit = Union[Measurement, Total]

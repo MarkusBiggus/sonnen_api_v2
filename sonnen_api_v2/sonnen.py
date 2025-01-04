@@ -93,7 +93,8 @@ class Sonnen:
 
         self.ip_address = ip_address
         self.auth_token = auth_token
-        self.url = f'http://{ip_address}:{ip_port}'
+        self._hostname = f'{ip_address}:{ip_port}'
+        self.url = f'http://{self._hostname}'
         self.header = {'Auth-Token': self.auth_token}
         self.request_timeouts = (TIMEOUT, TIMEOUT)  # noqa: F405
         self.client_timeouts = aiohttp.ClientTimeout(connect=TIMEOUT, sock_read=TIMEOUT)  # noqa: F405
@@ -128,7 +129,10 @@ class Sonnen:
             print(msg)
 
     def sync_validate_token(self) -> bool:
-        """Used to check valid ip address & token can make connection."""
+        """Check valid IP address & token can make connection.
+            urllib3 used to access to low level exceptions obfuscated
+            by aiohttp exception handler.
+        """
 
         conn = urllib3.connection_from_url(self.configurations_api_endpoint,headers=self.header, retries=False)
         try:
@@ -139,26 +143,28 @@ class Sonnen:
                             False)
 
         except urllib3.exceptions.NewConnectionError:
-            self._log_error(f'Invalid ip address "{self.configurations_api_endpoint}"')
-            raise BatterieAuthError(f'Invalid ip address "{self.configurations_api_endpoint}"')
+            self._log_error(f'Invalid IP address "{self.configurations_api_endpoint}"')
+            raise BatterieAuthError(f'Invalid IP address "{self.configurations_api_endpoint}"')
         except Exception as error:
             self._log_error(f'Sync fetch "{self.configurations_api_endpoint}" fail: {error}')
             raise BatterieError(f'Sync fetch "{self.configurations_api_endpoint}"  fail: {error}') from error
 
-        #print(f'resp: {response.body}')
         if response.status in [401, 403]:
             raise BatterieAuthError(f'Invalid token "{self.auth_token}" status: {response.status}')
         elif response.status > 299:
             raise BatterieHTTPError(f'HTTP Error fetching endpoint "{self.configurations_api_endpoint}" status: {response.status}')
 
-        self._configurations = json.loads(response.body) #json() #await self.async_fetch_configurations()
+        self._configurations = json.loads(response.body)
         self._last_configurations = datetime.datetime.now()
         return True
 
     async def async_validate_token(self) -> bool:
-        """Used to check valid ip address & token can make connection."""
+        """Check valid IP address & token can make connection."""
 
-        return self.sync_validate_token()
+        loop = asyncio.get_running_loop()
+
+        return await loop.run_in_executor(None, self.sync_validate_token)
+#blocking        return self.sync_validate_token()
 
     async def async_update(self) -> bool:
         """Update all battery data from an async caller.
@@ -416,6 +422,16 @@ class Sonnen:
         return self._fetch_api_endpoint(
             self.inverter_api_endpoint
         )
+
+    @property
+    def api_token(self) -> Dict:
+        """API token to authenticate with batterie."""
+        return self.auth_token
+
+    @property
+    def hostname(self) -> Dict:
+        """Hostname:port of the batterie."""
+        return self._hostname
 
     @property
     def configurations(self) -> Dict:

@@ -44,7 +44,7 @@ class BatterieBackup:
         success = await self.battery.async_update()
 
         if success is False:
-            _LOGGER.error('BatterieBackup: Error updating batterie data!')
+            _LOGGER.error(f'BatterieBackup: Error updating batterie data! from: {self.battery.hostname}')
             raise BatterieError('BatterieBackup: Error updating batterie data!')
 
         return BatterieResponse(
@@ -59,8 +59,8 @@ class BatterieBackup:
         success = await self.battery.async_validate_token()
 
         if success is not True:
-            _LOGGER.error('BatterieBackup: Error updating batterie data!')
-            raise BatterieError('BatterieBackup: Error updating batterie data!')
+            _LOGGER.error(f'BatterieBackup: Error validating API token! ({self.battery.api_token})')
+            raise BatterieAuthError('BatterieBackup: Error validating API token!')
 
         return BatterieResponse(
             version = self.battery.configuration_de_software,

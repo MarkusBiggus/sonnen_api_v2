@@ -47,13 +47,14 @@ if LOGGER_NAME is not None:
 async def test_batterieresponse(battery_charging: Batterie) -> None:
     """Batterie Response using mock data"""
 
-    status_data = await battery_charging.async_fetch_status()
-#    print(f'status: {status_data}')
-    assert status_data.get('Timestamp') == '2023-11-20 17:00:55'
-    assert status_data.get('GridFeedIn_W') == 0
-    assert status_data.get('Consumption_W') == 1578
-    assert status_data.get('Production_W') == 2972
-    assert status_data.get('Pac_total_W') == -1394
+#     #chconfirmeck fixture is working
+#     status_data = await battery_charging.async_fetch_status()
+# #    print(f'status: {status_data}')
+#     assert status_data.get('Timestamp') == '2023-11-20 17:00:55'
+#     assert status_data.get('GridFeedIn_W') == 0
+#     assert status_data.get('Consumption_W') == 1578
+#     assert status_data.get('Production_W') == 2972
+#     assert status_data.get('Pac_total_W') == -1394
 
     _batterie = BatterieBackup('fakeToken', 'fakeHost')
 

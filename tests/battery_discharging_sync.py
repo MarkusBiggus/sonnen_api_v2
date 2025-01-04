@@ -6,8 +6,8 @@ import pytest
 
 from sonnen_api_v2 import Batterie
 
-from . mock_sonnenbatterie_v2_charging import __mock_configurations, __mock_battery, __mock_powermeter
-from . mock_sonnenbatterie_v2_discharging import __mock_status_discharging, __mock_latest_discharging, __mock_inverter_discharging
+from . mock_sonnenbatterie_v2_charging import __mock_configurations, __mock_powermeter
+from . mock_sonnenbatterie_v2_discharging import __mock_status_discharging, __mock_latest_discharging, __mock_battery_discharging, __mock_inverter_discharging
 
 LOGGER_NAME = "sonnenapiv2"
 
@@ -23,7 +23,7 @@ def fixture_battery_discharging(mocker) -> Batterie:
     mocker.patch.object(Batterie, "fetch_status", __mock_status_discharging)
     mocker.patch.object(Batterie, "fetch_latest_details", __mock_latest_discharging)
     mocker.patch.object(Batterie, "fetch_configurations", __mock_configurations)
-    mocker.patch.object(Batterie, "fetch_battery_status", __mock_battery)
+    mocker.patch.object(Batterie, "fetch_battery_status", __mock_battery_discharging)
     mocker.patch.object(Batterie, "fetch_powermeter", __mock_powermeter)
     mocker.patch.object(Batterie, "fetch_inverter", __mock_inverter_discharging)
 

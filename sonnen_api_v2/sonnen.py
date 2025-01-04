@@ -542,7 +542,7 @@ class Sonnen:
     @property
     @get_item(int)
     def u_soc(self) -> int:
-        """User state of charge (usable charge)
+        """Useable state of charge
             Returns:
                 Integer Percent
         """
@@ -1019,6 +1019,24 @@ class Sonnen:
               Hz
         """
         return self._status_data[STATUS_FREQUENCY]
+
+    @property
+    @get_item(int)
+    def status_rsoc(self) -> int:
+        """Relative state of charge
+            Returns:
+                state of charge%
+        """
+        return self._status_data[STATUS_RSOC]
+
+    @property
+    @get_item(int)
+    def status_usoc(self) -> int:
+        """Usable state of charge
+            Returns:
+                state of charge%
+        """
+        return self._status_data[STATUS_USOC]
 
     @property
     @get_item(int)

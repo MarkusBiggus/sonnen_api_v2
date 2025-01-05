@@ -160,7 +160,6 @@ class Sonnen:
         loop = asyncio.get_running_loop()
 
         return await loop.run_in_executor(None, self.sync_validate_token)
-#blocking        return self.sync_validate_token()
 
     async def async_update(self) -> Awaitable[bool]:
         """Update all battery data from an async caller.

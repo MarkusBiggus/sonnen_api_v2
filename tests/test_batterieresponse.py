@@ -19,7 +19,7 @@ from . mock_battery_configurations import __battery_configurations_auth200
 
 LOGGER_NAME = None # "sonnenapiv2" #
 
-logging.getLogger("asyncio").setLevel(logging.WARNING)
+logging.getLogger("batterieResponse").setLevel(logging.WARNING)
 
 if LOGGER_NAME is not None:
     filename=f'/tests/logs/{LOGGER_NAME}.log'
@@ -47,15 +47,6 @@ if LOGGER_NAME is not None:
 async def test_batterieresponse(battery_charging: Batterie) -> None:
     """Batterie Response using mock data"""
 
-#     #chconfirmeck fixture is working
-#     status_data = await battery_charging.async_fetch_status()
-# #    print(f'status: {status_data}')
-#     assert status_data.get('Timestamp') == '2023-11-20 17:00:55'
-#     assert status_data.get('GridFeedIn_W') == 0
-#     assert status_data.get('Consumption_W') == 1578
-#     assert status_data.get('Production_W') == 2972
-#     assert status_data.get('Pac_total_W') == -1394
-
     _batterie = BatterieBackup('fakeToken', 'fakeHost')
 
     response = await _batterie.validate_token()
@@ -73,7 +64,7 @@ async def test_batterieresponse(battery_charging: Batterie) -> None:
     sensor_value = _batterie.get_sensor_value('configuration_de_software')
     assert sensor_value == '1.14.5'
 
-
+@pytest.mark.asyncio
 @patch.object(Batterie, 'async_validate_token', lambda *args: False)
 async def test_batterieresponse_BatterieAuthError(battery_charging: Batterie) -> None:
     """Batterie Response using mock data"""

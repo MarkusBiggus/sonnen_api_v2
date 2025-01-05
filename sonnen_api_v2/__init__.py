@@ -34,7 +34,9 @@ class BatterieBackup:
         self._battery = Batterie(auth_token, ip_address, port)
 
     def get_sensor_value(self, sensor_name:str):
-        """Get sensor value by name from battery property."""
+        """Get sensor value by name from battery property.
+            refresh_response must have been called at least once before any sensor value is retrieved.
+        """
 
         return getattr(self._battery, sensor_name)
 

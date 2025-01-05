@@ -35,5 +35,6 @@ setup(
         'asyncio>=3.4.3',
         'yarl>=1.18.3',
         "setuptools==75.1.0",
-    ]
+    ],
+    python_requires=">=3.12",
 )

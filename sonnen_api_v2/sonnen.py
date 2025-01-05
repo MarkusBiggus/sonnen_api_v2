@@ -78,7 +78,7 @@ class Sonnen:
     from .wrapped import sync_get_update, sync_get_latest_data, sync_get_configurations, sync_get_status, sync_get_powermeter, sync_get_battery, sync_get_inverter
 
 
-    def __init__(self, auth_token: str, ip_address: str, ip_port: str = '80', logger_name: str = None) -> None:
+    def __init__(self, auth_token: str, ip_address: str, ip_port: int = 80, logger_name: str = None) -> None:
         """Cache manager Sonnen API V2 data."""
 
         self._last_updated = None #rate limiters
@@ -98,7 +98,6 @@ class Sonnen:
         self.header = {'Auth-Token': self.auth_token}
         self.request_timeouts = (TIMEOUT, TIMEOUT)  # noqa: F405
         self.client_timeouts = aiohttp.ClientTimeout(connect=TIMEOUT, sock_read=TIMEOUT)  # noqa: F405
-    #    self.set_request_connect_timeouts( (TIMEOUT, TIMEOUT) )
         # read api endpoints
         self.status_api_endpoint = f'{self.url}/api/v2/status'
         self.latest_details_api_endpoint = f'{self.url}/api/v2/latestdata'
@@ -159,7 +158,9 @@ class Sonnen:
         return True
 
     async def async_validate_token(self) -> bool:
-        """Check valid IP address & token can make connection."""
+        """Check valid IP address & token can make connection.
+            Called from HASS component event loop.
+        """
 
         loop = asyncio.get_running_loop()
 

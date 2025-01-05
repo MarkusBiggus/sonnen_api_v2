@@ -31,44 +31,39 @@ class BatterieBackup:
     def __init__(self, auth_token:str , ip_address:str, port=DEFAULT_PORT):
         """Initialize the API client."""
 
-        self.battery = Batterie(auth_token, ip_address, port)
+        self._battery = Batterie(auth_token, ip_address, port)
 
     def get_sensor_value(self, sensor_name:str):
-        """Get sensor names from battery attributes"""
+        """Get sensor value by name from battery property."""
 
-        return getattr(self.battery, sensor_name)
+        return getattr(self._battery, sensor_name)
 
     async def refresh_response(self) -> Awaitable[BatterieResponse]:
         """Query the real time API."""
 
-        success = await self.battery.async_update()
+        success = await self._battery.async_update()
 
         if success is False:
-            _LOGGER.error(f'BatterieBackup: Error updating batterie data! from: {self.battery.hostname}')
+            _LOGGER.error(f'BatterieBackup: Error updating batterie data! from: {self._battery.hostname}')
             raise BatterieError('BatterieBackup: Error updating batterie data!')
 
         return BatterieResponse(
-            version = self.battery.configuration_de_software,
-            last_updated = self.battery.last_updated,
-            configurations = self.battery.configurations,
+            version = self._battery.configuration_de_software,
+            last_updated = self._battery.last_updated,
+            configurations = self._battery.configurations,
         )
 
     async def validate_token(self) -> Awaitable[BatterieResponse]:
         """Query the real time API."""
 
-        success = await self.battery.async_validate_token()
+        success = await self._battery.async_validate_token()
 
         if success is not True:
-            _LOGGER.error(f'BatterieBackup: Error validating API token! ({self.battery.api_token})')
+            _LOGGER.error(f'BatterieBackup: Error validating API token! ({self._battery.api_token})')
             raise BatterieAuthError('BatterieBackup: Error validating API token!')
 
         return BatterieResponse(
-            version = self.battery.configuration_de_software,
-            last_updated = self.battery.last_configurations,
-            configurations = self.battery.configurations,
+            version = self._battery.configuration_de_software,
+            last_updated = self._battery.last_configurations,
+            configurations = self._battery.configurations,
         )
-#            "status": self.battery.,
-#            "latestdata": self.battery.,
-#            "battery": self.battery.,
-#            "powermeter": self.battery.,
-#            "inverter": self.battery.

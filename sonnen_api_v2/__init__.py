@@ -58,7 +58,8 @@ class BatterieBackup:
     async def validate_token(self) -> Awaitable[BatterieResponse]:
         """Query the real time API."""
 
-        success = await self._battery.async_validate_token()
+    #    success = await self._battery.async_validate_token()
+        success = self._battery.async_validate_token()
 
         if success is not True:
             _LOGGER.error(f'BatterieBackup: Error validating API token! ({self._battery.api_token})')

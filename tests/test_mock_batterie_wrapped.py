@@ -260,7 +260,7 @@ def test_nobatterie_sync_wrapped():
 
     battery_charging = Batterie('fakeToken', 'fakeHost')
 
-    with pytest.raises(BatterieAuthError, match='Invalid ip address "http://fakeHost:80/api/v2/configurations"'):
+    with pytest.raises(BatterieAuthError, match='Invalid IP address "http://fakeHost:80/api/v2/configurations"'):
         success = battery_charging.sync_validate_token()
 
 

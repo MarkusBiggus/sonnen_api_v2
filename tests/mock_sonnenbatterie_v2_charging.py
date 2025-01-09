@@ -14,7 +14,7 @@ def __mock_status_charging(*args)-> json:
         'FlowConsumptionProduction': True,
         'FlowGridBattery': False,
         'FlowProductionBattery': True,
-        'FlowProductionGrid': True,
+        'FlowProductionGrid': False,
         'GridFeedIn_W': 0,
         'IsSystemInstalled': 1,
         'OperatingMode': '2',

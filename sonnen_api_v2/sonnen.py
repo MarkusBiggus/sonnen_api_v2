@@ -157,9 +157,9 @@ class Sonnen:
             Called from HASS component event loop.
         """
 
-        loop = asyncio.get_running_loop()
+        event_loop = asyncio.get_running_loop()
 
-        return await loop.run_in_executor(None, self.sync_validate_token)
+        return await event_loop.run_in_executor(None, self.sync_validate_token)
 
     async def async_update(self) -> Awaitable[bool]:
         """Update all battery data from an async caller.
@@ -207,10 +207,6 @@ class Sonnen:
             True when all updates successful or
             called again within rate limit interval.
         """
-        # event_loop = asyncio.get_event_loop()
-        # if event_loop is not None:
-        #     self._log_error('Update called from active event loop! Call aysnc_update in your loop instead.')
-        #     raise ValueError('Update called from active event loop, call aysnc_update instead.')
 
         event_loop = asyncio.new_event_loop()
         asyncio.set_event_loop(event_loop)
@@ -219,6 +215,7 @@ class Sonnen:
             event_loop.run_until_complete(self.async_update())
         finally:
             event_loop.close()
+
         return (self._last_updated is not None)
 
     def sync_update(self) -> bool:
@@ -1015,7 +1012,7 @@ class Sonnen:
 
     @property
     def system_status_timestamp(self) -> datetime.datetime:
-        """Timestamp: "2024-10-09 14:00:07"
+        """Timestamp: "2024-11-20 14:00:07"
             Returns:
                 datetime
         """

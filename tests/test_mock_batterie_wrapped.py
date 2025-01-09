@@ -20,9 +20,13 @@ from freezegun import freeze_time
 
 from sonnen_api_v2 import Batterie, BatterieAuthError, BatterieHTTPError, BatterieError
 
-from . mock_sonnenbatterie_v2_charging import __mock_status_charging, __mock_latest_charging, __mock_configurations, __mock_battery, __mock_powermeter, __mock_inverter
-from . mock_sonnenbatterie_v2_discharging import __mock_status_discharging, __mock_latest_discharging, __mock_battery_discharging
-from . mock_battery_configurations import __battery_configurations_auth200
+from .mock_sonnenbatterie_v2_charging import __mock_status_charging, __mock_latest_charging, __mock_configurations, __mock_battery, __mock_powermeter, __mock_inverter
+from .mock_sonnenbatterie_v2_discharging import __mock_status_discharging, __mock_latest_discharging, __mock_battery_discharging
+from .mock_battery_responses import (
+    __battery_configurations_auth200,
+    __battery_configurations_auth401,
+    __battery_configurations_auth500,
+)
 
 from .battery_charging_asyncio import fixture_battery_charging
 #from .battery_charging_sync import fixture_battery_charging

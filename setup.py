@@ -34,7 +34,7 @@ setup(
         'urllib3>=1.26.20,<2.0.0',
         'asyncio>=3.4.3',
         'yarl>=1.18.3',
-        "setuptools==75.1.0",
+        "setuptools>=75.7.0",
     ],
     python_requires=">=3.12",
 )

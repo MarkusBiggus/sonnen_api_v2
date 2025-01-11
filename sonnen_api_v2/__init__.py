@@ -32,6 +32,7 @@ class BatterieBackup:
         """Initialize the API client."""
 
         self._battery = Batterie(auth_token, ip_address, port)
+        self._attr_available = False
 
     def get_sensor_value(self, sensor_name:str):
         """Get sensor value by name from battery property.
@@ -45,6 +46,7 @@ class BatterieBackup:
 
         success = await self._battery.async_update()
 
+        self._attr_available = success
         if success is False:
             _LOGGER.error(f'BatterieBackup: Error updating batterie data! from: {self._battery.hostname}')
             raise BatterieError(f'BatterieBackup: Error updating batterie data! from: {self._battery.hostname}')
@@ -60,6 +62,7 @@ class BatterieBackup:
 
         success = await self._battery.async_validate_token()
 
+        self._attr_available = success
         if success is not True:
             _LOGGER.error(f'BatterieBackup: Error validating API token! ({self._battery.api_token})')
             raise BatterieAuthError(f'BatterieBackup: Error validating API token! ({self._battery.api_token})')

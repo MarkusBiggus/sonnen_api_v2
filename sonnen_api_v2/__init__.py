@@ -32,7 +32,12 @@ class BatterieBackup:
         """Initialize the API client."""
 
         self._battery = Batterie(auth_token, ip_address, port)
-        self._attr_available = False
+        self._attr_available:bool = False
+
+    @property
+    def available(self) -> bool:
+        """Device availability."""
+        return self._attr_available
 
     def get_sensor_value(self, sensor_name:str):
         """Get sensor value by name from battery property.

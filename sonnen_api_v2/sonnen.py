@@ -130,6 +130,7 @@ class Sonnen:
         """
         conn = urllib3.connection_from_url(self.configurations_api_endpoint,headers=self.header, retries=False)
         try:
+            # response = conn.request('GET', self.configurations_api_endpoint, None, self.header)
             response = conn.urlopen('GET',
                             self.configurations_api_endpoint,
                             None,
@@ -143,14 +144,33 @@ class Sonnen:
             self._log_error(f'Sync fetch "{self.configurations_api_endpoint}" fail: {error}')
             raise BatterieError(f'Sync fetch "{self.configurations_api_endpoint}"  fail: {error}') from error
 
+#        print(f'resp: {vars(response)}')
+
         if response.status in [401, 403]:
             raise BatterieAuthError(f'Invalid token "{self.auth_token}" status: {response.status}')
         elif response.status > 299:
             raise BatterieHTTPError(f'HTTP Error fetching endpoint "{self.configurations_api_endpoint}" status: {response.status}')
 
-        self._configurations = json.loads(response.body)
+        self._configurations = json.loads(response._body)
         self._last_configurations = datetime.datetime.now()
         return True
+
+    def _force_HTTPError(self) -> bool:
+        """Make a bad GET request to the batterie which it responds to with status 301.
+            ONLY to be used for testing!
+        """
+        conn = urllib3.connection_from_url(self.configurations_api_endpoint,headers=self.header, retries=False)
+        try:
+            response = conn.request('GET', '/')
+        except Exception as error:
+            self._log_error(f'Forced HTTP Error.  fail: {error}')
+            raise BatterieError(f'Forced HTTP Error.  fail: {error}') from error
+
+        if response.status > 299:
+            # print(f'resp: {vars(response)}')
+            raise BatterieHTTPError(f'HTTP Error fetching bad endpoint.  status: {response.status}')
+
+        return False
 
     async def async_validate_token(self) -> Awaitable[bool]:
         """Check valid IP address & token can make connection.
@@ -173,7 +193,6 @@ class Sonnen:
             if diff.total_seconds() < RATE_LIMIT:
                 return True
 
-        self._configurations = None
         self._latest_details_data = None
         self._status_data = None
         self._battery_status = None
@@ -181,21 +200,27 @@ class Sonnen:
         self._inverter_data = None
 
         self._configurations = await self.async_fetch_configurations()
+    #    print(f'_configurations: {self._configurations}')
         success = (self._configurations is not None)
         if success:
             self._latest_details_data = await self.async_fetch_latest_details()
+    #        print(f'_latest_details: {self._latest_details_data}')
             success = (self._latest_details_data is not None)
         if success:
             self._status_data = await self.async_fetch_status()
+    #        print(f'status: {self._status_data}')
             success = (self._status_data is not None)
         if success:
             self._battery_status = await self.async_fetch_battery_status()
+    #        print(f'_battery: {self._battery_status}')
             success = (self._battery_status is not None)
         if success:
             self._powermeter_data = await self.async_fetch_powermeter()
+    #        print(f'_powermeter: {self._powermeter_data}')
             success = (self._powermeter_data is not None)
         if success:
             self._inverter_data = await self.async_fetch_inverter()
+    #        print(f'_inverter: {self._inverter_data}')
             success = (self._inverter_data is not None)
 
         self._last_updated = now if success else None
@@ -269,26 +294,31 @@ class Sonnen:
         try:
             async with aiohttp.ClientSession(headers=self.header, timeout=self.client_timeouts) as session:
                 response = await self._async_fetch(session, url)
+
         except aiohttp.ClientConnectorDNSError as error:
             self._log_error(f'Battery: {self.ip_address} badIP? accessing: "{url}"  error: {error}')
             raise BatterieAuthError(f'Battery {self.ip_address} badIP? accessing: "{url}"  error: {error}') from error
+#??        except BatterieError as error:
+
         except Exception as error:
             self._log_error(f'Coroutine fetch "{url}"  fail: {error}')
             raise BatterieError(f'Coroutine fetch "{url}"  fail: {error}') from error
 
-        if response.status > 299:
-            self._log_error(f'Error fetching endpoint "{url}" status: {response.status}')
-            if response.status in [401, 403]:
-                raise BatterieAuthError(f'Auth error fetching endpoint "{url}" status: {response.status}')
-            else:
-                raise BatterieHTTPError(f'HTTP error fetching endpoint "{url}" status: {response.status}')
+#        print(f'resp: {response}')
 
         return response
 
-    async def _async_fetch(self, session: aiohttp.ClientSession, url: str) -> Awaitable[Union[Dict,None]]:
+    async def _async_fetch(self, session: aiohttp.ClientSession, url: str) -> Awaitable[Dict]: #Awaitable[aiohttp.ClientResponse]:
         """Fetch API endpoint with aiohttp client."""
         try:
             async with session.get(url) as response:
+#                print(f'resp: {vars(response)}')
+                if response.status > 299:
+                    self._log_error(f'Error fetching endpoint "{url}" status: {response.status}')
+                    if response.status in [401, 403]:
+                        raise BatterieAuthError(f'Auth error fetching endpoint "{url}" status: {response.status}')
+                    else:
+                        raise BatterieHTTPError(f'HTTP error fetching endpoint "{url}" status: {response.status}')
                 return await response.json()
         except aiohttp.ClientError as error:
             self._log_error(f'Battery: {self.ip_address} offline? accessing: "{url}"  error: {error}')
@@ -329,18 +359,6 @@ class Sonnen:
 
         return response.json()
 
-    async def async_fetch_status(self) -> Awaitable[Dict]:
-        """Wait for Fetch Status endpoint."""
-        return await self._async_fetch_api_endpoint(
-            self.status_api_endpoint
-        )
-
-    def fetch_status(self) -> Dict:
-        """Fetch Status endpoint."""
-        return self._fetch_api_endpoint(
-            self.status_api_endpoint
-        )
-
     async def async_fetch_configurations(self) -> Awaitable[Dict]:
         """Wait for Fetch Configurations endpoint."""
         now = datetime.datetime.now()
@@ -362,6 +380,7 @@ class Sonnen:
             if diff.total_seconds() < RATE_LIMIT:
                 return self._configurations
 
+        self._configurations = None
         self._last_configurations = now
         return self._fetch_api_endpoint(
             self.configurations_api_endpoint
@@ -377,6 +396,18 @@ class Sonnen:
         """Fetch Latest_Details endpoint."""
         return self._fetch_api_endpoint(
                 self.latest_details_api_endpoint
+        )
+
+    async def async_fetch_status(self) -> Awaitable[Dict]:
+        """Wait for Fetch Status endpoint."""
+        return await self._async_fetch_api_endpoint(
+            self.status_api_endpoint
+        )
+
+    def fetch_status(self) -> Dict:
+        """Fetch Status endpoint."""
+        return self._fetch_api_endpoint(
+            self.status_api_endpoint
         )
 
     async def async_fetch_battery_status(self) -> Awaitable[Dict]:
@@ -1013,6 +1044,7 @@ class Sonnen:
     @property
     def system_status_timestamp(self) -> datetime.datetime:
         """Timestamp: "2024-11-20 14:00:07"
+            Can be used to check device time is correct.
             Returns:
                 datetime
         """

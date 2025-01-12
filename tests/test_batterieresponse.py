@@ -17,9 +17,9 @@ from sonnen_api_v2 import Batterie, BatterieBackup, BatterieResponse, BatterieAu
 from .battery_charging_asyncio import fixture_battery_charging
 from .mock_sonnenbatterie_v2_charging import __mock_configurations
 from .mock_battery_responses import (
-    __battery_configurations_auth200,
-    __battery_configurations_auth401,
-    __battery_configurations_auth500,
+    __battery_auth200,
+    __battery_AuthError_401,
+    __battery_HTTPError_301,
 )
 
 LOGGER_NAME = None # "sonnenapiv2" #
@@ -46,9 +46,9 @@ if LOGGER_NAME is not None:
 
 
 @pytest.mark.asyncio
-@pytest.mark.usefixtures("battery_charging")
+#@pytest.mark.usefixtures("battery_charging")
 @freeze_time("20-11-2023 17:00:00")
-@patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_configurations_auth200)
+@patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_auth200)
 async def test_batterieresponse_works(battery_charging: Batterie) -> None:
     """BackupBatterie Response using mock data"""
 
@@ -96,7 +96,7 @@ async def __mock_async_update(self):
 @pytest.mark.asyncio
 @pytest.mark.usefixtures("battery_charging")
 @freeze_time("20-11-2023 17:00:00")
-@patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_configurations_auth200)
+@patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_auth200)
 @patch.object(Batterie, 'async_update', __mock_async_update)
 async def test_batterieresponse_BatterieError(battery_charging: Batterie) -> None:
     """BackupBatterie Response using mock data"""
@@ -114,7 +114,7 @@ async def test_batterieresponse_BatterieError(battery_charging: Batterie) -> Non
 
 @pytest.mark.asyncio
 @pytest.mark.usefixtures("battery_charging")
-@patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_configurations_auth401)
+@patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_AuthError_401)
 async def test_batterie_AuthError401(battery_charging: Batterie) -> None:
     """Batterie 401 Response using mock data"""
 
@@ -126,11 +126,11 @@ async def test_batterie_AuthError401(battery_charging: Batterie) -> None:
 
 @pytest.mark.asyncio
 @pytest.mark.usefixtures("battery_charging")
-@patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_configurations_auth500)
+@patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_HTTPError_301)
 async def test_batterier_BatterieHTTPError(battery_charging: Batterie) -> None:
-    """Batterie 500 Response using mock data"""
+    """Batterie 301 Response using mock data"""
 
     _batterie = Batterie('fakeToken', 'fakeHost')
 
-    with pytest.raises(BatterieHTTPError, match='HTTP Error fetching endpoint "http://fakeHost:80/api/v2/configurations" status: 500'):
+    with pytest.raises(BatterieHTTPError, match='HTTP Error fetching endpoint "http://fakeHost:80/api/v2/configurations" status: 301'):
         await _batterie.async_validate_token()

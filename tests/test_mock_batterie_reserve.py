@@ -21,7 +21,7 @@ from freezegun import freeze_time
 from sonnen_api_v2 import Batterie, BatterieAuthError, BatterieHTTPError, BatterieError
 
 from .mock_battery_responses import (
-    __battery_configurations_auth200,
+    __battery_auth200,
 )
 
 from .battery_discharging_reserve_asyncio import fixture_battery_discharging_reserve
@@ -51,9 +51,9 @@ if LOGGER_NAME is not None:
 
 
 @pytest.mark.asyncio
-@freeze_time("20-11-2023 17:00:59")
+@freeze_time("20-11-2023 17:00:59") # disharging reserve time
 @pytest.mark.usefixtures("battery_discharging_reserve")
-@patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_configurations_auth200)
+@patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_auth200)
 async def test_batterie_discharging_reserve(battery_discharging_reserve: Batterie):
     """package using mock reserve data"""
 

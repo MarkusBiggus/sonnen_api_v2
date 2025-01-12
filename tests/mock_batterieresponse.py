@@ -1,6 +1,6 @@
 """Mock batterie response for config_flow."""
+
 import datetime
-#import json
 from sonnen_api_v2 import BatterieResponse
 from .mock_sonnenbatterie_v2_charging import __mock_configurations
 

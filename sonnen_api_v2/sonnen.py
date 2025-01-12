@@ -14,6 +14,8 @@ import aiohttp_fast_zlib
 import requests
 import urllib3 #import request
 from urllib3.exceptions import NewConnectionError
+from urllib3.util.timeout import Timeout
+
 
 #import voluptuous as vol
 from .units import Measurement, Units
@@ -129,20 +131,23 @@ class Sonnen:
             by aiohttp exception handler.
         """
         conn = urllib3.connection_from_url(self.configurations_api_endpoint,headers=self.header, retries=False)
+        timeouts = Timeout(TIMEOUT, TIMEOUT)
         try:
             # response = conn.request('GET', self.configurations_api_endpoint, None, self.header)
             response = conn.urlopen('GET',
                             self.configurations_api_endpoint,
                             None,
                             self.header,
-                            False)
+                            False,
+                            timeout=timeouts
+                            )
 
         except urllib3.exceptions.NewConnectionError:
             self._log_error(f'Invalid IP address "{self.configurations_api_endpoint}"')
             raise BatterieAuthError(f'Invalid IP address "{self.configurations_api_endpoint}"')
         except Exception as error:
-            self._log_error(f'Sync fetch "{self.configurations_api_endpoint}" fail: {error}')
-            raise BatterieError(f'Sync fetch "{self.configurations_api_endpoint}"  fail: {error}') from error
+            self._log_error(f'Sync fetch "{self.configurations_api_endpoint}" fail: {repr(error)}')
+            raise BatterieError(f'Sync fetch "{self.configurations_api_endpoint}"  fail: {repr(error)}') from error
 
 #        print(f'resp: {vars(response)}')
 
@@ -163,11 +168,10 @@ class Sonnen:
         try:
             response = conn.request('GET', '/')
         except Exception as error:
-            self._log_error(f'Forced HTTP Error.  fail: {error}')
-            raise BatterieError(f'Forced HTTP Error.  fail: {error}') from error
+            self._log_error(f'Forced HTTP Error.  fail: {repr(error)}')
+            raise BatterieError(f'Forced HTTP Error.  fail: {repr(error)}') from error
 
         if response.status > 299:
-            # print(f'resp: {vars(response)}')
             raise BatterieHTTPError(f'HTTP Error fetching bad endpoint.  status: {response.status}')
 
         return False

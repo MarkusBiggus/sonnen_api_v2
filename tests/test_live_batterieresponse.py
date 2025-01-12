@@ -83,7 +83,7 @@ async def test_batterieresponse_BatterieAuthError() -> None:
 
     _batterie = Batterie('fakeToken', BATTERIE_HOST, BATTERIE_PORT)
 
-    with pytest.raises(BatterieAuthError, match='BatterieBackup: Error validating API token!'):
+    with pytest.raises(BatterieAuthError, match='Invalid token "fakeToken" status: 401'):
         await _batterie.async_validate_token()
 
 
@@ -108,10 +108,26 @@ async def test_batterieresponse_HTTPError() -> None:
 
 
 @pytest.mark.asyncio
-async def test_batterieresponse_BatterieError() -> None:
-    """BackupBatterie Response using live data"""
+async def test_batterieresponse_IPAuthError() -> None:
+    """BackupBatterie Response using live data.
+        Last test has long timeout waiting for IP that doesn't respond.
+    """
 
     _batterie = BatterieBackup('fakeToken', 'fakeHost')
 
-    with pytest.raises(BatterieError, match='Sync fetch '):
+    with pytest.raises(BatterieAuthError, match='Invalid IP address "http://fakeHost:80/api/v2/configurations'):
         await _batterie.validate_token()
+
+    _batterie = BatterieBackup('fakeToken', '192.168.200.100')
+
+    with pytest.raises(BatterieError, match='Sync fetch "http://192.168.200.100:80/api/v2/configurations"  fail: '):
+        await _batterie.validate_token()
+
+# @pytest.mark.asyncio
+# async def test_batterieresponse_BatterieError() -> None:
+#     """BackupBatterie Response using live data"""
+
+#     _batterie = BatterieBackup('fakeToken', '192.168.200.100')
+
+#     with pytest.raises(BatterieError, match='Invalid IP address "http://192.168.200.100:80/api/v2/configurations'):
+#         await _batterie.validate_token()

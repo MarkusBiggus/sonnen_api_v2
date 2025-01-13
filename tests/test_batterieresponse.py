@@ -102,7 +102,8 @@ async def test_batterieresponse_bad_sensor(battery_charging: Batterie) -> None:
     assert isinstance(response, BatterieResponse) is True
     assert _batterie.available is True
 
-    with pytest.raises(AttributeError, match="'Sonnen' object has no attribute 'bad_sensor_name'"):
+#    with pytest.raises(AttributeError, match="'Sonnen' object has no attribute 'bad_sensor_name'"):
+    with pytest.raises(BatterieError, match="'BackupBatterie' device has no sensor called 'bad_sensor_name'"):
         _batterie.get_sensor_value('bad_sensor_name')
 
 

@@ -43,8 +43,12 @@ class BatterieBackup:
         """Get sensor value by name from battery property.
             refresh_response must have been called at least once before any sensor value is retrieved.
         """
+        try:
+            sensor_value =  getattr(self._battery, sensor_name)
+        except AttributeError as error:
+            raise BatterieError(f"'BackupBatterie' device has no sensor called '{sensor_name}'")
 
-        return getattr(self._battery, sensor_name)
+        return sensor_value
 
     async def refresh_response(self) -> Awaitable[BatterieResponse]:
         """Query the real time API."""

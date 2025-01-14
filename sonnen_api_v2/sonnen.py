@@ -452,8 +452,10 @@ class Sonnen:
 
     @property
     def last_configurations(self) -> Optional[datetime.datetime]:
-        """Last time configurations fetched (token validated) from batterie."""
-        return self._last_configurations
+        """Last time configurations fetched (token validated) from batterie.
+            Timezone must be provided for hass sensor.
+        """
+        return self._last_configurations.astimezone()
 
     # @last_configurations.setter
     # def last_configurations(self, last_configurations: datetime.datetime = None):
@@ -462,13 +464,17 @@ class Sonnen:
 
     @property
     def last_get_updated(self) -> Optional[datetime.datetime]:
-        """Last time emulated method sync fetched from batterie."""
-        return self._last_get_updated
+        """Last time emulated method sync fetched from batterie.
+            Timezone must be provided for hass sensor.
+        """
+        return self._last_get_updated.astimezone()
 
     @property
     def last_updated(self) -> Optional[datetime.datetime]:
-        """Last time data successfully fetched from batterie."""
-        return self._last_updated
+        """Last time data successfully fetched from batterie.
+            Timezone must be provided for hass sensor.
+        """
+        return self._last_updated.astimezone()
 
     # @last_updated.setter
     # def last_updated(self, last_updated: datetime.datetime = None):
@@ -608,12 +614,12 @@ class Sonnen:
            Returns:
                DateTime
         """
-        return datetime.datetime.now() - self.time_since_full
+        return datetime.datetime.now().astimezone() - self.time_since_full
 
     @property
     @get_item(bool)
     def using_reserve(self) -> bool:
-        """Is backup reserve being used
+        """Is backup reserve being used.
             Returns:
                 Bool - true when reserve in use
         """
@@ -622,7 +628,7 @@ class Sonnen:
     @property
     @get_item(float)
     def capacity_until_reserve(self) -> float:
-        """Capacity until reserve is reached (battery goes standby)
+        """Capacity until reserve is reached (battery goes standby).
             Returns:
                 Wh
         """
@@ -630,7 +636,8 @@ class Sonnen:
 
     @property
     def backup_reserve_at(self) -> Optional[datetime.datetime]:
-        """Time battery charged/discharged to backup reserve
+        """Time battery charged/discharged to backup reserve.
+            Timezone must be provided for hass sensor.
             Returns:
                 Datetime charged/discharged to reserve or None when not charging/discharging
         """
@@ -639,9 +646,9 @@ class Sonnen:
             return None
 
         if seconds < 0:
-            return (datetime.datetime.now() - datetime.timedelta(seconds=abs(seconds))) if self.discharging else None
+            return (datetime.datetime.now().astimezone() - datetime.timedelta(seconds=abs(seconds))) if self.discharging else None
         else:
-            return (datetime.datetime.now() + datetime.timedelta(seconds=seconds)) if self.discharging else None
+            return (datetime.datetime.now().astimezone() + datetime.timedelta(seconds=seconds)) if self.discharging else None
 
     @property
     def state_core_control_module(self) -> str:
@@ -654,7 +661,7 @@ class Sonnen:
     @property
     @get_item(int)
     def pac_total(self) -> int:
-        """ Battery inverter load
+        """ Battery inverter load.
             Negative is charging
             Positive is discharging
             Returns:
@@ -665,7 +672,7 @@ class Sonnen:
     @property
     @get_item(int)
     def charging(self) -> int:
-        """Actual battery charging value is negative
+        """Actual battery charging value is negative.
             Returns:
                 Charging value in watt
         """
@@ -683,10 +690,11 @@ class Sonnen:
     @property
     def validation_timestamp(self) -> datetime.datetime:
         """Timestamp: "Wed Sep 18 12:26:06 2024"
+            Timezone must be provided for hass sensor.
             Returns:
                 datetime
         """
-        return  datetime.datetime.strptime(self._latest_details_data[IC_STATUS]["timestamp"], '%a %b %d %H:%M:%S %Y')
+        return  datetime.datetime.strptime(self._latest_details_data[IC_STATUS]["timestamp"], '%a %b %d %H:%M:%S %Y').astimezone()
 
     @property
     @get_item(int)
@@ -926,6 +934,7 @@ class Sonnen:
     @property
     def fully_charged_at(self) -> Optional[datetime.datetime]:
         """ Calculate time until fully charged
+            Timezone must be provided for hass sensor.
             Returns:
                 Datetime or None when not charging
         """
@@ -933,7 +942,8 @@ class Sonnen:
 
     @property
     def fully_discharged_at(self) -> Optional[datetime.datetime]:
-        """Future time battery is fully discharged
+        """Future time battery is fully discharged.
+            Timezone must be provided for hass sensor.
             Returns:
                 Datetime discharged or None when not discharging
         """
@@ -1034,10 +1044,11 @@ class Sonnen:
     def system_status_timestamp(self) -> datetime.datetime:
         """Timestamp: "2024-11-20 14:00:07"
             Can be used to check device time is correct.
+            Timezone must be provided for hass sensor.
             Returns:
                 datetime
         """
-        return  datetime.datetime.fromisoformat(self._status_data[STATUS_TIMESTAMP])
+        return  datetime.datetime.fromisoformat(self._status_data[STATUS_TIMESTAMP]).astimezone()
 
     @property
     @get_item(float)

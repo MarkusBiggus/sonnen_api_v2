@@ -1,28 +1,21 @@
 """SonnenAPI v2 module."""
 
 from functools import wraps
-from typing import Any, Dict, Optional, Union, Tuple
-from collections import namedtuple
+from typing import Dict, Optional, Union
 from collections.abc import Awaitable
 import json
 import datetime
+import logging
 
 import aiohttp
 import asyncio
 import aiohttp_fast_zlib
 
 import requests
-import urllib3 #import request
-from urllib3.exceptions import NewConnectionError
+import urllib3 
 from urllib3.util.timeout import Timeout
 
-
-#import voluptuous as vol
-from .units import Measurement, Units
-
-import logging
-
-from .const import *
+from .const import *   # noqa: F403
 
 def get_item(_type):
     """Decorator factory for getting data from the api dictionary and casting
@@ -35,10 +28,10 @@ def get_item(_type):
             try:
                 result = _type(fn(*args))
             except KeyError:
-                print('Key not found')
+#                print('Key not found')
                 result = None
             except ValueError:
-                print(f'{fn(*args)} is not an {_type} castable!')
+#                print(f'{fn(*args)} is not an {_type} castable!')
                 result = None
             return result
         return inner
@@ -55,24 +48,6 @@ class BatterieAuthError(Exception):
 class BatterieHTTPError(Exception):
     """Indicates (internal?) HTTP error with batterie."""
     pass
-
-class BatterieResponse(
-    namedtuple(
-        "BatterieResponse",
-        [
-            "version",
-            "last_updated",
-            "configurations",
-#            "status",
-#            "latestdata",
-#            "battery",
-#            "powermeter",
-#            "inverter"
-        ],
-    )
-):
-    """Sonnen Batterie response for ha component."""
-
 
 class Sonnen:
     """Class for managing Sonnen API V2 data."""
@@ -120,6 +95,7 @@ class Sonnen:
         aiohttp_fast_zlib.enable()
 
     def _log_error(self, msg):
+        """Log message when error logger is present"""
         if self.logger:
             self.logger.error(msg)
         else:
@@ -130,6 +106,7 @@ class Sonnen:
             urllib3 used to access to low level exceptions obfuscated
             by aiohttp exception handler.
         """
+
         conn = urllib3.connection_from_url(self.configurations_api_endpoint,headers=self.header, retries=False)
         timeouts = Timeout(TIMEOUT, TIMEOUT)
         try:
@@ -164,6 +141,7 @@ class Sonnen:
         """Make a bad GET request to the batterie which it responds to with status 301.
             ONLY to be used for testing!
         """
+
         conn = urllib3.connection_from_url(self.configurations_api_endpoint,headers=self.header, retries=False)
         try:
             response = conn.request('GET', '/')
@@ -191,6 +169,7 @@ class Sonnen:
             True when all updates successful or
             called again within rate limit interval.
         """
+
         now = datetime.datetime.now()
         if self._last_updated is not None:
             diff = now - self._last_updated
@@ -253,6 +232,7 @@ class Sonnen:
             True when all updates successful or
             called again within rate limit interval
         """
+
         now = datetime.datetime.now()
         if self._last_updated is not None:
             diff = now - self._last_updated
@@ -295,6 +275,7 @@ class Sonnen:
 
     async def _async_fetch_api_endpoint(self, url: str) -> Awaitable[Dict]:
         """Fetch API coroutine."""
+
         try:
             async with aiohttp.ClientSession(headers=self.header, timeout=self.client_timeouts) as session:
                 response = await self._async_fetch(session, url)
@@ -314,6 +295,7 @@ class Sonnen:
 
     async def _async_fetch(self, session: aiohttp.ClientSession, url: str) -> Awaitable[Dict]: #Awaitable[aiohttp.ClientResponse]:
         """Fetch API endpoint with aiohttp client."""
+
         try:
             async with session.get(url) as response:
 #                print(f'resp: {vars(response)}')
@@ -342,6 +324,7 @@ class Sonnen:
     # sync for use with run_in_executor in existing event loop
     def _fetch_api_endpoint(self, url: str) -> Dict:
         """Fetch API coroutine."""
+
         try:
             response = requests.get(
                 url,
@@ -365,6 +348,7 @@ class Sonnen:
 
     async def async_fetch_configurations(self) -> Awaitable[Dict]:
         """Wait for Fetch Configurations endpoint."""
+
         now = datetime.datetime.now()
         if self._last_configurations is not None:
             diff = now - self._last_configurations
@@ -378,6 +362,7 @@ class Sonnen:
 
     def fetch_configurations(self) -> Dict:
         """Fetch Configurations endpoint."""
+
         now = datetime.datetime.now()
         if self._last_configurations is not None:
             diff = now - self._last_configurations
@@ -1052,7 +1037,6 @@ class Sonnen:
             Returns:
                 datetime
         """
-        print (f'{self._status_data[STATUS_TIMESTAMP]}')
         return  datetime.datetime.fromisoformat(self._status_data[STATUS_TIMESTAMP])
 
     @property

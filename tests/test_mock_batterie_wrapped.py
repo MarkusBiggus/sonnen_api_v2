@@ -12,11 +12,9 @@ import urllib3
 
 #for tests only
 import pytest
-import responses
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from asyncmock import AsyncMock
 from freezegun import freeze_time
-#from urllib3_mock import Responses
 
 from sonnen_api_v2 import Batterie, BatterieAuthError, BatterieHTTPError, BatterieError
 

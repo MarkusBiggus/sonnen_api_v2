@@ -2,8 +2,10 @@
 
 import logging
 from collections.abc import Awaitable
+from collections import namedtuple
+from typing import Any #, Dict, Optional, Union, Tuple
 
-from sonnen_api_v2.sonnen import Sonnen as Batterie, BatterieResponse, BatterieError, BatterieAuthError, BatterieHTTPError
+from sonnen_api_v2.sonnen import Sonnen as Batterie, BatterieError, BatterieAuthError, BatterieHTTPError
 from .const import DEFAULT_PORT
 
 __version__ = '0.5.13'
@@ -19,6 +21,24 @@ __all__ = (
 
 _LOGGER = logging.getLogger(__name__)
 
+class BatterieResponse(
+    namedtuple(
+        "BatterieResponse",
+        [
+            "version",
+            "last_updated",
+#            "configurations",
+            "sensor_values"
+#            "status",
+#            "latestdata",
+#            "battery",
+#            "powermeter",
+#            "inverter"
+        ],
+    )
+):
+    """Sonnen Batterie response for ha component."""
+
 
 class BatterieBackup:
     """Sonnen Batterie real time API.
@@ -28,7 +48,7 @@ class BatterieBackup:
 
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, auth_token:str , ip_address:str, port=DEFAULT_PORT):
+    def __init__(self, auth_token:str , ip_address:str, port=DEFAULT_PORT) -> None:
         """Initialize the API client."""
 
         self._battery = Batterie(auth_token, ip_address, port)
@@ -39,14 +59,14 @@ class BatterieBackup:
         """Device availability."""
         return self._attr_available
 
-    def get_sensor_value(self, sensor_name:str):
+    def get_sensor_value(self, sensor_name:str) -> Any:
         """Get sensor value by name from battery property.
             refresh_response must have been called at least once before any sensor value is retrieved.
         """
         try:
             sensor_value =  getattr(self._battery, sensor_name)
         except AttributeError as error:
-            raise BatterieError(f"'BackupBatterie' device has no sensor called '{sensor_name}'")
+            raise BatterieError(f"'BackupBatterie' device has no sensor called '{sensor_name}'") from error
 
         return sensor_value
 
@@ -63,7 +83,8 @@ class BatterieBackup:
         return BatterieResponse(
             version = self._battery.configuration_de_software,
             last_updated = self._battery.last_updated,
-            configurations = self._battery.configurations,
+            sensor_values = {},
+    #        configurations = self._battery.configurations,
         )
 
     async def validate_token(self) -> Awaitable[BatterieResponse]:
@@ -79,5 +100,6 @@ class BatterieBackup:
         return BatterieResponse(
             version = self._battery.configuration_de_software,
             last_updated = self._battery.last_configurations,
-            configurations = self._battery.configurations,
+            sensor_values = {},
+    #        configurations = self._battery.configurations,
         )

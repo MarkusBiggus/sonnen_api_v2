@@ -49,6 +49,10 @@ class BatterieHTTPError(Exception):
     """Indicates (internal?) HTTP error with batterie."""
     pass
 
+class BatterieSensorError(Exception):
+    """Indicates Sensor attribute requested does not exist."""
+    pass
+
 class Sonnen:
     """Class for managing Sonnen API V2 data."""
     from .wrapped import set_request_connect_timeouts, get_request_connect_timeouts

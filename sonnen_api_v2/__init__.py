@@ -5,7 +5,7 @@ from collections.abc import Awaitable
 from collections import namedtuple
 from typing import Any #, Dict, Optional, Union, Tuple
 
-from sonnen_api_v2.sonnen import Sonnen as Batterie, BatterieError, BatterieAuthError, BatterieHTTPError
+from sonnen_api_v2.sonnen import Sonnen as Batterie, BatterieError, BatterieAuthError, BatterieHTTPError, BatterieSensorError
 from .const import DEFAULT_PORT
 
 __version__ = '0.5.13'
@@ -14,7 +14,8 @@ __all__ = (
     "Batterie"
     "BatterieError",
     "BatterieAuthError",
-    "BatterieHTTPError"
+    "BatterieHTTPError",
+    "BatterieSensorError",
     "BatterieResponse",
     "BatterieBackup",
 )
@@ -66,7 +67,7 @@ class BatterieBackup:
         try:
             sensor_value =  getattr(self._battery, sensor_name)
         except AttributeError as error:
-            raise BatterieError(f"'BackupBatterie' device has no sensor called '{sensor_name}'") from error
+            raise BatterieSensorError(f"'BatterieBackup' device has no sensor called '{sensor_name}'") from error
 
         return sensor_value
 

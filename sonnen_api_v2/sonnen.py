@@ -12,7 +12,7 @@ import asyncio
 import aiohttp_fast_zlib
 
 import requests
-import urllib3 
+import urllib3
 from urllib3.util.timeout import Timeout
 
 from .const import *   # noqa: F403
@@ -929,7 +929,7 @@ class Sonnen:
             Returns:
                 Datetime or None when not charging
         """
-        return (datetime.datetime.now() + datetime.timedelta(seconds=self.seconds_until_fully_charged)) if self.charging else None
+        return (datetime.datetime.now().astimezone() + datetime.timedelta(seconds=self.seconds_until_fully_charged)) if self.charging else None
 
     @property
     def fully_discharged_at(self) -> Optional[datetime.datetime]:
@@ -937,7 +937,7 @@ class Sonnen:
             Returns:
                 Datetime discharged or None when not discharging
         """
-        return (datetime.datetime.now() + datetime.timedelta(seconds=self.seconds_until_fully_discharged)) if self.discharging else None
+        return (datetime.datetime.now().astimezone() + datetime.timedelta(seconds=self.seconds_until_fully_discharged)) if self.discharging else None
 
     @property
     @get_item(int)

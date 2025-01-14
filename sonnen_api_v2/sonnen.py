@@ -455,7 +455,7 @@ class Sonnen:
         """Last time configurations fetched (token validated) from batterie.
             Timezone must be provided for hass sensor.
         """
-        return self._last_configurations.astimezone()
+        return self._last_configurations.astimezone() if self._last_configurations is not None else None
 
     # @last_configurations.setter
     # def last_configurations(self, last_configurations: datetime.datetime = None):
@@ -467,14 +467,14 @@ class Sonnen:
         """Last time emulated method sync fetched from batterie.
             Timezone must be provided for hass sensor.
         """
-        return self._last_get_updated.astimezone()
+        return self._last_get_updated.astimezone() if self._last_get_updated is not None else None
 
     @property
     def last_updated(self) -> Optional[datetime.datetime]:
         """Last time data successfully fetched from batterie.
             Timezone must be provided for hass sensor.
         """
-        return self._last_updated.astimezone()
+        return self._last_updated.astimezone() if self._last_updated is not None else None
 
     # @last_updated.setter
     # def last_updated(self, last_updated: datetime.datetime = None):

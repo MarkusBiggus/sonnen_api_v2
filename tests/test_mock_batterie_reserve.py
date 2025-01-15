@@ -1,6 +1,5 @@
 """pytest tests/test_mock_batterie_reserve.py -s -v -x
     1. Async update called from an async method.
-    2. Async update called from sync method
 """
 #import datetime
 import os

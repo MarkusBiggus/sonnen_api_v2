@@ -85,7 +85,6 @@ class BatterieBackup:
             version = self._battery.configuration_de_software,
             last_updated = self._battery.last_updated,
             sensor_values = {},
-    #        configurations = self._battery.configurations,
         )
 
     async def validate_token(self) -> Awaitable[BatterieResponse]:
@@ -102,5 +101,4 @@ class BatterieBackup:
             version = self._battery.configuration_de_software,
             last_updated = self._battery.last_configurations,
             sensor_values = {},
-    #        configurations = self._battery.configurations,
         )

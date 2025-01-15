@@ -1,4 +1,4 @@
-"""pytest tests/test_batterieresponse.py -s -v -x
+"""pytest tests/test_batterieresponse.py -s -v -x -k test_batterieresponse_works
 1. Async update called from an async method.
 """
 import datetime
@@ -6,6 +6,7 @@ import os
 import sys
 import logging
 import urllib3
+import tzlocal
 
 #for tests only
 import pytest
@@ -42,7 +43,7 @@ if LOGGER_NAME is not None:
     ch.setLevel(logging.DEBUG)
     logger.addHandler(fh)
     logger.addHandler(ch)
-    logger.info ('Response for HA mock data tests')
+    logger.info ('BatterieResponse for HA mock data tests')
 
 
 @pytest.mark.asyncio
@@ -59,7 +60,7 @@ async def test_batterieresponse_works(battery_charging: Batterie) -> None:
     assert isinstance(response, BatterieResponse) is True
     assert response == BatterieResponse(
         version='1.14.5',
-        last_updated=datetime.datetime(2023, 11, 20, 17, 0),
+        last_updated=datetime.datetime(2023, 11, 20, 17, 0, tzinfo=tzlocal.get_localzone()),
         sensor_values={}
     )
 
@@ -70,18 +71,30 @@ async def test_batterieresponse_works(battery_charging: Batterie) -> None:
     assert isinstance(response, BatterieResponse) is True
     assert response == BatterieResponse(
         version='1.14.5',
-        last_updated=datetime.datetime(2023, 11, 20, 17, 0),
+        last_updated=datetime.datetime(2023, 11, 20, 17, 0, tzinfo=tzlocal.get_localzone()),
         sensor_values={}
         )
 
     sensor_value = _batterie.get_sensor_value('configuration_de_software')
     assert sensor_value == '1.14.5'
 
+    assert _batterie.get_sensor_value('led_state') == 'Pulsing White 100%'
+    assert _batterie.get_sensor_value('inverter_uac') == 233.55
+    assert _batterie.get_sensor_value('status_remaining_capacity_wh') == 18201.4712
+    assert _batterie.get_sensor_value('status_usable_capacity_wh') == 16753.626900000003
+    assert _batterie.get_sensor_value('battery_min_cell_temp') == 18.95
+    assert _batterie.get_sensor_value('battery_max_cell_temp') == 19.95
+    assert _batterie.get_sensor_value('battery_dod_limit') == 93
+    assert _batterie.get_sensor_value('production_total_w') == 609.5
+    assert _batterie.get_sensor_value('consumption_total_w') == 59.29999923706055
+    assert _batterie.get_sensor_value('state_bms') == 'ready'
+    assert _batterie.get_sensor_value('state_inverter') == 'running'
+
 
 @pytest.mark.asyncio
 @patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_auth200)
 async def test_batterieresponse_bad_sensor(battery_charging: Batterie) -> None:
-    """BackupBatterie Response using mock data"""
+    """BackupBatterie Response for unknown property name"""
 
     _batterie = BatterieBackup('fakeToken', 'fakeHost')
     assert _batterie.available is False

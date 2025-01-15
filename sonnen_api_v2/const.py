@@ -35,10 +35,11 @@ DETAIL_PRODUCTION_W = 'Production_W'
 DETAIL_STATE_CORECONTROL_MODULE = "statecorecontrolmodule"
 DETAIL_SECONDS_SINCE_FULLCHARGE = 'secondssincefullcharge'
 DETAIL_TIMESTAMP = 'Timestamp'
+DETAIL_STATE_BMS = 'statebms'
+DETAIL_STATE_INVERTER = 'stateinverter'
 IC_ECLIPSE_LED = "Eclipse Led"
-POWERMETER_KWH_CONSUMED = 'kwh_imported'
-POWERMETER_KWH_PRODUCED = 'kwh_exported'
-POWERMETER_AMPERE_L1 = 'a_l1'
+POWERMETER_KWH_EXPORTED = 'kwh_exported'
+POWERMETER_AMPERE_L1 = 'a_l1' # bug: a_total is always zero
 POWERMETER_VOLT_L1 = 'v_l1_n'
 POWERMETER_WATT_L1 = 'w_l1'
 POWERMETER_REACTIVE_POWER = 'var_total'
@@ -66,8 +67,10 @@ STATUS_RSOC = 'RSOC'
 STATUS_USOC = 'USOC'
 STATUS_SYSTEMSTATUS = 'SystemStatus'
 STATUS_TIMESTAMP = 'Timestamp'
-INVERTER_PAC_TOTAL = 'pac_total'
+INVERTER_PAC_TOTAL = 'pac_total'        #OnGrid
+INVERTER_PAC_MICROGRID = 'pac_microgrid' #OffGrid
 INVERTER_UAC = 'uac'
+INVERTER_UBAT = 'ubat'
 
 # default timeout (seconds)
 TIMEOUT = 20

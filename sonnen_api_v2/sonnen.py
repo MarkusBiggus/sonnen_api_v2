@@ -489,25 +489,40 @@ class Sonnen:
     @get_item(float)
     def kwh_consumed(self) -> float:
         """Consumed kWh"""
-        return self._powermeter_data[1][POWERMETER_KWH_CONSUMED]
+        return self._powermeter_data[1][POWERMETER_KWH_EXPORTED]
 
     @property
     @get_item(float)
     def kwh_produced(self) -> float:
         """Produced kWh"""
-        return self._powermeter_data[0][POWERMETER_KWH_CONSUMED]
+        return self._powermeter_data[0][POWERMETER_KWH_EXPORTED]
 
     @property
     @get_item(float)
     def production_total_w(self) -> float:
-        """Produced W"""
+        """Powermeter production Watts total"
+            Returns:
+                watts
+        """
         return self._powermeter_data[0][POWERMETER_WATTS_TOTAL]
 
     @property
     @get_item(float)
+    def production_total_a(self) -> float:
+        """Powermeter production Ampere total"
+            Returns:
+                Amps
+        """
+        return  self._powermeter_data[0][POWERMETER_AMPERE_L1]
+
+    @property
+    @get_item(float)
     def production_reactive_power(self) -> float:
-        """Reactive Produced W"""
-        return self._powermeter_data[0][POWERMETER_REACTIVE_POWER]
+        """Powermeter production VAR total"
+            Returns:
+                reactance?
+        """
+        return  self._powermeter_data[0][POWERMETER_REACTIVE_POWER]
 
     @property
     @get_item(float)
@@ -522,14 +537,36 @@ class Sonnen:
     @property
     @get_item(float)
     def consumption_total_w(self) -> float:
-        """Consumed W"""
-        return self._powermeter_data[1][POWERMETER_WATTS_TOTAL]
+        """Powermeter consumption Watts total"
+            Returns:
+                watts
+        """
+        return  self._powermeter_data[1][POWERMETER_WATTS_TOTAL]
+
+    @property
+    @get_item(float)
+    def consumption_total_a(self) -> float:
+        """Powermeter consumption Ampere total"
+            Returns:
+                Amps
+        """
+        return  self._powermeter_data[1][POWERMETER_AMPERE_L1]
 
     @property
     @get_item(float)
     def consumption_reactive_power(self) -> float:
-        """Reactive Consumed W"""
+        """Powermeter production VAR total
+        """
         return self._powermeter_data[1][POWERMETER_REACTIVE_POWER]
+
+    @property
+    @get_item(float)
+    def consumption_total_var(self) -> float:
+        """Powermeter consumption VAR total"
+            Returns:
+                reactance?
+        """
+        return  self._powermeter_data[1][POWERMETER_REACTIVE_POWER]
 
     @property
     @get_item(float)
@@ -605,6 +642,24 @@ class Sonnen:
         return self._latest_details_data[DETAIL_FULL_CHARGE_CAPACITY]
 
     @property
+    def state_bms(self) -> str:
+        """State of Battery Management System
+            eg. ready
+            Returns:
+                state
+        """
+        return self._latest_details_data[IC_STATUS][DETAIL_STATE_BMS]
+
+    @property
+    def state_inverter(self) -> str:
+        """State of Battery Inverter
+        eg: running
+            Returns:
+                state
+        """
+        return self._latest_details_data[IC_STATUS][DETAIL_STATE_INVERTER]
+
+    @property
     def time_since_full(self) -> datetime.timedelta:
         """Calculates time since full charge.
            Returns:
@@ -616,7 +671,7 @@ class Sonnen:
     def last_time_full(self) -> datetime.datetime:
         """Calculates last time at full charge.
            Returns:
-               DateTime
+               DateTime with timezone
         """
         return datetime.datetime.now().astimezone() - self.time_since_full
 
@@ -643,7 +698,7 @@ class Sonnen:
         """Time battery charged/discharged to backup reserve.
             Timezone must be provided for hass sensor.
             Returns:
-                Datetime charged/discharged to reserve or None when not charging/discharging
+                Datetime with timezone charged/discharged to reserve or None when not charging/discharging
         """
         seconds = self.seconds_until_reserve
         if seconds is None:
@@ -696,7 +751,7 @@ class Sonnen:
         """Timestamp: "Wed Sep 18 12:26:06 2024"
             Timezone must be provided for hass sensor.
             Returns:
-                datetime
+                datetime with timezone
         """
         return  datetime.datetime.strptime(self._latest_details_data[IC_STATUS]["timestamp"], '%a %b %d %H:%M:%S %Y').astimezone()
 
@@ -712,11 +767,11 @@ class Sonnen:
     @property
     @get_item(int)
     def battery_dod_limit(self) -> int:
-        """Dept Of Discharge limit
+        """Depth Of Discharge limit
             Returns:
                 Int percent
         """
-        return (1 - BATTERY_UNUSABLE_RESERVE) * 100
+        return 100 - int(BATTERY_UNUSABLE_RESERVE * 100)
 
     @property
     @get_item(float)
@@ -726,6 +781,24 @@ class Sonnen:
                 Maximum cell temperature in ºC
         """
         return self._battery_status[BATTERY_MAX_CELL_TEMP]
+
+    @property
+    @get_item(float)
+    def battery_min_cell_temp(self) -> float:
+        """Min cell temperature
+            Returns:
+                Minimum cell temperature in ºC
+        """
+        return self._battery_status[BATTERY_MIN_CELL_TEMP]
+
+    @property
+    @get_item(float)
+    def battery_min_cell_voltage(self) -> float:
+        """Min cell voltage
+            Returns:
+                Minimum cell voltage in Volt
+        """
+        return self._battery_status[BATTERY_MIN_CELL_VOLTAGE]
 
     @property
     @get_item(float)
@@ -762,24 +835,6 @@ class Sonnen:
                 Maximum module DC temperature in ºC
         """
         return self._battery_status[BATTERY_MAX_MODULE_TEMP]
-
-    @property
-    @get_item(float)
-    def battery_min_cell_temp(self) -> float:
-        """Min cell temperature
-            Returns:
-                Minimum cell temperature in ºC
-        """
-        return self._battery_status[BATTERY_MIN_CELL_TEMP]
-
-    @property
-    @get_item(float)
-    def battery_min_cell_voltage(self) -> float:
-        """Min cell voltage
-            Returns:
-                Minimum cell voltage in Volt
-        """
-        return self._battery_status[BATTERY_MIN_CELL_VOLTAGE]
 
     @property
     @get_item(float)
@@ -940,7 +995,7 @@ class Sonnen:
         """ Calculate time until fully charged
             Timezone must be provided for hass sensor.
             Returns:
-                Datetime or None when not charging
+                Datetime with timezone or None when not charging
         """
         return (datetime.datetime.now().astimezone() + datetime.timedelta(seconds=self.seconds_until_fully_charged)) if self.charging else None
 
@@ -1050,7 +1105,7 @@ class Sonnen:
             Can be used to check device time is correct.
             Timezone must be provided for hass sensor.
             Returns:
-                datetime
+                datetime with timezone
         """
         return  datetime.datetime.fromisoformat(self._status_data[STATUS_TIMESTAMP]).astimezone()
 
@@ -1068,7 +1123,7 @@ class Sonnen:
     def status_rsoc(self) -> int:
         """Relative state of charge
             Returns:
-                state of charge%
+                percent
         """
         return self._status_data[STATUS_RSOC]
 
@@ -1077,9 +1132,29 @@ class Sonnen:
     def status_usoc(self) -> int:
         """Usable state of charge
             Returns:
-                state of charge%
+                percent
         """
         return self._status_data[STATUS_USOC]
+
+    @property
+    @get_item(float)
+    def status_remaining_capacity_wh(self) -> float:
+        """Remaining capacity Wh calculated from rsoc of full_charge
+            use instead of status RemainingCapacity_Wh which is incorrect
+            Returns:
+                Wh
+        """
+        return self.battery_full_charge_capacity_wh * self.status_rsoc / 100
+
+    @property
+    @get_item(float)
+    def status_usable_capacity_wh(self) -> float:
+        """Remaining usable capacity Wh calculated from usoc of full_charge
+            use instead of status RemainingCapacity_Wh which is incorrect
+            Returns:
+                Wh
+        """
+        return self.battery_full_charge_capacity_wh * self.status_usoc / 100
 
     @property
     @get_item(int)
@@ -1222,11 +1297,38 @@ class Sonnen:
     @property
     @get_item(float)
     def inverter_pac_total(self) -> float:
-        """Inverter PAC total"
+        """Inverter PAC total when OnGrid"
             Returns:
                 Watts
         """
         return  self._inverter_data[INVERTER_PAC_TOTAL]
+
+    @property
+    @get_item(float)
+    def inverter_pac_microgrid(self) -> float:
+        """Inverter microgrid total when OffGrid"
+            Returns:
+                Watts
+        """
+        return  self._inverter_data[INVERTER_PAC_MICROGRID]
+
+    @property
+    @get_item(float)
+    def inverter_uac(self) -> float:
+        """Inverter Voltage ac"
+            Returns:
+                Volts
+        """
+        return  self._inverter_data[INVERTER_UAC]
+
+    @property
+    @get_item(float)
+    def inverter_ubat(self) -> float:
+        """Inverter battery voltage"
+            Returns:
+                Volts
+        """
+        return  self._inverter_data[INVERTER_UBAT]
 
     @property
     def ic_eclipse_led(self) -> str:
@@ -1242,4 +1344,40 @@ class Sonnen:
             Returns:
                 JSON String
         """
+        # print(f"eclipse: {self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED]}")
+        # print(f"ic_status: {self._latest_details_data[IC_STATUS]}")
+
         return self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED]
+
+    @property
+    def led_state(self) -> str:
+        """System-Status:
+                "Eclipse Led":{
+                    "Blinking Red":false,
+                    "Brightness":100,
+                    "Pulsing Green":false,
+                    "Pulsing Orange":false,
+                    "Pulsing White":true,
+                    "Solid Red":false
+                }
+            Returns:
+                String
+        """
+        leds = self.ic_eclipse_led
+        (Blinking_Red, Brightness, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
+
+    #    print(f'leds: {leds}')
+    #    print(f'leds: white: {Pulsing_White} red: {Solid_Red}')
+
+        if Blinking_Red is True:
+            return f"Blinking Red {Brightness}%"
+        elif Pulsing_Green is True:
+            return f"Pulsing Green {Brightness}%"
+        elif Pulsing_Orange is True:
+            return f"Pulsing Orange {Brightness}%"
+        elif Pulsing_White is True:
+            return f"Pulsing White {Brightness}%"
+        elif Solid_Red is True:
+            return f"Solid Red {Brightness}%"
+        else:
+            return "off"

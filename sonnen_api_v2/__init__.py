@@ -10,12 +10,14 @@ from .const import DEFAULT_PORT
 
 __version__ = '0.5.13'
 
+
 __all__ = (
     "Batterie"
     "BatterieError",
     "BatterieAuthError",
     "BatterieHTTPError",
     "BatterieSensorError",
+
     "BatterieResponse",
     "BatterieBackup",
 )

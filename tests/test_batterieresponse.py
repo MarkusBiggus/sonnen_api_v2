@@ -1,4 +1,5 @@
 """pytest tests/test_batterieresponse.py -s -v -x -k test_batterieresponse_works
+
 1. Async update called from an async method.
 """
 import datetime
@@ -185,3 +186,4 @@ async def test_batterier_BatterieHTTPError(battery_charging: Batterie) -> None:
 
     with pytest.raises(BatterieHTTPError, match='HTTP Error fetching endpoint "http://fakeHost:80/api/v2/configurations" status: 301'):
         await _batterie.async_validate_token()
+

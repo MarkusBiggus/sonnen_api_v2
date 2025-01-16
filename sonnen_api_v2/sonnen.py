@@ -4,6 +4,7 @@ from functools import wraps
 from typing import Dict, Optional, Union
 from collections.abc import Awaitable
 import json
+
 import datetime
 import logging
 
@@ -48,6 +49,7 @@ class BatterieAuthError(Exception):
 class BatterieHTTPError(Exception):
     """Indicates (internal?) HTTP error with batterie."""
     pass
+
 
 class BatterieSensorError(Exception):
     """Indicates Sensor attribute requested does not exist."""
@@ -168,6 +170,7 @@ class Sonnen:
         return await event_loop.run_in_executor(None, self.sync_validate_token)
 
     async def async_update(self) -> Awaitable[bool]:
+
         """Update all battery data from an async caller.
         Returns:
             True when all updates successful or
@@ -450,6 +453,7 @@ class Sonnen:
         return self._hostname
 
     @property
+
     def configurations(self) -> Dict:
         """latest Configurations fetched from batterie."""
         return self._configurations

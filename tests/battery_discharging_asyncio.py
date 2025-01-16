@@ -8,6 +8,7 @@ from sonnen_api_v2 import Batterie
 from . mock_sonnenbatterie_v2_charging import __mock_configurations, __mock_powermeter
 from . mock_sonnenbatterie_v2_discharging import __mock_status_discharging, __mock_latest_discharging, __mock_battery_discharging, __mock_inverter_discharging
 
+
 LOGGER_NAME = "sonnenapiv2"
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')

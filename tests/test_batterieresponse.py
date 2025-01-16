@@ -1,4 +1,5 @@
 """pytest tests/test_batterieresponse.py -s -v -x -k test_batterieresponse_works
+
 1. Async update called from an async method.
 """
 import datetime

@@ -13,7 +13,7 @@ import pytest
 from freezegun import freeze_time
 from unittest.mock import patch
 
-from sonnen_api_v2 import Batterie, BatterieBackup, BatterieResponse, BatterieAuthError, BatterieHTTPError, BatterieError
+from sonnen_api_v2 import Batterie, BatterieBackup, BatterieResponse, BatterieAuthError, BatterieHTTPError, BatterieSensorError, BatterieError
 
 from .battery_charging_asyncio import fixture_battery_charging
 #from .mock_sonnenbatterie_v2_charging import __mock_configurations
@@ -116,7 +116,7 @@ async def test_batterieresponse_bad_sensor(battery_charging: Batterie) -> None:
     assert _batterie.available is True
 
 #    with pytest.raises(AttributeError, match="'Sonnen' object has no attribute 'bad_sensor_name'"):
-    with pytest.raises(BatterieError, match="'BackupBatterie' device has no sensor called 'bad_sensor_name'"):
+    with pytest.raises(BatterieSensorError, match="BatterieBackup: Device has no sensor called 'bad_sensor_name'"):
         _batterie.get_sensor_value('bad_sensor_name')
 
 
@@ -155,7 +155,7 @@ async def test_batterieresponse_BatterieError(battery_charging: Batterie) -> Non
     assert isinstance(response, BatterieResponse) is True
     assert response == BatterieResponse(
         version='1.14.5',
-        last_updated=datetime.datetime(2023, 11, 20, 17, 0),
+        last_updated=datetime.datetime(2023, 11, 20, 17, 0, tzinfo=tzlocal.get_localzone()),
         sensor_values={}
     )
 

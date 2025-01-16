@@ -489,13 +489,13 @@ class Sonnen:
     @get_item(float)
     def kwh_consumed(self) -> float:
         """Consumed kWh"""
-        return self._powermeter_data[1][POWERMETER_KWH_EXPORTED]
+        return self._powermeter_data[1][POWERMETER_KWH_IMPORTED]
 
     @property
     @get_item(float)
     def kwh_produced(self) -> float:
         """Produced kWh"""
-        return self._powermeter_data[0][POWERMETER_KWH_EXPORTED]
+        return self._powermeter_data[0][POWERMETER_KWH_IMPORTED]
 
     @property
     @get_item(float)

@@ -328,7 +328,6 @@ class Sonnen:
     # sync for use with run_in_executor in existing event loop
     def _fetch_api_endpoint(self, url: str) -> Dict:
         """Fetch API coroutine."""
-
         try:
             response = requests.get(
                 url,

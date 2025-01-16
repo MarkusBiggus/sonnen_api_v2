@@ -1,22 +1,22 @@
 """SonnenAPI v2 module."""
 
 from functools import wraps
-from typing import Any, Dict, Optional, Union, Tuple
-from collections import namedtuple
+from typing import Dict, Optional, Union
+from collections.abc import Awaitable
+import json
 
 import datetime
+import logging
 
 import aiohttp
 import asyncio
 import aiohttp_fast_zlib
 
 import requests
-#import voluptuous as vol
-from .units import Measurement, Units
+import urllib3
+from urllib3.util.timeout import Timeout
 
-import logging
-
-from .const import *
+from .const import *   # noqa: F403
 
 def get_item(_type):
     """Decorator factory for getting data from the api dictionary and casting
@@ -29,37 +29,31 @@ def get_item(_type):
             try:
                 result = _type(fn(*args))
             except KeyError:
-                print('Key not found')
+#                print('Key not found')
                 result = None
             except ValueError:
-                print(f'{fn(*args)} is not an {_type} castable!')
+#                print(f'{fn(*args)} is not an {_type} castable!')
                 result = None
             return result
         return inner
     return decorator
 
 class BatterieError(Exception):
-    """Indicates error communicating with batterie."""
+    """Indicates network error communicating with batterie."""
     pass
 
-class BatterieResponse(
-    namedtuple(
-        "BatterieResponse",
-        [
-            "serial_number",
-            "version",
-            "last_updated",
-            "configurations",
-#            "status",
-#            "latestdata",
-#            "battery",
-#            "powermeter",
-#            "inverter"
-        ],
-    )
-):
-    """Sonnen Batterie response for ha component."""
+class BatterieAuthError(Exception):
+    """Indicates error authorising with batterie."""
+    pass
 
+class BatterieHTTPError(Exception):
+    """Indicates (internal?) HTTP error with batterie."""
+    pass
+
+
+class BatterieSensorError(Exception):
+    """Indicates Sensor attribute requested does not exist."""
+    pass
 
 class Sonnen:
     """Class for managing Sonnen API V2 data."""
@@ -67,10 +61,13 @@ class Sonnen:
     from .wrapped import get_update, get_latest_data, get_configurations, get_status, get_powermeter, get_battery, get_inverter
     from .wrapped import sync_get_update, sync_get_latest_data, sync_get_configurations, sync_get_status, sync_get_powermeter, sync_get_battery, sync_get_inverter
 
-    def __init__(self, auth_token: str, ip_address: str, ip_port: str = '80', logger_name: str = None) -> None:
-        self.last_updated = None #rate limiters
-        self.last_get_updated = None
-        self.last_configurations = None
+
+    def __init__(self, auth_token: str, ip_address: str, ip_port: int = 80, logger_name: str = None) -> None:
+        """Cache manager Sonnen API V2 data."""
+
+        self._last_updated = None #rate limiters
+        self._last_get_updated = None
+        self._last_configurations = None
 
         logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         if logger_name is not None:
@@ -80,11 +77,11 @@ class Sonnen:
 
         self.ip_address = ip_address
         self.auth_token = auth_token
-        self.url = f'http://{ip_address}:{ip_port}'
+        self._hostname = f'{ip_address}:{ip_port}'
+        self.url = f'http://{self._hostname}'
         self.header = {'Auth-Token': self.auth_token}
         self.request_timeouts = (TIMEOUT, TIMEOUT)  # noqa: F405
         self.client_timeouts = aiohttp.ClientTimeout(connect=TIMEOUT, sock_read=TIMEOUT)  # noqa: F405
-    #    self.set_request_connect_timeouts( (TIMEOUT, TIMEOUT) )
         # read api endpoints
         self.status_api_endpoint = f'{self.url}/api/v2/status'
         self.latest_details_api_endpoint = f'{self.url}/api/v2/latestdata'
@@ -103,30 +100,89 @@ class Sonnen:
         # isal is preferred over zlib_ng if it is available
         aiohttp_fast_zlib.enable()
 
-    @property
-    def status_api_url(self) -> str:
-        """Return api_endpoint url."""
-        return self.status_api_endpoint
-
     def _log_error(self, msg):
+        """Log message when error logger is present"""
         if self.logger:
             self.logger.error(msg)
         else:
             print(msg)
 
-    async def async_update(self) -> bool:
+    def sync_validate_token(self) -> bool:
+        """Check valid IP address & token can make connection.
+            urllib3 used to access to low level exceptions obfuscated
+            by aiohttp exception handler.
+        """
+
+        conn = urllib3.connection_from_url(self.configurations_api_endpoint,headers=self.header, retries=False)
+        timeouts = Timeout(TIMEOUT, TIMEOUT)
+        try:
+            # response = conn.request('GET', self.configurations_api_endpoint, None, self.header)
+            response = conn.urlopen('GET',
+                            self.configurations_api_endpoint,
+                            None,
+                            self.header,
+                            False,
+                            timeout=timeouts
+                            )
+
+        except urllib3.exceptions.NewConnectionError:
+            self._log_error(f'Invalid IP address "{self.configurations_api_endpoint}"')
+            raise BatterieAuthError(f'Invalid IP address "{self.configurations_api_endpoint}"')
+        except Exception as error:
+            self._log_error(f'Sync fetch "{self.configurations_api_endpoint}" fail: {repr(error)}')
+            raise BatterieError(f'Sync fetch "{self.configurations_api_endpoint}"  fail: {repr(error)}') from error
+
+#        print(f'resp: {vars(response)}')
+
+        if response.status in [401, 403]:
+            raise BatterieAuthError(f'Invalid token "{self.auth_token}" status: {response.status}')
+        elif response.status > 299:
+            raise BatterieHTTPError(f'HTTP Error fetching endpoint "{self.configurations_api_endpoint}" status: {response.status}')
+
+        self._configurations = json.loads(response._body)
+        self._last_configurations = datetime.datetime.now()
+        return True
+
+    def _force_HTTPError(self) -> bool:
+        """Make a bad GET request to the batterie which it responds to with status 301.
+            ONLY to be used for testing!
+        """
+
+        conn = urllib3.connection_from_url(self.configurations_api_endpoint,headers=self.header, retries=False)
+        try:
+            response = conn.request('GET', '/')
+        except Exception as error:
+            self._log_error(f'Forced HTTP Error.  fail: {repr(error)}')
+            raise BatterieError(f'Forced HTTP Error.  fail: {repr(error)}') from error
+
+        if response.status > 299:
+            raise BatterieHTTPError(f'HTTP Error fetching bad endpoint.  status: {response.status}')
+
+        return False
+
+    async def async_validate_token(self) -> Awaitable[bool]:
+        """Check valid IP address & token can make connection.
+            Called from HASS component event loop.
+        """
+
+        event_loop = asyncio.get_running_loop()
+
+        return await event_loop.run_in_executor(None, self.sync_validate_token)
+
+    async def async_update(self) -> Awaitable[bool]:
+
         """Update all battery data from an async caller.
         Returns:
             True when all updates successful or
             called again within rate limit interval.
         """
+
         now = datetime.datetime.now()
-        if self.last_updated is not None:
-            diff = now - self.last_updated
+        if self._last_updated is not None:
+            diff = now - self._last_updated
             if diff.total_seconds() < RATE_LIMIT:
                 return True
 
-        self._configurations = None
         self._latest_details_data = None
         self._status_data = None
         self._battery_status = None
@@ -134,24 +190,30 @@ class Sonnen:
         self._inverter_data = None
 
         self._configurations = await self.async_fetch_configurations()
+    #    print(f'_configurations: {self._configurations}')
         success = (self._configurations is not None)
         if success:
             self._latest_details_data = await self.async_fetch_latest_details()
+    #        print(f'_latest_details: {self._latest_details_data}')
             success = (self._latest_details_data is not None)
         if success:
             self._status_data = await self.async_fetch_status()
+    #        print(f'status: {self._status_data}')
             success = (self._status_data is not None)
         if success:
             self._battery_status = await self.async_fetch_battery_status()
+    #        print(f'_battery: {self._battery_status}')
             success = (self._battery_status is not None)
         if success:
             self._powermeter_data = await self.async_fetch_powermeter()
+    #        print(f'_powermeter: {self._powermeter_data}')
             success = (self._powermeter_data is not None)
         if success:
             self._inverter_data = await self.async_fetch_inverter()
+    #        print(f'_inverter: {self._inverter_data}')
             success = (self._inverter_data is not None)
 
-        self.last_updated = now if success else None
+        self._last_updated = now if success else None
         return success
 
     def update(self) -> bool:
@@ -160,10 +222,6 @@ class Sonnen:
             True when all updates successful or
             called again within rate limit interval.
         """
-        # event_loop = asyncio.get_event_loop()
-        # if event_loop is not None:
-        #     self._log_error('Update called from active event loop! Call aysnc_update in your loop instead.')
-        #     raise ValueError('Update called from active event loop, call aysnc_update instead.')
 
         event_loop = asyncio.new_event_loop()
         asyncio.set_event_loop(event_loop)
@@ -172,7 +230,8 @@ class Sonnen:
             event_loop.run_until_complete(self.async_update())
         finally:
             event_loop.close()
-        return (self.last_updated is not None)
+
+        return (self._last_updated is not None)
 
     def sync_update(self) -> bool:
         """Update all battery data from a sequential caller using sync methods.
@@ -180,9 +239,10 @@ class Sonnen:
             True when all updates successful or
             called again within rate limit interval
         """
+
         now = datetime.datetime.now()
-        if self.last_updated is not None:
-            diff = now - self.last_updated
+        if self._last_updated is not None:
+            diff = now - self._last_updated
             if diff.total_seconds() < RATE_LIMIT:
                 return True
 
@@ -217,164 +277,310 @@ class Sonnen:
     #        print(f'_inverter: {self._inverter_data}')
             success = (self._inverter_data is not None)
 
-        self.last_updated = now if success else None
+        self._last_updated = now if success else None
         return success
 
-    async def _async_fetch_api_endpoint(self, url: str) -> Union[Dict, None]:
+    async def _async_fetch_api_endpoint(self, url: str) -> Awaitable[Dict]:
         """Fetch API coroutine."""
+
         try:
             async with aiohttp.ClientSession(headers=self.header, timeout=self.client_timeouts) as session:
                 response = await self._async_fetch(session, url)
-        except Exception as error:
-            self._log_error(f'Coroutine fetch {url} fail: {error}')
-            raise BatterieError(f'Coroutine "{url}"  fail: {error}') from error
 
-        if response.status_code != 200:
-            self._log_error(f'Error async fetching endpoint {url} status: {response.status_code}')
-    #        raise BatterieError(f'Get async endpoint "{url}" status: {response.status_code}')
+        except aiohttp.ClientConnectorDNSError as error:
+            self._log_error(f'Battery: {self.ip_address} badIP? accessing: "{url}"  error: {error}')
+            raise BatterieAuthError(f'Battery {self.ip_address} badIP? accessing: "{url}"  error: {error}') from error
+#??        except BatterieError as error:
+
+        except Exception as error:
+            self._log_error(f'Coroutine fetch "{url}"  fail: {error}')
+            raise BatterieError(f'Coroutine fetch "{url}"  fail: {error}') from error
+
+#        print(f'resp: {response}')
 
         return response
 
-    async def _async_fetch(self, session: aiohttp.ClientSession, url: str) -> Union[Dict, None]:
+    async def _async_fetch(self, session: aiohttp.ClientSession, url: str) -> Awaitable[Dict]: #Awaitable[aiohttp.ClientResponse]:
         """Fetch API endpoint with aiohttp client."""
+
         try:
             async with session.get(url) as response:
+#                print(f'resp: {vars(response)}')
+                if response.status > 299:
+                    self._log_error(f'Error fetching endpoint "{url}" status: {response.status}')
+                    if response.status in [401, 403]:
+                        raise BatterieAuthError(f'Auth error fetching endpoint "{url}" status: {response.status}')
+                    else:
+                        raise BatterieHTTPError(f'HTTP error fetching endpoint "{url}" status: {response.status}')
                 return await response.json()
         except aiohttp.ClientError as error:
-            self._log_error(f'Battery: {self.ip_address} is offline? error: {error}')
-            raise BatterieError(f'Client {self.ip_address} error: {error}') from error
+            self._log_error(f'Battery: {self.ip_address} offline? accessing: "{url}"  error: {error}')
+            raise BatterieError(f'Battery {self.ip_address} offline? accessing: "{url}"  error: {error}') from error
+        except aiohttp.ClientConnectorDNSError as error:
+            self._log_error(f'Battery: {self.ip_address} badIP? accessing: "{url}"  error: {error}')
+            raise BatterieAuthError(f'Battery {self.ip_address} badIP? accessing: "{url}"  error: {error}') from error
         except asyncio.TimeoutError as error:
-            self._log_error(f'Timeout error while accessing: {url}')
-            raise BatterieError(f'Client Timeout: {error}') from error
+            self._log_error(f'Syncio Timeout accessing: "{url}"  error: {error}')
+            raise BatterieError(f'Syncio Timeout accessing: "{url}"  error: {error}') from error
         except Exception as error:
-            self._log_error(f'Error fetching endpoint {url}: {error}')
-            raise BatterieError(f'Endpoint "{url}" error: {error}') from error
+            self._log_error(f'Failed Fetching endpoint "{url}"  error: {error}')
+            raise BatterieError(f'Failed Fetching endpoint "{url}"  error: {error}') from error
 
         return None
 
     # sync for use with run_in_executor in existing event loop
     def _fetch_api_endpoint(self, url: str) -> Dict:
         """Fetch API coroutine."""
+
         try:
             response = requests.get(
                 url,
                 headers=self.header, timeout=TIMEOUT
             )
         except requests.ConnectionError as error:
-            self._log_error(f'Connection error to: {url} fail: {error}')
-            raise BatterieError(f'Connection error to: "{url}"   fail: {error}') from error
+            self._log_error(f'Connection failed to: "{url}"  error: {error}')
+            raise BatterieError(f'Connection failed to: "{url}"  error: {error}') from error
         except Exception as error:
-            self._log_error(f'Sync fetch {url} fail: {error}')
-            raise BatterieError(f'Sync fetch "{url}"  fail: {error}') from error
+            self._log_error(f'Failed Sync fetch "{url}"  error: {error}')
+            raise BatterieError(f'Failed Sync fetch "{url}"  error: {error}') from error
 
-        if response.status_code != 200:
-            self._log_error(f'Error fetching endpoint {url} status: {response.status_code}')
-    #        raise BatterieError(f'Get endpoint "{url}" status: {response.status_code}')
+        if response.status > 299:
+            self._log_error(f'Error fetching endpoint "{url}" status: {response.status}')
+            if response.status in [401, 403]:
+                raise BatterieAuthError(f'Auth error fetching endpoint "{url}" status: {response.status}')
+            else:
+                raise BatterieHTTPError(f'HTTP error fetching endpoint "{url}" status: {response.status}')
 
         return response.json()
 
-    async def async_fetch_status(self) -> Dict:
-        """Used by sonnenbatterie_v2_api to check connection."""
-        return await self._async_fetch_api_endpoint(
-            self.status_api_endpoint
-        )
+    async def async_fetch_configurations(self) -> Awaitable[Dict]:
+        """Wait for Fetch Configurations endpoint."""
 
-    def fetch_status(self) -> Dict:
-        """Used by sonnenbatterie_v2_api to check connection."""
-        return self._fetch_api_endpoint(
-            self.status_api_endpoint
-        )
-
-    async def async_fetch_configurations(self) -> Dict:
         now = datetime.datetime.now()
-        if self.last_configurations is not None:
-            diff = now - self.last_configurations
+        if self._last_configurations is not None:
+            diff = now - self._last_configurations
             if diff.total_seconds() < RATE_LIMIT:
                 return self._configurations
 
-        self.last_configurations = now
+        self._last_configurations = now
         return await self._async_fetch_api_endpoint(
             self.configurations_api_endpoint
         )
 
     def fetch_configurations(self) -> Dict:
+        """Fetch Configurations endpoint."""
+
         now = datetime.datetime.now()
-        if self.last_configurations is not None:
-            diff = now - self.last_configurations
+        if self._last_configurations is not None:
+            diff = now - self._last_configurations
             if diff.total_seconds() < RATE_LIMIT:
                 return self._configurations
 
-        self.last_configurations = now
+        self._configurations = None
+        self._last_configurations = now
         return self._fetch_api_endpoint(
             self.configurations_api_endpoint
         )
 
-    async def async_fetch_latest_details(self) -> Dict:
+    async def async_fetch_latest_details(self) -> Awaitable[Dict]:
+        """Wait for Fetch Latest_Details endpoint."""
         return await self._async_fetch_api_endpoint(
                 self.latest_details_api_endpoint
         )
 
     def fetch_latest_details(self) -> Dict:
+        """Fetch Latest_Details endpoint."""
         return self._fetch_api_endpoint(
                 self.latest_details_api_endpoint
         )
 
-    async def async_fetch_battery_status(self) -> Dict:
+    async def async_fetch_status(self) -> Awaitable[Dict]:
+        """Wait for Fetch Status endpoint."""
+        return await self._async_fetch_api_endpoint(
+            self.status_api_endpoint
+        )
+
+    def fetch_status(self) -> Dict:
+        """Fetch Status endpoint."""
+        return self._fetch_api_endpoint(
+            self.status_api_endpoint
+        )
+
+    async def async_fetch_battery_status(self) -> Awaitable[Dict]:
+        """Wait for Fetch Battery endpoint."""
         return await self._async_fetch_api_endpoint(
             self.battery_api_endpoint
         )
 
     def fetch_battery_status(self) -> Dict:
+        """Fetch Battery endpoint."""
         return self._fetch_api_endpoint(
             self.battery_api_endpoint
         )
 
-    async def async_fetch_powermeter(self) -> Dict:
+    async def async_fetch_powermeter(self) -> Awaitable[Dict]:
+        """Wait for Powermeter Status endpoint."""
         return await self._async_fetch_api_endpoint(
             self.powermeter_api_endpoint
         )
 
     def fetch_powermeter(self) -> Dict:
+        """Fetch Powermeter endpoint."""
         return self._fetch_api_endpoint(
             self.powermeter_api_endpoint
         )
 
-    async def async_fetch_inverter(self) -> Dict:
+    async def async_fetch_inverter(self) -> Awaitable[Dict]:
+        """Wait for Fetch Inverter endpoint."""
         return await self._async_fetch_api_endpoint(
             self.inverter_api_endpoint
         )
 
     def fetch_inverter(self) -> Dict:
+        """Fetch Inverter endpoint."""
         return self._fetch_api_endpoint(
             self.inverter_api_endpoint
         )
 
     @property
+    def api_token(self) -> Dict:
+        """API token to authenticate with batterie."""
+        return self.auth_token
+
+    @property
+    def hostname(self) -> Dict:
+        """Hostname:port of the batterie."""
+        return self._hostname
+
+    @property
+
     def configurations(self) -> Dict:
         """latest Configurations fetched from batterie."""
         return self._configurations
 
     @property
-    def last_updated(self) -> Optional[datetime.datetime]:
-        """Last time data fetched from batterie."""
-        return self._last_updated
+    def last_configurations(self) -> Optional[datetime.datetime]:
+        """Last time configurations fetched (token validated) from batterie.
+            Timezone must be provided for hass sensor.
+        """
+        return self._last_configurations.astimezone() if self._last_configurations is not None else None
 
-    @last_updated.setter
-    def last_updated(self, last_updated: datetime.datetime = None):
-        """Last time data fetched from batterie."""
-        self._last_updated = last_updated
+    # @last_configurations.setter
+    # def last_configurations(self, last_configurations: datetime.datetime = None):
+    #     """Last time configurations fetched (token validated) from batterie."""
+    #     self._last_configurations = last_configurations
+
+    @property
+    def last_get_updated(self) -> Optional[datetime.datetime]:
+        """Last time emulated method sync fetched from batterie.
+            Timezone must be provided for hass sensor.
+        """
+        return self._last_get_updated.astimezone() if self._last_get_updated is not None else None
+
+    @property
+    def last_updated(self) -> Optional[datetime.datetime]:
+        """Last time data successfully fetched from batterie.
+            Timezone must be provided for hass sensor.
+        """
+        return self._last_updated.astimezone() if self._last_updated is not None else None
+
+    # @last_updated.setter
+    # def last_updated(self, last_updated: datetime.datetime = None):
+    #     """Last time data fetched from batterie."""
+    #     self._last_updated = last_updated
 
     @property
     @get_item(float)
     def kwh_consumed(self) -> float:
         """Consumed kWh"""
-        return self._powermeter_data[1][POWERMETER_KWH_CONSUMED]
+        return self._powermeter_data[1][POWERMETER_KWH_IMPORTED]
 
     @property
     @get_item(float)
     def kwh_produced(self) -> float:
         """Produced kWh"""
-        return self._powermeter_data[0][POWERMETER_KWH_PRODUCED]
+        return self._powermeter_data[0][POWERMETER_KWH_IMPORTED]
+
+    @property
+    @get_item(float)
+    def production_total_w(self) -> float:
+        """Powermeter production Watts total"
+            Returns:
+                watts
+        """
+        return self._powermeter_data[0][POWERMETER_WATTS_TOTAL]
+
+    @property
+    @get_item(float)
+    def production_total_a(self) -> float:
+        """Powermeter production Ampere total"
+            Returns:
+                Amps
+        """
+        return  self._powermeter_data[0][POWERMETER_AMPERE_L1]
+
+    @property
+    @get_item(float)
+    def production_reactive_power(self) -> float:
+        """Powermeter production VAR total"
+            Returns:
+                reactance?
+        """
+        return  self._powermeter_data[0][POWERMETER_REACTIVE_POWER]
+
+    @property
+    @get_item(float)
+    def production_power_factor(self) -> float:
+        """Production Power Factor
+        Apparent Power = Real Power + Reactive Power
+        Power Factor = Real Power / Apparent Power
+        """
+        apparent_power = self.production_total_w + self.production_reactive_power
+        return self.production_total_w / apparent_power if apparent_power > 0 else 0
+
+    @property
+    @get_item(float)
+    def consumption_total_w(self) -> float:
+        """Powermeter consumption Watts total"
+            Returns:
+                watts
+        """
+        return  self._powermeter_data[1][POWERMETER_WATTS_TOTAL]
+
+    @property
+    @get_item(float)
+    def consumption_total_a(self) -> float:
+        """Powermeter consumption Ampere total"
+            Returns:
+                Amps
+        """
+        return  self._powermeter_data[1][POWERMETER_AMPERE_L1]
+
+    @property
+    @get_item(float)
+    def consumption_reactive_power(self) -> float:
+        """Powermeter production VAR total
+        """
+        return self._powermeter_data[1][POWERMETER_REACTIVE_POWER]
+
+    @property
+    @get_item(float)
+    def consumption_total_var(self) -> float:
+        """Powermeter consumption VAR total"
+            Returns:
+                reactance?
+        """
+        return  self._powermeter_data[1][POWERMETER_REACTIVE_POWER]
+
+    @property
+    @get_item(float)
+    def consumption_power_factor(self) -> float:
+        """Consumption Power Factor
+        Apparent Power = Real Power + Reactive Power
+        Power Factor = Real Power / Apparent Power
+        """
+        apparent_power = self.consumption_total_w + self.consumption_reactive_power
+        return self.consumption_total_w / apparent_power if apparent_power > 0 else 0
 
     @property
     @get_item(int)
@@ -384,15 +590,6 @@ class Sonnen:
                 house consumption in Watt
         """
         return self._latest_details_data[STATUS_CONSUMPTION_W]
-
-    @property
-    @get_item(int)
-    def consumption_average(self) -> int:
-        """Average consumption in watt
-           Returns:
-               average consumption in watt
-        """
-        return self._status_data[STATUS_CONSUMPTION_AVG]
 
     @property
     @get_item(int)
@@ -423,17 +620,8 @@ class Sonnen:
 
     @property
     @get_item(int)
-    def installed_capacity(self) -> int:
-        """Battery modules installed in the system
-            Returns:
-                total installed capacity Wh
-        """
-        return self._configurations[CONFIGURATION_MODULECAPACITY] * self.installed_modules
-
-    @property
-    @get_item(int)
     def u_soc(self) -> int:
-        """User state of charge (usable charge)
+        """Useable state of charge
             Returns:
                 Integer Percent
         """
@@ -450,23 +638,30 @@ class Sonnen:
 
     @property
     @get_item(int)
-    def remaining_capacity_wh(self) -> int:
-        """ Remaining capacity in watt-hours
-        IMPORTANT NOTE: Why is this double as high as it should be???
-            use battery_remaining_capacity_wh for calculated value
-            Returns:
-                Remaining USABLE capacity of the battery in Wh
-        """
-        return self._status_data[STATUS_REMAININGCAPACITY_WH]
-
-    @property
-    @get_item(int)
     def full_charge_capacity(self) -> int:
         """Full charge capacity of the battery
             Returns:
                 Capacity in Wh
         """
         return self._latest_details_data[DETAIL_FULL_CHARGE_CAPACITY]
+
+    @property
+    def state_bms(self) -> str:
+        """State of Battery Management System
+            eg. ready
+            Returns:
+                state
+        """
+        return self._latest_details_data[IC_STATUS][DETAIL_STATE_BMS]
+
+    @property
+    def state_inverter(self) -> str:
+        """State of Battery Inverter
+        eg: running
+            Returns:
+                state
+        """
+        return self._latest_details_data[IC_STATUS][DETAIL_STATE_INVERTER]
 
     @property
     def time_since_full(self) -> datetime.timedelta:
@@ -480,105 +675,58 @@ class Sonnen:
     def last_time_full(self) -> datetime.datetime:
         """Calculates last time at full charge.
            Returns:
-               DateTime
+               DateTime with timezone
         """
-        return datetime.datetime.now() - self.time_since_full
+        return datetime.datetime.now().astimezone() - self.time_since_full
 
     @property
-    @get_item(int)
-    def seconds_until_fully_charged(self) -> Union[int, None]:
-        """Time remaining until fully charged
-            Returns:
-                Time in seconds - None when not charging, zero when fully charged
-        """
-        remaining_charge = self.battery_full_charge_capacity_wh - self.battery_remaining_capacity_wh
-        seconds = int(remaining_charge / self.charging * 3600) if self.charging else None
-
-        return seconds if remaining_charge != 0 else 0
-
-    @property
-    @get_item(int)
-    def seconds_until_fully_discharged(self) -> Union[int, None]:
-        """Time remaining until fully discharged
-            Returns:
-                Time in seconds - None when not discharging, zero when fully discharged
-        """
-        remaining_charge = self.battery_remaining_capacity_wh
-        seconds = int(remaining_charge / self.discharging * 3600) if self.discharging else None
-
-        return seconds if remaining_charge != 0 else 0
-
-    @property
-    def fully_charged_at(self) -> Optional[datetime.datetime]:
-        """ Calculate time until fully charged
-            Returns:
-                Datetime or None when not charging
-        """
-        return (datetime.datetime.now() + datetime.timedelta(seconds=self.seconds_until_fully_charged)) if self.charging else None
-
-    @property
-    def fully_discharged_at(self) -> Optional[datetime.datetime]:
-        """Future time battery is fully discharged
-            Returns:
-                Datetime discharged or None when not discharging
-        """
-        return (datetime.datetime.now() + datetime.timedelta(seconds=self.seconds_until_fully_discharged)) if self.discharging else None
-
-    @property
-    @get_item(int)
-    def seconds_until_reserve(self) -> Union[int, None]:
-        """Time until battery capacity at backup reserve
-            Above reserve:
-                Charging - None
-                Discharging - seconds to reserve
-            Below Reserve
-                Charging - seconds to reserve
-                Discharging - None (negative seconds since reserve?)
-                Standby - None
-            Returns:
-                Time in seconds or None
-        """
-        capacity_until_reserve = self.battery_remaining_capacity_wh - self.backup_buffer_capacity_wh
-        if capacity_until_reserve > 0:
-            seconds = int((capacity_until_reserve / self.discharging) * 3600) if self.discharging else None
-        else:
-            if self.charging:
-                seconds = int(abs(capacity_until_reserve) / self.charging * 3600)
-            else:
-                seconds = None # int(capacity_until_reserve / self.discharging * 3600)
-        return seconds
-
-    @property
-    @get_item(int)
-    def using_reserve(self) -> int:
-        """Is backup reserve being used
+    @get_item(bool)
+    def using_reserve(self) -> bool:
+        """Is backup reserve being used.
             Returns:
                 Bool - true when reserve in use
         """
-        capacity_until_reserve = self.battery_remaining_capacity_wh - self.backup_buffer_capacity_wh
-        return capacity_until_reserve < 0
+        return self.capacity_until_reserve < 0
+
+    @property
+    @get_item(float)
+    def capacity_until_reserve(self) -> float:
+        """Capacity until reserve is reached (battery goes standby).
+            Returns:
+                Wh
+        """
+        return self.battery_remaining_capacity_wh - self.backup_buffer_capacity_wh
 
     @property
     def backup_reserve_at(self) -> Optional[datetime.datetime]:
-        """Time battery charged/discharged to backup reserve
+        """Time battery charged/discharged to backup reserve.
+            Timezone must be provided for hass sensor.
             Returns:
-                Datetime charged/discharged to reserve or None when not charging/discharging
+                Datetime with timezone charged/discharged to reserve or None when not charging/discharging
         """
         seconds = self.seconds_until_reserve
         if seconds is None:
             return None
 
         if seconds < 0:
-            return (datetime.datetime.now() - datetime.timedelta(seconds=abs(seconds))) if self.discharging else None
+            return (datetime.datetime.now().astimezone() - datetime.timedelta(seconds=abs(seconds))) if self.discharging else None
         else:
-            return (datetime.datetime.now() + datetime.timedelta(seconds=seconds)) if self.discharging else None
+            return (datetime.datetime.now().astimezone() + datetime.timedelta(seconds=seconds)) if self.discharging else None
+
+    @property
+    def state_core_control_module(self) -> str:
+        """State of control module: config, ongrid, offgrid, critical error, ...
+            Returns:
+                String
+        """
+        return self._latest_details_data[IC_STATUS][DETAIL_STATE_CORECONTROL_MODULE]
 
     @property
     @get_item(int)
     def pac_total(self) -> int:
-        """ Battery inverter load
-            Negative if charging
-            Positive if discharging
+        """ Battery inverter load.
+            Negative is charging
+            Positive is discharging
             Returns:
                 Inverter load in watt
         """
@@ -587,7 +735,7 @@ class Sonnen:
     @property
     @get_item(int)
     def charging(self) -> int:
-        """Actual battery charging value is negative
+        """Actual battery charging value is negative.
             Returns:
                 Charging value in watt
         """
@@ -603,22 +751,13 @@ class Sonnen:
         return self.pac_total if self.pac_total > 0 else 0
 
     @property
-    @get_item(int)
-    def grid_in(self) -> int:
-        """Actual grid feed in value
+    def validation_timestamp(self) -> datetime.datetime:
+        """Timestamp: "Wed Sep 18 12:26:06 2024"
+            Timezone must be provided for hass sensor.
             Returns:
-                Value in watt
+                datetime with timezone
         """
-        return self._status_data[STATUS_GRIDFEEDIN_W] if self._status_data[STATUS_GRIDFEEDIN_W] > 0 else 0
-
-    @property
-    @get_item(int)
-    def grid_out(self) -> int:
-        """Actual grid out value
-            Returns:
-                Value in watt
-        """
-        return abs(self._status_data[STATUS_GRIDFEEDIN_W]) if self._status_data[STATUS_GRIDFEEDIN_W] < 0 else 0
+        return  datetime.datetime.strptime(self._latest_details_data[IC_STATUS]["timestamp"], '%a %b %d %H:%M:%S %Y').astimezone()
 
     @property
     @get_item(int)
@@ -632,11 +771,11 @@ class Sonnen:
     @property
     @get_item(int)
     def battery_dod_limit(self) -> int:
-        """Dept Of Discharge limit
+        """Depth Of Discharge limit
             Returns:
                 Int percent
         """
-        return (1 - BATTERY_UNUSABLE_RESERVE) * 100
+        return 100 - int(BATTERY_UNUSABLE_RESERVE * 100)
 
     @property
     @get_item(float)
@@ -646,6 +785,24 @@ class Sonnen:
                 Maximum cell temperature in ºC
         """
         return self._battery_status[BATTERY_MAX_CELL_TEMP]
+
+    @property
+    @get_item(float)
+    def battery_min_cell_temp(self) -> float:
+        """Min cell temperature
+            Returns:
+                Minimum cell temperature in ºC
+        """
+        return self._battery_status[BATTERY_MIN_CELL_TEMP]
+
+    @property
+    @get_item(float)
+    def battery_min_cell_voltage(self) -> float:
+        """Min cell voltage
+            Returns:
+                Minimum cell voltage in Volt
+        """
+        return self._battery_status[BATTERY_MIN_CELL_VOLTAGE]
 
     @property
     @get_item(float)
@@ -682,24 +839,6 @@ class Sonnen:
                 Maximum module DC temperature in ºC
         """
         return self._battery_status[BATTERY_MAX_MODULE_TEMP]
-
-    @property
-    @get_item(float)
-    def battery_min_cell_temp(self) -> float:
-        """Min cell temperature
-            Returns:
-                Minimum cell temperature in ºC
-        """
-        return self._battery_status[BATTERY_MIN_CELL_TEMP]
-
-    @property
-    @get_item(float)
-    def battery_min_cell_voltage(self) -> float:
-        """Min cell voltage
-            Returns:
-                Minimum cell voltage in Volt
-        """
-        return self._battery_status[BATTERY_MIN_CELL_VOLTAGE]
 
     @property
     @get_item(float)
@@ -757,6 +896,15 @@ class Sonnen:
 
     @property
     @get_item(float)
+    def battery_unusable_capacity_wh(self) -> float:
+        """Unusable capacity Wh calculated from Ah
+            Returns:
+                float Wh
+        """
+        return self.battery_full_charge_capacity_wh * BATTERY_UNUSABLE_RESERVE
+
+    @property
+    @get_item(float)
     def battery_remaining_capacity(self) -> float:
         """Remaining capacity
             Returns:
@@ -770,7 +918,7 @@ class Sonnen:
         """Remaining capacity Wh calculated from Ah
             use instead of status RemainingCapacity_Wh which is incorrect
             Returns:
-                Int Wh
+                Wh
         """
         return self.battery_remaining_capacity * self.battery_module_dc_voltage
 
@@ -794,15 +942,6 @@ class Sonnen:
                 Voltage in Volt
         """
         return self._battery_status[BATTERY_SYSTEM_VOLTAGE]
-
-    @property
-    @get_item(float)
-    def battery_unusable_capacity_wh(self) -> float:
-        """Unusable capacity Wh calculated from Ah
-            Returns:
-                float Wh
-        """
-        return self.battery_full_charge_capacity_wh * BATTERY_UNUSABLE_RESERVE
 
     @property
     @get_item(float)
@@ -830,6 +969,72 @@ class Sonnen:
                 System current in Ampere
         """
         return self._battery_status[BATTERY_SYSTEM_CURRENT]
+
+    @property
+    @get_item(int)
+    def seconds_until_fully_charged(self) -> Union[int, None]:
+        """Time remaining until fully charged
+            Returns:
+                Time in seconds - None when not charging, zero when fully charged
+        """
+        remaining_charge = self.battery_full_charge_capacity_wh - self.battery_remaining_capacity_wh
+        seconds = int(remaining_charge / self.charging * 3600) if self.charging else None
+
+        return seconds if remaining_charge != 0 else 0
+
+    @property
+    @get_item(int)
+    def seconds_until_fully_discharged(self) -> Union[int, None]:
+        """Time remaining until fully discharged
+            Returns:
+                Time in seconds - None when not discharging, zero when fully discharged
+        """
+        remaining_charge = self.battery_remaining_capacity_wh
+        seconds = int(remaining_charge / self.discharging * 3600) if self.discharging else None
+
+        return seconds if remaining_charge != 0 else 0
+
+    @property
+    def fully_charged_at(self) -> Optional[datetime.datetime]:
+        """ Calculate time until fully charged
+            Timezone must be provided for hass sensor.
+            Returns:
+                Datetime with timezone or None when not charging
+        """
+        return (datetime.datetime.now().astimezone() + datetime.timedelta(seconds=self.seconds_until_fully_charged)) if self.charging else None
+
+    @property
+    def fully_discharged_at(self) -> Optional[datetime.datetime]:
+        """Future time battery is fully discharged.
+            Timezone must be provided for hass sensor.
+            Returns:
+                Datetime discharged or None when not discharging
+        """
+        return (datetime.datetime.now().astimezone() + datetime.timedelta(seconds=self.seconds_until_fully_discharged)) if self.discharging else None
+
+    @property
+    @get_item(int)
+    def seconds_until_reserve(self) -> Union[int, None]:
+        """Time until battery capacity at backup reserve
+            Above reserve:
+                Charging - None
+                Discharging - seconds to reserve
+            Below Reserve
+                Charging - seconds to reserve
+                Discharging - None (negative seconds since reserve?)
+                Standby - None
+            Returns:
+                Time in seconds or None
+        """
+        capacity_until_reserve = self.battery_remaining_capacity_wh - self.backup_buffer_capacity_wh
+        if capacity_until_reserve > 0:
+            seconds = int((capacity_until_reserve / self.discharging) * 3600) if self.discharging else None
+        else:
+            if self.charging:
+                seconds = int(abs(capacity_until_reserve) / self.charging * 3600)
+            else:
+                seconds = None # int(capacity_until_reserve / self.discharging * 3600)
+        return seconds
 
     @property
     @get_item(int)
@@ -865,6 +1070,15 @@ class Sonnen:
 
     @property
     @get_item(int)
+    def installed_capacity(self) -> int:
+        """Battery modules installed in the system
+            Returns:
+                total installed capacity Wh
+        """
+        return self._configurations[CONFIGURATION_MODULECAPACITY] * self.installed_modules
+
+    @property
+    @get_item(int)
     def configuration_em_usoc(self) -> int:
         """User State Of Charge - BackupBuffer value (includes unusable reserve)
             Returns:
@@ -874,10 +1088,113 @@ class Sonnen:
 
     @property
     @get_item(int)
-    def status_backup_buffer(self) -> int:
-        """BackupBuffer value from Status api
+    def consumption_average(self) -> int:
+        """Average consumption in watt
+           Returns:
+               average consumption in watt
+        """
+        return self._status_data[STATUS_CONSUMPTION_AVG]
+
+    @property
+    def system_status(self) -> str:
+        """System Status: Config, OnGrid, OffGrid, Critical Error, ...
             Returns:
-                Integer Percent
+                String
+        """
+        return self._status_data[STATUS_SYSTEMSTATUS]
+
+    @property
+    def system_status_timestamp(self) -> datetime.datetime:
+        """Timestamp: "2024-11-20 14:00:07"
+            Can be used to check device time is correct.
+            Timezone must be provided for hass sensor.
+            Returns:
+                datetime with timezone
+        """
+        return  datetime.datetime.fromisoformat(self._status_data[STATUS_TIMESTAMP]).astimezone()
+
+    @property
+    @get_item(float)
+    def status_frequency(self) -> float:
+        """AC Frequency
+           Returns:
+              Hz
+        """
+        return self._status_data[STATUS_FREQUENCY]
+
+    @property
+    @get_item(int)
+    def status_rsoc(self) -> int:
+        """Relative state of charge
+            Returns:
+                percent
+        """
+        return self._status_data[STATUS_RSOC]
+
+    @property
+    @get_item(int)
+    def status_usoc(self) -> int:
+        """Usable state of charge
+            Returns:
+                percent
+        """
+        return self._status_data[STATUS_USOC]
+
+    @property
+    @get_item(float)
+    def status_remaining_capacity_wh(self) -> float:
+        """Remaining capacity Wh calculated from rsoc of full_charge
+            use instead of status RemainingCapacity_Wh which is incorrect
+            Returns:
+                Wh
+        """
+        return self.battery_full_charge_capacity_wh * self.status_rsoc / 100
+
+    @property
+    @get_item(float)
+    def status_usable_capacity_wh(self) -> float:
+        """Remaining usable capacity Wh calculated from usoc of full_charge
+            use instead of status RemainingCapacity_Wh which is incorrect
+            Returns:
+                Wh
+        """
+        return self.battery_full_charge_capacity_wh * self.status_usoc / 100
+
+    @property
+    @get_item(int)
+    def remaining_capacity_wh(self) -> int:
+        """ Remaining capacity in watt-hours
+        IMPORTANT NOTE: Why is this double as high as it should be???
+            use battery_remaining_capacity_wh for calculated value
+            Returns:
+                Remaining USABLE capacity of the battery in Wh
+        """
+        return self._status_data[STATUS_REMAININGCAPACITY_WH]
+
+    @property
+    @get_item(int)
+    def grid_in(self) -> int:
+        """Actual grid feed in value
+            Returns:
+                Value in watt
+        """
+        return self._status_data[STATUS_GRIDFEEDIN_W] if self._status_data[STATUS_GRIDFEEDIN_W] > 0 else 0
+
+    @property
+    @get_item(int)
+    def grid_out(self) -> int:
+        """Actual grid out value
+            Returns:
+                Value in watt
+        """
+        return abs(self._status_data[STATUS_GRIDFEEDIN_W]) if self._status_data[STATUS_GRIDFEEDIN_W] < 0 else 0
+
+    @property
+    @get_item(int)
+    def status_backup_buffer(self) -> int:
+        """BackupBuffer proportion reserved for OffGrid use
+            Returns:
+                Percent of capacity
         """
         return self._status_data[STATUS_BACKUPBUFFER]
 
@@ -886,7 +1203,7 @@ class Sonnen:
     def status_battery_charging(self) -> bool:
         """BatteryCharging
             Returns:
-                Bool
+                true when charging
         """
         return self._status_data[STATUS_BATTERY_CHARGING]
 
@@ -895,7 +1212,7 @@ class Sonnen:
     def status_battery_discharging(self) -> bool:
         """BatteryDischarging
             Returns:
-                Bool
+                true when discharging
         """
         return self._status_data[STATUS_BATTERY_DISCHARGING]
 
@@ -935,70 +1252,87 @@ class Sonnen:
         return self._status_data[STATUS_DISCHARGE_NOT_ALLOWED]
 
     @property
-    @get_item(int)
-    def backup_buffer_capacity_wh(self) -> int:
+    @get_item(float)
+    def backup_buffer_capacity_wh(self) -> float:
         """Backup Buffer capacity (includes 7% unusable)
             Returns:
                 Backup Buffer in Wh
         """
-        buffer_percent = self.configuration_em_usoc
+        buffer_percent = self.status_backup_buffer / 100 #self.configuration_em_usoc
         full_charge = self.battery_full_charge_capacity_wh
 
-        return int(full_charge * buffer_percent / 100)
+        return full_charge * buffer_percent
 
     @property
-    @get_item(int)
-    def backup_buffer_usable_capacity_wh(self) -> int:
+    @get_item(float)
+    def backup_buffer_usable_capacity_wh(self) -> float:
         """Backup Buffer usable capacity (excludes BATTERY_UNUSABLE_RESERVE)
             Returns:
                 Usable Backup Buffer in Wh
         """
         buffer_percent = self.status_backup_buffer / 100 #configuration_em_usoc
 
-        return int(self.battery_full_charge_capacity_wh * (buffer_percent - BATTERY_UNUSABLE_RESERVE)) if buffer_percent > BATTERY_UNUSABLE_RESERVE else 0
+        return self.battery_full_charge_capacity_wh * (buffer_percent - BATTERY_UNUSABLE_RESERVE) if buffer_percent > BATTERY_UNUSABLE_RESERVE else 0
 
     @property
-    def state_core_control_module(self) -> str:
-        """State of control module: config, ongrid, offgrid, critical error, ...
-            Returns:
-                String
-        """
-        return self._latest_details_data[IC_STATUS][DETAIL_STATE_CORECONTROL_MODULE]
+    def battery_activity_state(self) -> str:
+        """Battery current state of activity"""
 
-    @property
-    def system_status(self) -> str:
-        """System Status: Config, OnGrid, OffGrid, Critical Error, ...
-            Returns:
-                String
-        """
-        return self._status_data[STATUS_SYSTEMSTATUS]
+        if self.configurations is None:
+            return "unavailable"
 
-    @property
-    def system_status_timestamp(self) -> datetime.datetime:
-        """Timestamp: "2024-10-09 14:00:07"
-            Returns:
-                datetime
-        """
-        print (f'{self._status_data[STATUS_TIMESTAMP]}')
-        return  datetime.datetime.fromisoformat(self._status_data[STATUS_TIMESTAMP])
+        """ current_state index of: ["standby", "charging", "discharging", "discharging reserve", "charged", "discharged"] """
+        if self.status_battery_charging:
+            battery_status = "charging"
+        elif self.status_battery_discharging:
+            if self.battery_remaining_capacity_wh > self.backup_buffer_capacity_wh:
+                battery_status = "discharging"
+            else:
+                battery_status = "discharging reserve"
+        elif self.battery_rsoc > 98: # look at usable capacity over long term?
+            battery_status = "charged"
+        elif self.battery_usable_remaining_capacity < 2:
+            battery_status = "discharged"
+        else:
+            battery_status = "standby"
+
+        return battery_status
 
     @property
     @get_item(float)
     def inverter_pac_total(self) -> float:
-        """Inverter PAC total"
+        """Inverter PAC total when OnGrid"
             Returns:
-                float
+                Watts
         """
         return  self._inverter_data[INVERTER_PAC_TOTAL]
 
     @property
-    def validation_timestamp(self) -> datetime.datetime:
-        """Timestamp: "Wed Sep 18 12:26:06 2024"
+    @get_item(float)
+    def inverter_pac_microgrid(self) -> float:
+        """Inverter microgrid total when OffGrid"
             Returns:
-                datetime
+                Watts
         """
-        print (f'{self._latest_details_data[IC_STATUS]["timestamp"]}')
-        return  datetime.datetime.strptime(self._latest_details_data[IC_STATUS]["timestamp"], '%a %b %d %H:%M:%S %Y')
+        return  self._inverter_data[INVERTER_PAC_MICROGRID]
+
+    @property
+    @get_item(float)
+    def inverter_uac(self) -> float:
+        """Inverter Voltage ac"
+            Returns:
+                Volts
+        """
+        return  self._inverter_data[INVERTER_UAC]
+
+    @property
+    @get_item(float)
+    def inverter_ubat(self) -> float:
+        """Inverter battery voltage"
+            Returns:
+                Volts
+        """
+        return  self._inverter_data[INVERTER_UBAT]
 
     @property
     def ic_eclipse_led(self) -> str:
@@ -1014,4 +1348,40 @@ class Sonnen:
             Returns:
                 JSON String
         """
+        # print(f"eclipse: {self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED]}")
+        # print(f"ic_status: {self._latest_details_data[IC_STATUS]}")
+
         return self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED]
+
+    @property
+    def led_state(self) -> str:
+        """System-Status:
+                "Eclipse Led":{
+                    "Blinking Red":false,
+                    "Brightness":100,
+                    "Pulsing Green":false,
+                    "Pulsing Orange":false,
+                    "Pulsing White":true,
+                    "Solid Red":false
+                }
+            Returns:
+                String
+        """
+        leds = self.ic_eclipse_led
+        (Blinking_Red, Brightness, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
+
+    #    print(f'leds: {leds}')
+    #    print(f'leds: white: {Pulsing_White} red: {Solid_Red}')
+
+        if Blinking_Red is True:
+            return f"Blinking Red {Brightness}%"
+        elif Pulsing_Green is True:
+            return f"Pulsing Green {Brightness}%"
+        elif Pulsing_Orange is True:
+            return f"Pulsing Orange {Brightness}%"
+        elif Pulsing_White is True:
+            return f"Pulsing White {Brightness}%"
+        elif Solid_Red is True:
+            return f"Solid Red {Brightness}%"
+        else:
+            return "off"

@@ -29,7 +29,7 @@ def __mock_status_discharging(*args)-> json:
         'Sac3': None,
         'SystemStatus': 'OffGrid',
         'Timestamp': '2023-11-20 17:00:59',
-        'USOC': 18,
+        'USOC': 11,
         'Uac': 237,
         'Ubat': 211,
         'dischargeNotAllowed': False,
@@ -46,7 +46,7 @@ def __mock_latest_discharging(*args)-> json:
         'RSOC': 18,
         'SetPoint_W': 439,
         'Timestamp': '2023-11-20 17:00:59',
-        'USOC': 18,
+        'USOC': 11,
         'UTC_Offet': 2,
         'ic_status': {
             'DC Shutdown Reason': {
@@ -132,6 +132,7 @@ def __mock_latest_discharging(*args)-> json:
             'timestamp': 'Mon Nov 20 17:00:59 2023'
         }
     }
+
 def __mock_battery_discharging(*args)-> json:
     return {
         "balancechargerequest":0.0,
@@ -153,12 +154,12 @@ def __mock_battery_discharging(*args)-> json:
         "minimummoduledcvoltage":104.15,
         "minimummoduletemperature":-273.15,
         "nominalmoduledcvoltage":102.4,
-        "relativestateofcharge":88.0,
+        "relativestateofcharge":18.0,
         "remainingcapacity":36.36,
         "systemalarm":0.0,
         "systemcurrent":0.0,
         "systemdcvoltage":208.3,
-        "systemstatus":88.0,
+        "systemstatus":49,
         "systemtime":0.0,
         "systemwarning":0.0,
         "usableremainingcapacity":22.22

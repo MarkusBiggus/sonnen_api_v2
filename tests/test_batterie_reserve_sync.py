@@ -15,7 +15,7 @@ LOGGER_NAME = "sonnenapiv2"
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 @responses.activate
-@freeze_time("24-05-2022 15:38:23")
+@freeze_time("20-11-2023 17:00:59")
 @pytest.mark.usefixtures("battery_discharging_reserve")
 def test_sync_methods(battery_discharging_reserve: Batterie) -> None:
     if LOGGER_NAME is not None:
@@ -25,7 +25,7 @@ def test_sync_methods(battery_discharging_reserve: Batterie) -> None:
 
     assert battery_discharging_reserve.discharging > 0
     assert battery_discharging_reserve.charging == 0
-    assert battery_discharging_reserve.fully_discharged_at.strftime('%d.%B.%Y %H:%M') == '24.May.2022 18:13'
+    assert battery_discharging_reserve.fully_discharged_at.strftime('%d.%b.%Y %H:%M') == '20.Nov.2023 19:36'
 
     # sync wrapped methods used by ha component
     status_data = battery_discharging_reserve.sync_get_status()

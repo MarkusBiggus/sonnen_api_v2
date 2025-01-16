@@ -10,8 +10,9 @@ from collections.abc import (
 )
 from sonnen_api_v2 import Batterie
 
-from . mock_sonnenbatterie_v2_charging import  __mock_configurations, __mock_powermeter, __mock_inverter
-from . mock_sonnenbatterie_v2_discharging_reserve import __mock_status_discharging, __mock_latest_discharging, __mock_battery_discharging
+from . mock_sonnenbatterie_v2_charging import __mock_configurations, __mock_powermeter
+from . mock_sonnenbatterie_v2_discharging_reserve import __mock_status_discharging, __mock_latest_discharging, __mock_battery_discharging, __mock_inverter_discharging
+
 
 LOGGER_NAME = "sonnenapiv2"
 
@@ -30,7 +31,7 @@ async def fixture_battery_discharging_reserve(mocker) -> Batterie:
     mocker.patch.object(Batterie, "fetch_configurations", __mock_configurations)
     mocker.patch.object(Batterie, "fetch_battery_status", __mock_battery_discharging)
     mocker.patch.object(Batterie, "fetch_powermeter", __mock_powermeter)
-    mocker.patch.object(Batterie, "fetch_inverter", __mock_inverter)
+    mocker.patch.object(Batterie, "fetch_inverter", __mock_inverter_discharging)
 
     def async_add_executor_job[*_Ts, _T](
         target: Callable[[*_Ts], _T], *args: *_Ts
@@ -45,7 +46,7 @@ async def fixture_battery_discharging_reserve(mocker) -> Batterie:
         return battery_discharging_reserve.sync_get_update()
 
 
-    battery_discharging_reserve = Batterie('fakeUsername', 'fakeToken', 'fakeHost')
+    battery_discharging_reserve = Batterie('fakeToken', 'fakeHost')
     success = await async_add_executor_job(
         _sync_update, battery_discharging_reserve
     )

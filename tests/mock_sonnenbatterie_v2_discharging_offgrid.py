@@ -26,7 +26,7 @@ def __mock_status_discharging(*args)-> json:
         'Sac3': None,
         'SystemStatus': 'OffGrid',
         'Timestamp': '2023-11-20 17:00:50',
-        'USOC': 19,
+        'USOC': 12,
         'Uac': 237,
         'Ubat': 211,
         'dischargeNotAllowed': False,
@@ -43,7 +43,7 @@ def __mock_latest_discharging(*args)-> json:
         'RSOC': 19,
         'SetPoint_W': 439,
         'Timestamp': '2023-11-20 17:00:50',
-        'USOC': 19,
+        'USOC': 12,
         'UTC_Offet': 2,
         'ic_status': {
             'DC Shutdown Reason': {

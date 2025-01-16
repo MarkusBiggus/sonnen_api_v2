@@ -35,18 +35,15 @@ DETAIL_PRODUCTION_W = 'Production_W'
 DETAIL_STATE_CORECONTROL_MODULE = "statecorecontrolmodule"
 DETAIL_SECONDS_SINCE_FULLCHARGE = 'secondssincefullcharge'
 DETAIL_TIMESTAMP = 'Timestamp'
-CONFIGURATION_EM_USOC = "EM_USOC"
-DETAIL_USOC = 'USOC'
-DETAIL_RSOC = 'RSOC'
-DETAIL_FULL_CHARGE_CAPACITY = 'FullChargeCapacity'
-DETAIL_PAC_TOTAL_W = 'Pac_total_W'
-DETAIL_PRODUCTION_W = 'Production_W'
-DETAIL_STATE_CORECONTROL_MODULE = "statecorecontrolmodule"
-DETAIL_SECONDS_SINCE_FULLCHARGE = 'secondssincefullcharge'
-DETAIL_TIMESTAMP = 'Timestamp'
+DETAIL_STATE_BMS = 'statebms'
+DETAIL_STATE_INVERTER = 'stateinverter'
 IC_ECLIPSE_LED = "Eclipse Led"
-POWERMETER_KWH_CONSUMED = 'kwh_imported'
-POWERMETER_KWH_PRODUCED = 'kwh_exported'
+POWERMETER_KWH_IMPORTED = 'kwh_imported'
+POWERMETER_AMPERE_L1 = 'a_l1' # bug: a_total is always zero
+POWERMETER_VOLT_L1 = 'v_l1_n'
+POWERMETER_WATT_L1 = 'w_l1'
+POWERMETER_REACTIVE_POWER = 'var_total'
+POWERMETER_WATTS_TOTAL = 'w_total'
 STATUS_APPARENT_OUTPUT = 'Apparent_output'
 STATUS_BACKUPBUFFER = "BackupBuffer"
 STATUS_BATTERY_CHARGING = 'BatteryCharging'
@@ -60,14 +57,20 @@ STATUS_FLOW_CONSUMPTION_PRODUCTION = 'FlowConsumptionProduction'
 STATUS_FLOW_GRID_BATTERY = 'FlowGridBattery'
 STATUS_FLOW_PRODUCTION_BATTERY = 'FlowProductionBattery'
 STATUS_FLOW_PRODUCTION_GRID = 'FlowProductionGrid'
+STATUS_FREQUENCY = 'Fac'
 STATUS_GRIDFEEDIN_W = 'GridFeedIn_W'
 STATUS_MODULES_INSTALLED = 'nrbatterymodules'
 STATUS_PAC_TOTAL_W = 'Pac_total_W'
 STATUS_PRODUCTION_W = 'Production_W'
 STATUS_REMAININGCAPACITY_WH = 'RemainingCapacity_Wh'
+STATUS_RSOC = 'RSOC'
+STATUS_USOC = 'USOC'
 STATUS_SYSTEMSTATUS = 'SystemStatus'
 STATUS_TIMESTAMP = 'Timestamp'
-INVERTER_PAC_TOTAL = 'pac_total'
+INVERTER_PAC_TOTAL = 'pac_total'        #OnGrid
+INVERTER_PAC_MICROGRID = 'pac_microgrid' #OffGrid
+INVERTER_UAC = 'uac'
+INVERTER_UBAT = 'ubat'
 
 # default timeout (seconds)
 TIMEOUT = 20
@@ -75,6 +78,7 @@ TIMEOUT_CONNECT=0
 TIMEOUT_REQUEST=1
 
 RATE_LIMIT = 3 #seconds
+DEFAULT_PORT = 80
 
 # Manufacturer reserve 7%
 BATTERY_UNUSABLE_RESERVE = .07

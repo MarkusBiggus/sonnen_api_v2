@@ -15,7 +15,7 @@ LOGGER_NAME = "sonnenapiv2"
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 @responses.activate
-@freeze_time("24-05-2022 15:38:23")
+@freeze_time("20-11-2023 17:00:55")
 @pytest.mark.usefixtures("battery_discharging")
 def test_sync_methods(battery_discharging: Batterie) -> None:
     if LOGGER_NAME is not None:
@@ -25,7 +25,7 @@ def test_sync_methods(battery_discharging: Batterie) -> None:
 
     assert battery_discharging.discharging > 0
     assert battery_discharging.charging == 0
-    assert battery_discharging.fully_discharged_at.strftime('%d.%B.%Y %H:%M') == '25.May.2022 04:17'
+    assert battery_discharging.fully_discharged_at.strftime('%d.%b.%Y %H:%M') == '21.Nov.2023 05:40'
 
     # sync wrapped methods used by ha component
     status_data = battery_discharging.sync_get_status()
@@ -65,6 +65,9 @@ def test_sync_methods(battery_discharging: Batterie) -> None:
     configurations = battery_discharging.sync_get_configurations()
     assert configurations.get('DE_Software') == '1.14.5'
     assert configurations.get('EM_USOC') == 20
+
+    assert battery_discharging.kwh_consumed == 816.5
+    assert battery_discharging.kwh_produced == 3969.800048828125
 
     from .check_results import check_discharge_results
 

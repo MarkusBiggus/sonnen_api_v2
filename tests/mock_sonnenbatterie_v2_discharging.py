@@ -29,7 +29,7 @@ def __mock_status_discharging(*args)-> json:
         'Sac3': None,
         'SystemStatus': 'OnGrid',
         'Timestamp': '2023-11-20 17:00:58',
-        'USOC': 88,
+        'USOC': 81,
         'Uac': 237,
         'Ubat': 211,
         'dischargeNotAllowed': False,
@@ -46,7 +46,7 @@ def __mock_latest_discharging(*args)-> json:
         'RSOC': 88,
         'SetPoint_W': 439,
         'Timestamp': '2023-11-20 17:00:58',
-        'USOC': 88,
+        'USOC': 81,
         'UTC_Offet': 2,
         'ic_status': {
             'DC Shutdown Reason': {
@@ -131,6 +131,38 @@ def __mock_latest_discharging(*args)-> json:
             'stateinverter': 'running',
             'timestamp': 'Mon Nov 20 17:00:58 2023'
         }
+    }
+
+def __mock_battery_discharging(*args)-> json:
+    return {
+        "balancechargerequest":0.0,
+        "chargecurrentlimit":39.97,
+        "cyclecount":30.0,
+        "dischargecurrentlimit":39.97,
+        "fullchargecapacity":201.98,
+        "fullchargecapacitywh":20683.490,
+        "maximumcelltemperature":19.95,
+        "maximumcellvoltage":3.257,
+        "maximumcellvoltagenum":0.0,
+        "maximummodulecurrent":0.0,
+        "maximummoduledcvoltage":104.15,
+        "maximummoduletemperature":-273.15,
+        "minimumcelltemperature":18.95,
+        "minimumcellvoltage":3.251,
+        "minimumcellvoltagenum":0.0,
+        "minimummodulecurrent":0.0,
+        "minimummoduledcvoltage":104.15,
+        "minimummoduletemperature":-273.15,
+        "nominalmoduledcvoltage":102.4,
+        "relativestateofcharge":88.0,
+        "remainingcapacity":177.74,
+        "systemalarm":0.0,
+        "systemcurrent":0.0,
+        "systemdcvoltage":208.3,
+        "systemstatus":88.0,
+        "systemtime":0.0,
+        "systemwarning":0.0,
+        "usableremainingcapacity":163.60
     }
 
 def __mock_inverter_discharging(*args)-> json:

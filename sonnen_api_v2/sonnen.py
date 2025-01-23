@@ -753,7 +753,7 @@ class Sonnen:
     @property
     @get_item(int)
     def discharging(self) -> int:
-        """Actual battery discharging value
+        """Actual battery discharging value.
             Returns:
                 Discharging value in watt
         """
@@ -771,17 +771,16 @@ class Sonnen:
     @property
     @get_item(float)
     def full_charge_capacity(self) -> float:
-        """Full charge capacity of the battery
+        """Full charge capacity of the battery.
             Returns:
                 Capacity in Wh
         """
         return round(self._latest_details_data[DETAIL_FULL_CHARGE_CAPACITY])
-    #    return round(self._battery_status[BATTERY_FULL_CHARGE_CAPACITY_WH])
 
     @property
     @get_item(int)
     def usable_capacity(self) -> int:
-        """Usable amount of Full charge capacity
+        """Usable amount of Full charge capacity.
             Returns:
                 Capacity in Wh
         """
@@ -790,7 +789,7 @@ class Sonnen:
     @property
     @get_item(int)
     def unusable_capacity(self) -> int:
-        """Unusable amount of Full charge due to DoD limit
+        """Unusable amount of Full charge due to DoD limit.
             Returns:
                 Capacity in Wh
         """
@@ -799,7 +798,7 @@ class Sonnen:
     @property
     @get_item(int)
     def battery_cycle_count(self) -> int:
-        """Number of charge/discharge cycles
+        """Number of charge/discharge cycles.
             Returns:
                 Int count
         """
@@ -808,7 +807,7 @@ class Sonnen:
     @property
     @get_item(int)
     def battery_dod_limit(self) -> int:
-        """Depth Of Discharge limit
+        """Depth Of Discharge limit.
             Returns:
                 Int percent
         """
@@ -817,7 +816,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_max_cell_temp(self) -> float:
-        """Max cell temperature
+        """Max cell temperature.
             Returns:
                 Maximum cell temperature in ºC
         """
@@ -826,7 +825,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_min_cell_temp(self) -> float:
-        """Min cell temperature
+        """Min cell temperature.
             Returns:
                 Minimum cell temperature in ºC
         """
@@ -835,7 +834,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_min_cell_voltage(self) -> float:
-        """Min cell voltage
+        """Min cell voltage.
             Returns:
                 Minimum cell voltage in Volt
         """
@@ -844,7 +843,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_max_cell_voltage(self) -> float:
-        """Max cell voltage
+        """Max cell voltage.
             Returns:
                 Maximum cell voltage in Volt
         """
@@ -853,7 +852,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_max_module_current(self) -> float:
-        """Max module DC current
+        """Max module DC current.
             Returns:
                 Maximum module DC current in Ampere
         """
@@ -862,7 +861,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_max_module_voltage(self) -> float:
-        """Max module DC voltage
+        """Max module DC voltage.
             Returns:
                 Maximum module DC voltage in Volt
         """
@@ -871,7 +870,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_max_module_temp(self) -> float:
-        """Max module DC temperature
+        """Max module DC temperature.
             Returns:
                 Maximum module DC temperature in ºC
         """
@@ -880,7 +879,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_min_module_current(self) -> float:
-        """Min module DC current
+        """Min module DC current.
             Returns:
                 Minimum module DC current in Ampere
         """
@@ -889,7 +888,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_min_module_voltage(self) -> float:
-        """Min module DC voltage
+        """Min module DC voltage.
             Returns:
                 Minimum module DC voltage in Volt
         """
@@ -898,7 +897,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_min_module_temp(self) -> float:
-        """Min module DC temperature
+        """Min module DC temperature.
             Returns:
                 Minimum module DC temperature in ºC
         """
@@ -907,7 +906,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_rsoc(self) -> float:
-        """Relative state of charge
+        """Relative state of charge.
             Returns:
                 Relative state of charge in %
         """
@@ -916,7 +915,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_full_charge_capacity(self) -> float:
-        """Fullcharge capacity
+        """Fullcharge capacity.
             Returns:
                 Fullcharge capacity in Ah
         """
@@ -925,7 +924,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_full_charge_capacity_wh(self) -> float:
-        """Full charge capacity
+        """Full charge capacity.
             Returns:
                 Fullcharge capacity in Wh
         """
@@ -934,7 +933,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_unusable_capacity_wh(self) -> float:
-        """Unusable capacity Wh calculated from Ah
+        """Unusable capacity Wh calculated from Ah.
             Returns:
                 float Wh
         """
@@ -943,7 +942,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_remaining_capacity(self) -> float:
-        """Remaining capacity
+        """Remaining capacity.
             Returns:
                 Remaining capacity in Ah
         """
@@ -952,7 +951,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_remaining_capacity_wh(self) -> float:
-        """Remaining capacity Wh calculated from Ah
+        """Remaining capacity Wh calculated from Ah.
             use instead of status RemainingCapacity_Wh which is incorrect
             Returns:
                 Wh rounded to whole number by .03 tolerance
@@ -962,7 +961,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_usable_remaining_capacity(self) -> float:
-        """Usable Remaining capacity
+        """Usable Remaining capacity.
             Returns:
                 Usable Remaining capacity in Ah
         """
@@ -971,7 +970,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_usable_remaining_capacity_wh(self) -> float:
-        """Usable Remaining capacity
+        """Usable Remaining capacity.
             Returns:
                 Usable Remaining capacity in Wh
         """
@@ -980,7 +979,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_module_dc_voltage(self) -> float:
-        """Battery module voltage
+        """Battery module voltage.
             value is consistent with Ah & Wh values reported
 
             Returns:
@@ -991,7 +990,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_system_dc_voltage(self) -> float:
-        """System battery voltage
+        """System battery voltage.
             seems to be module voltage * num modules
             Returns:
                 Voltage in Volt
@@ -1001,7 +1000,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_system_current(self) -> float:
-        """System current
+        """System current.
             Returns:
                 System current in Ampere
         """
@@ -1010,7 +1009,7 @@ class Sonnen:
     @property
     @get_item(int)
     def seconds_until_fully_charged(self) -> Union[int, None]:
-        """Time remaining until fully charged
+        """Time remaining until fully charged.
             Returns:
                 Time in seconds - None when not charging, zero when fully charged
         """
@@ -1022,7 +1021,7 @@ class Sonnen:
     @property
     @get_item(int)
     def seconds_until_fully_discharged(self) -> Union[int, None]:
-        """Time remaining until fully discharged
+        """Time remaining until fully discharged.
             Returns:
                 Time in seconds - None when not discharging, zero when fully discharged
         """
@@ -1033,7 +1032,7 @@ class Sonnen:
 
     @property
     def fully_charged_at(self) -> Optional[datetime.datetime]:
-        """ Calculate time until fully charged
+        """ Calculate time until fully charged.
             Timezone must be provided for hass sensor.
             Returns:
                 Datetime with timezone or None when not charging
@@ -1052,7 +1051,7 @@ class Sonnen:
     @property
     @get_item(int)
     def seconds_until_reserve(self) -> Union[int, None]:
-        """Time until battery capacity at backup reserve
+        """Time until battery capacity at backup reserve.
             Above reserve:
                 Charging - None
                 Discharging - seconds to reserve
@@ -1076,7 +1075,7 @@ class Sonnen:
     @property
     @get_item(int)
     def configuration_em_operatingmode(self) -> int:
-        """Operating Mode
+        """Operating Mode.
             Returns:
                 Integer code
         """
@@ -1084,7 +1083,7 @@ class Sonnen:
 
     @property
     def configuration_em_operatingmode_name(self) -> str:
-        """Operating Mode code translated
+        """Operating Mode code translated.
             Returns:
                 string
         """
@@ -1099,7 +1098,7 @@ class Sonnen:
 
     @property
     def configuration_de_software(self) -> str:
-        """Software version
+        """Software version.
             Returns:
                 String
         """
@@ -1108,7 +1107,7 @@ class Sonnen:
     @property
     @get_item(int)
     def installed_capacity(self) -> int:
-        """Battery modules installed in the system
+        """Battery modules installed in the system.
             Returns:
                 total installed capacity Wh
         """
@@ -1117,7 +1116,7 @@ class Sonnen:
     @property
     @get_item(int)
     def configuration_em_usoc(self) -> int:
-        """User State Of Charge - BackupBuffer value (includes unusable reserve)
+        """User State Of Charge - BackupBuffer value.
             Returns:
                 Integer Percent
         """
@@ -1126,7 +1125,7 @@ class Sonnen:
     @property
     @get_item(int)
     def consumption_average(self) -> int:
-        """Average consumption in watt
+        """Average consumption in watt.
            Returns:
                average consumption in watt
         """
@@ -1153,7 +1152,7 @@ class Sonnen:
     @property
     @get_item(float)
     def status_frequency(self) -> float:
-        """AC Frequency
+        """AC Frequency.
            Returns:
               Hz
         """
@@ -1162,7 +1161,7 @@ class Sonnen:
     @property
     @get_item(int)
     def status_rsoc(self) -> int:
-        """Relative state of charge
+        """Relative state of charge.
             Returns:
                 percent
         """
@@ -1171,7 +1170,7 @@ class Sonnen:
     @property
     @get_item(int)
     def status_usoc(self) -> int:
-        """Usable state of charge
+        """Usable state of charge.
             Returns:
                 percent
         """
@@ -1180,22 +1179,20 @@ class Sonnen:
     @property
     @get_item(float)
     def status_remaining_capacity_wh(self) -> float:
-        """Remaining capacity Wh calculated from rsoc of full_charge
-            use instead of status RemainingCapacity_Wh which is incorrect
+        """Remaining capacity Wh calculated from rsoc of full_charge.
             Returns:
                 Wh
         """
-        return self.battery_full_charge_capacity_wh * self.status_rsoc / 100
+        return round(self.battery_full_charge_capacity_wh * self.status_rsoc / 100, 1)
 
     @property
     @get_item(float)
     def status_usable_capacity_wh(self) -> float:
-        """Remaining usable capacity Wh calculated from usoc of full_charge
-            use instead of status RemainingCapacity_Wh which is incorrect
+        """Remaining usable capacity Wh calculated from usoc of full_charge.
             Returns:
                 Wh
         """
-        return self.battery_full_charge_capacity_wh * self.status_usoc / 100
+        return round(self.battery_full_charge_capacity_wh * self.status_usoc / 100, 1)
 
     @property
     @get_item(int)

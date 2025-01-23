@@ -291,7 +291,8 @@ class Sonnen:
             self._log_error(f'Battery: {self.ip_address} badIP? accessing: "{url}"  error: {error}')
             raise BatterieAuthError(f'Battery {self.ip_address} badIP? accessing: "{url}"  error: {error}') from error
 #??        except BatterieError as error:
-
+        except (BatterieError, BatterieAuthError) as error:
+            raise error
         except Exception as error:
             self._log_error(f'Coroutine fetch "{url}"  fail: {error}')
             raise BatterieError(f'Coroutine fetch "{url}"  fail: {error}') from error
@@ -305,7 +306,6 @@ class Sonnen:
 
         try:
             async with session.get(url) as response:
-#                print(f'resp: {vars(response)}')
                 if response.status > 299:
                     self._log_error(f'Error fetching endpoint "{url}" status: {response.status}')
                     if response.status in [401, 403]:
@@ -316,6 +316,9 @@ class Sonnen:
         except aiohttp.ClientError as error:
             self._log_error(f'Battery: {self.ip_address} offline? accessing: "{url}"  error: {error}')
             raise BatterieError(f'Battery {self.ip_address} offline? accessing: "{url}"  error: {error}') from error
+        except aiohttp.ConnectionTimeoutError as error:
+            self._log_error(f'Battery: {self.ip_address} badIP? accessing: "{url}"  error: {error}')
+            raise BatterieError(f'Connection timeout to endpoint "{url}"  error: {error}') from error
         except aiohttp.ClientConnectorDNSError as error:
             self._log_error(f'Battery: {self.ip_address} badIP? accessing: "{url}"  error: {error}')
             raise BatterieAuthError(f'Battery {self.ip_address} badIP? accessing: "{url}"  error: {error}') from error

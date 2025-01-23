@@ -67,7 +67,7 @@ def test_sync_methods(battery_discharging: Batterie) -> None:
     assert configurations.get('EM_USOC') == 20
 
     assert battery_discharging.kwh_consumed == 816.5
-    assert battery_discharging.kwh_produced == 3969.800048828125
+    assert battery_discharging.kwh_produced == 3969.8
 
     from .check_results import check_discharge_results
 

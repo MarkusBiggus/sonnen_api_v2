@@ -1,5 +1,8 @@
 # API latestdata System-Status Groups
 IC_STATUS = 'ic_status'
+DC_SHUTDOWN_REASON = 'DC Shutdown Reason'
+IC_ECLIPSE_LED = 'Eclipse Led'
+MICROGRID_STATUS = 'Microgrid Status'
 
 # API Item keys
 BATTERY_CYCLE_COUNT = 'cyclecount'
@@ -16,12 +19,10 @@ BATTERY_MIN_MODULE_CURRENT = 'minimummodulecurrent'
 BATTERY_MIN_MODULE_VOLTAGE = 'minimummoduledcvoltage'
 BATTERY_MIN_MODULE_TEMP = 'minimummoduletemperature'
 BATTERY_REMAINING_CAPACITY = 'remainingcapacity'
-BATTERY_REMAINING_CAPACITY = 'remainingcapacity'
 BATTERY_NOMINAL_MODULE_VOLTAGE = 'nominalmoduledcvoltage'
 BATTERY_RSOC = 'relativestateofcharge'
 BATTERY_SYSTEM_CURRENT = 'systemcurrent'
 BATTERY_SYSTEM_VOLTAGE = 'systemdcvoltage'
-BATTERY_USABLE_REMAINING_CAPACITY = 'usableremainingcapacity'
 BATTERY_USABLE_REMAINING_CAPACITY = 'usableremainingcapacity'
 CONFIGURATION_EM_OPERATINGMODE = "EM_OperatingMode"
 CONFIGURATION_DE_SOFTWARE = "DE_Software"
@@ -37,7 +38,6 @@ DETAIL_SECONDS_SINCE_FULLCHARGE = 'secondssincefullcharge'
 DETAIL_TIMESTAMP = 'Timestamp'
 DETAIL_STATE_BMS = 'statebms'
 DETAIL_STATE_INVERTER = 'stateinverter'
-IC_ECLIPSE_LED = "Eclipse Led"
 POWERMETER_KWH_IMPORTED = 'kwh_imported'
 POWERMETER_AMPERE_L1 = 'a_l1' # bug: a_total is always zero
 POWERMETER_VOLT_L1 = 'v_l1_n'

@@ -81,13 +81,13 @@ async def test_batterieresponse_works(battery_charging: Batterie) -> None:
 
     assert _batterie.get_sensor_value('led_state') == 'Pulsing White 100%'
     assert _batterie.get_sensor_value('inverter_uac') == 233.55
-    assert _batterie.get_sensor_value('status_remaining_capacity_wh') == 18201.4712
-    assert _batterie.get_sensor_value('status_usable_capacity_wh') == 16753.626900000003
+    assert _batterie.get_sensor_value('status_remaining_capacity_wh') == 18201.04
+    assert _batterie.get_sensor_value('status_usable_capacity_wh') == 16753.23
     assert _batterie.get_sensor_value('battery_min_cell_temp') == 18.95
     assert _batterie.get_sensor_value('battery_max_cell_temp') == 19.95
     assert _batterie.get_sensor_value('battery_dod_limit') == 93
     assert _batterie.get_sensor_value('production_total_w') == 609.5
-    assert _batterie.get_sensor_value('consumption_total_w') == 59.29999923706055
+    assert _batterie.get_sensor_value('consumption_total_w') == 59.30
     assert _batterie.get_sensor_value('state_bms') == 'ready'
     assert _batterie.get_sensor_value('state_inverter') == 'running'
 

@@ -704,7 +704,7 @@ class Sonnen:
             Returns:
                 Wh
         """
-        return self.battery_remaining_capacity_wh - self.backup_buffer_capacity_wh
+        return round(self.battery_remaining_capacity_wh - self.backup_buffer_capacity_wh, 1)
 
     @property
     def backup_reserve_at(self) -> Optional[datetime.datetime]:
@@ -775,8 +775,8 @@ class Sonnen:
             Returns:
                 Capacity in Wh
         """
-    #    return round(self._latest_details_data[DETAIL_FULL_CHARGE_CAPACITY], 2)
-        return round(self._battery_status[BATTERY_FULL_CHARGE_CAPACITY_WH], 2)
+        return round(self._latest_details_data[DETAIL_FULL_CHARGE_CAPACITY])
+    #    return round(self._battery_status[BATTERY_FULL_CHARGE_CAPACITY_WH])
 
     @property
     @get_item(int)

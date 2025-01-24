@@ -632,15 +632,6 @@ class Sonnen:
 
     @property
     @get_item(int)
-    def installed_modules(self) -> int:
-        """Battery modules installed in the system
-            Returns:
-                Number of modules
-        """
-        return self._latest_details_data[IC_STATUS][STATUS_MODULES_INSTALLED]
-
-    @property
-    @get_item(int)
     def u_soc(self) -> int:
         """Useable state of charge
             Returns:
@@ -1109,12 +1100,31 @@ class Sonnen:
 
     @property
     @get_item(int)
+    def configuration_module_capacity(self) -> int:
+        """User State Of Charge - BackupBuffer value.
+            Returns:
+                Integer Percent
+        """
+        return self._configurations[CONFIGURATION_MODULECAPACITY]
+
+    @property
+    @get_item(int)
+    def installed_modules(self) -> int:
+        """Number Battery modules installed in the system.
+            Returns:
+                Number of modules
+        """
+#        return self._latest_details_data[IC_STATUS][STATUS_MODULES_INSTALLED]
+        return self._configurations[CONFIGURATION_BATTERYMODULES]
+
+    @property
+    @get_item(int)
     def installed_capacity(self) -> int:
-        """Battery modules installed in the system.
+        """Capacity of all modules.
             Returns:
                 total installed capacity Wh
         """
-        return self._configurations[CONFIGURATION_MODULECAPACITY] * self.installed_modules
+        return self.configuration_module_capacity * self.installed_modules
 
     @property
     @get_item(int)

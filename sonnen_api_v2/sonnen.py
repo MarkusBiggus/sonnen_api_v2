@@ -694,7 +694,7 @@ class Sonnen:
     @property
     @get_item(float)
     def capacity_until_reserve(self) -> float:
-        """Capacity until reserve is reached (battery goes standby).
+        """Capacity until reserve is reached (battery state goes standby).
             Returns:
                 Wh
         """
@@ -769,7 +769,16 @@ class Sonnen:
             Returns:
                 Capacity in Wh
         """
-        return round(self._latest_details_data[DETAIL_FULL_CHARGE_CAPACITY])
+        return round(self._latest_details_data[DETAIL_FULL_CHARGE_CAPACITY], 2)
+
+    @property
+    @get_item(float)
+    def used_capacity(self) -> float:
+        """Used capacity from Full charge.
+            Returns:
+                Capacity in Wh
+        """
+        return round(self.battery_full_charge_capacity_wh - self.status_remaining_capacity_wh, 1)
 
     @property
     @get_item(int)
@@ -922,7 +931,7 @@ class Sonnen:
             Returns:
                 Fullcharge capacity in Wh
         """
-        return round(self._battery_status[BATTERY_FULL_CHARGE_CAPACITY_WH])
+        return round(self._battery_status[BATTERY_FULL_CHARGE_CAPACITY_WH], 2)
 
     @property
     @get_item(float)
@@ -1056,14 +1065,15 @@ class Sonnen:
             Returns:
                 Time in seconds or None
         """
-        capacity_until_reserve = self.battery_remaining_capacity_wh - self.backup_buffer_capacity_wh
-        if capacity_until_reserve > 0:
-            seconds = int((capacity_until_reserve / self.discharging) * 3600) if self.discharging else None
+        if self.capacity_until_reserve > 0:
+            seconds = int((self.capacity_until_reserve / self.discharging) * 3600) if self.discharging else None
+        elif self.capacity_until_reserve == 0:
+            return 0
         else:
             if self.charging:
-                seconds = int(abs(capacity_until_reserve) / self.charging * 3600)
+                seconds = int(abs(self.capacity_until_reserve) / self.charging * 3600)
             else:
-                seconds = None # int(capacity_until_reserve / self.discharging * 3600)
+                seconds = None # int(self.capacity_until_reserve / self.discharging * 3600)
         return seconds
 
     @property
@@ -1207,16 +1217,16 @@ class Sonnen:
         """
         return round(self.battery_full_charge_capacity_wh * self.status_usoc / 100, 1)
 
-    @property
-    @get_item(int)
-    def remaining_capacity_wh(self) -> int:
-        """ Remaining capacity in watt-hours
-        IMPORTANT NOTE: Why is this double as high as it should be???
-            use battery_remaining_capacity_wh for calculated value
-            Returns:
-                Remaining USABLE capacity of the battery in Wh
-        """
-        return self._status_data[STATUS_REMAININGCAPACITY_WH]
+    # @property
+    # @get_item(int)
+    # def remaining_capacity_wh(self) -> int:
+    #     """ Remaining capacity in watt-hours
+    #     IMPORTANT NOTE: Why is this double as high as it should be???
+    #         use battery_remaining_capacity_wh for calculated value
+    #         Returns:
+    #             Remaining USABLE capacity of the battery in Wh
+    #     """
+    #     return self._status_data[STATUS_REMAININGCAPACITY_WH]
 
     @property
     @get_item(int)
@@ -1475,7 +1485,7 @@ class Sonnen:
         elif Solid_Red is True:
             return "Critical Error - call installer!"
         else:
-            return "Off or Off Grid."
+            return "Off Grid."
 
 #        if Blinking_Red is True:
 #            return {"Blinking Red", Brightness, "Error - call installer!"}

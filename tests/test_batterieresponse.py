@@ -8,6 +8,8 @@ import sys
 import logging
 import urllib3
 import tzlocal
+import aiohttp
+from aiohttp import ConnectionTimeoutError
 
 #for tests only
 import pytest
@@ -80,14 +82,18 @@ async def test_batterieresponse_works(battery_charging: Batterie) -> None:
     assert sensor_value == '1.14.5'
 
     assert _batterie.get_sensor_value('led_state') == 'Pulsing White 100%'
+    assert _batterie.get_sensor_value('led_state_text') == 'Normal Operation.'
     assert _batterie.get_sensor_value('inverter_uac') == 233.55
-    assert _batterie.get_sensor_value('status_remaining_capacity_wh') == 18201.4712
-    assert _batterie.get_sensor_value('status_usable_capacity_wh') == 16753.626900000003
+    assert _batterie.get_sensor_value('status_remaining_capacity_wh') == 18201.5
+    assert _batterie.get_sensor_value('battery_full_charge_capacity_wh') == 20683.49
+    assert _batterie.get_sensor_value('used_capacity') == (20683.5 - 18201.5)
+
+    assert _batterie.get_sensor_value('status_usable_capacity_wh') == 16753.6
     assert _batterie.get_sensor_value('battery_min_cell_temp') == 18.95
     assert _batterie.get_sensor_value('battery_max_cell_temp') == 19.95
     assert _batterie.get_sensor_value('battery_dod_limit') == 93
     assert _batterie.get_sensor_value('production_total_w') == 609.5
-    assert _batterie.get_sensor_value('consumption_total_w') == 59.29999923706055
+    assert _batterie.get_sensor_value('consumption_total_w') == 59.30
     assert _batterie.get_sensor_value('state_bms') == 'ready'
     assert _batterie.get_sensor_value('state_inverter') == 'running'
 
@@ -179,7 +185,7 @@ async def test_batterie_AuthError401(battery_charging: Batterie) -> None:
 @pytest.mark.asyncio
 @pytest.mark.usefixtures("battery_charging")
 @patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_HTTPError_301)
-async def test_batterier_BatterieHTTPError(battery_charging: Batterie) -> None:
+async def test_batterie_BatterieHTTPError(battery_charging: Batterie) -> None:
     """Batterie 301 Response using mock data"""
 
     _batterie = Batterie('fakeToken', 'fakeHost')
@@ -187,3 +193,19 @@ async def test_batterier_BatterieHTTPError(battery_charging: Batterie) -> None:
     with pytest.raises(BatterieHTTPError, match='HTTP Error fetching endpoint "http://fakeHost:80/api/v2/configurations" status: 301'):
         await _batterie.async_validate_token()
 
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("battery_charging")
+#@patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_auth200)
+async def test_batterie_ConnectionError(battery_charging: Batterie) -> None:
+    """Batterie connection error"""
+
+    _batterie = BatterieBackup('fakeToken', 'fakeHost')
+
+    with patch(
+#        "sonnen_api_v2.BatterieBackup._battery._async_fetch",
+#        "sonnen_api_v2.sonnen._async_fetch",
+        "aiohttp.ClientSession.get",
+        side_effect=ConnectionTimeoutError,
+    ):
+#        with pytest.raises(BatterieError, match='Connection timeout to endpoint '):
+        await _batterie.refresh_response()

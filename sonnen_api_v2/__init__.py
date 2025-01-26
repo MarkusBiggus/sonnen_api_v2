@@ -10,14 +10,12 @@ from .const import DEFAULT_PORT
 
 __version__ = '0.5.13'
 
-
 __all__ = (
     "Batterie"
     "BatterieError",
     "BatterieAuthError",
     "BatterieHTTPError",
     "BatterieSensorError",
-
     "BatterieResponse",
     "BatterieBackup",
 )
@@ -69,7 +67,7 @@ class BatterieBackup:
         try:
             sensor_value =  getattr(self._battery, sensor_name)
         except AttributeError as error:
-            raise BatterieSensorError(f"BatterieBackup: Device has no sensor called '{sensor_name}'") from error
+            raise BatterieSensorError(f"BatterieBackup: Device has no sensor called '{sensor_name}'. Update sonnen_api_v2 package.") from error
 
         return sensor_value
 

@@ -64,3 +64,25 @@ There are three ways to update from the Batterie:
 
 
 Variation #3 use case is Home Assistant custom_component sonnenbatterie
+
+
+Within a Home Assistant integration:
+
+```
+from sonnen_api_v2 import BatterieBackup, BatterieResponse,
+import asyncio
+
+async def validate() -> BatterieResponse:
+    _batterie = BatterieBackup(auth_token, ip_address, port)
+    return await _batterie.validate_token()
+
+async def update() -> BatterieResponse:
+    _batterie = BatterieBackup(auth_token, ip_address, port)
+    return await _batterie.get_response()
+
+
+# hass will call from its running event loop
+loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)
+response = loop.run_until_complete(update())
+```

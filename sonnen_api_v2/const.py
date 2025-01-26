@@ -1,5 +1,8 @@
 # API latestdata System-Status Groups
 IC_STATUS = 'ic_status'
+DC_SHUTDOWN_REASON = 'DC Shutdown Reason'
+IC_ECLIPSE_LED = 'Eclipse Led'
+MICROGRID_STATUS = 'Microgrid Status'
 
 # API Item keys
 BATTERY_CYCLE_COUNT = 'cyclecount'
@@ -16,17 +19,16 @@ BATTERY_MIN_MODULE_CURRENT = 'minimummodulecurrent'
 BATTERY_MIN_MODULE_VOLTAGE = 'minimummoduledcvoltage'
 BATTERY_MIN_MODULE_TEMP = 'minimummoduletemperature'
 BATTERY_REMAINING_CAPACITY = 'remainingcapacity'
-BATTERY_REMAINING_CAPACITY = 'remainingcapacity'
 BATTERY_NOMINAL_MODULE_VOLTAGE = 'nominalmoduledcvoltage'
 BATTERY_RSOC = 'relativestateofcharge'
 BATTERY_SYSTEM_CURRENT = 'systemcurrent'
 BATTERY_SYSTEM_VOLTAGE = 'systemdcvoltage'
 BATTERY_USABLE_REMAINING_CAPACITY = 'usableremainingcapacity'
-BATTERY_USABLE_REMAINING_CAPACITY = 'usableremainingcapacity'
 CONFIGURATION_EM_OPERATINGMODE = "EM_OperatingMode"
 CONFIGURATION_DE_SOFTWARE = "DE_Software"
 CONFIGURATION_EM_USOC = "EM_USOC"
 CONFIGURATION_MODULECAPACITY = "CM_MarketingModuleCapacity"
+CONFIGURATION_BATTERYMODULES = "IC_BatteryModules"
 DETAIL_USOC = 'USOC'
 DETAIL_RSOC = 'RSOC'
 DETAIL_FULL_CHARGE_CAPACITY = 'FullChargeCapacity'
@@ -37,7 +39,6 @@ DETAIL_SECONDS_SINCE_FULLCHARGE = 'secondssincefullcharge'
 DETAIL_TIMESTAMP = 'Timestamp'
 DETAIL_STATE_BMS = 'statebms'
 DETAIL_STATE_INVERTER = 'stateinverter'
-IC_ECLIPSE_LED = "Eclipse Led"
 POWERMETER_KWH_IMPORTED = 'kwh_imported'
 POWERMETER_AMPERE_L1 = 'a_l1' # bug: a_total is always zero
 POWERMETER_VOLT_L1 = 'v_l1_n'
@@ -72,12 +73,14 @@ INVERTER_PAC_MICROGRID = 'pac_microgrid' #OffGrid
 INVERTER_UAC = 'uac'
 INVERTER_UBAT = 'ubat'
 
+
 # default timeout (seconds)
 TIMEOUT = 20
 TIMEOUT_CONNECT=0
 TIMEOUT_REQUEST=1
 
 RATE_LIMIT = 3 #seconds
+DEFAULT_PORT = 80
 DEFAULT_PORT = 80
 
 # Manufacturer reserve 7%

@@ -20,7 +20,8 @@ from .const import *   # noqa: F403
 
 def get_item(_type):
     """Decorator factory for getting data from the api dictionary and casting
-    to the right type """
+        to the right type.
+    """
     def decorator(fn):
         @wraps(fn)
         def inner(*args):
@@ -116,14 +117,13 @@ class Sonnen:
         conn = urllib3.connection_from_url(self.configurations_api_endpoint,headers=self.header, retries=False)
         timeouts = Timeout(TIMEOUT, TIMEOUT)
         try:
-            # response = conn.request('GET', self.configurations_api_endpoint, None, self.header)
             response = conn.urlopen('GET',
-                            self.configurations_api_endpoint,
-                            None,
-                            self.header,
-                            False,
-                            timeout=timeouts
-                            )
+                self.configurations_api_endpoint,
+                None,
+                self.header,
+                False,
+                timeout=timeouts
+            )
 
         except urllib3.exceptions.NewConnectionError:
             self._log_error(f'Invalid IP address "{self.configurations_api_endpoint}"')
@@ -190,27 +190,21 @@ class Sonnen:
         self._inverter_data = None
 
         self._configurations = await self.async_fetch_configurations()
-    #    print(f'_configurations: {self._configurations}')
         success = (self._configurations is not None)
         if success:
             self._latest_details_data = await self.async_fetch_latest_details()
-    #        print(f'_latest_details: {self._latest_details_data}')
             success = (self._latest_details_data is not None)
         if success:
             self._status_data = await self.async_fetch_status()
-    #        print(f'status: {self._status_data}')
             success = (self._status_data is not None)
         if success:
             self._battery_status = await self.async_fetch_battery_status()
-    #        print(f'_battery: {self._battery_status}')
             success = (self._battery_status is not None)
         if success:
             self._powermeter_data = await self.async_fetch_powermeter()
-    #        print(f'_powermeter: {self._powermeter_data}')
             success = (self._powermeter_data is not None)
         if success:
             self._inverter_data = await self.async_fetch_inverter()
-    #        print(f'_inverter: {self._inverter_data}')
             success = (self._inverter_data is not None)
 
         self._last_updated = now if success else None
@@ -290,13 +284,11 @@ class Sonnen:
         except aiohttp.ClientConnectorDNSError as error:
             self._log_error(f'Battery: {self.ip_address} badIP? accessing: "{url}"  error: {error}')
             raise BatterieAuthError(f'Battery {self.ip_address} badIP? accessing: "{url}"  error: {error}') from error
-#??        except BatterieError as error:
-
+        except (BatterieError, BatterieAuthError) as error:
+            raise error
         except Exception as error:
             self._log_error(f'Coroutine fetch "{url}"  fail: {error}')
             raise BatterieError(f'Coroutine fetch "{url}"  fail: {error}') from error
-
-#        print(f'resp: {response}')
 
         return response
 
@@ -305,7 +297,6 @@ class Sonnen:
 
         try:
             async with session.get(url) as response:
-#                print(f'resp: {vars(response)}')
                 if response.status > 299:
                     self._log_error(f'Error fetching endpoint "{url}" status: {response.status}')
                     if response.status in [401, 403]:
@@ -316,6 +307,9 @@ class Sonnen:
         except aiohttp.ClientError as error:
             self._log_error(f'Battery: {self.ip_address} offline? accessing: "{url}"  error: {error}')
             raise BatterieError(f'Battery {self.ip_address} offline? accessing: "{url}"  error: {error}') from error
+        except aiohttp.ConnectionTimeoutError as error:
+            self._log_error(f'Battery: {self.ip_address} badIP? accessing: "{url}"  error: {error}')
+            raise BatterieError(f'Connection timeout to endpoint "{url}"  error: {error}') from error
         except aiohttp.ClientConnectorDNSError as error:
             self._log_error(f'Battery: {self.ip_address} badIP? accessing: "{url}"  error: {error}')
             raise BatterieAuthError(f'Battery {self.ip_address} badIP? accessing: "{url}"  error: {error}') from error
@@ -493,13 +487,13 @@ class Sonnen:
     @get_item(float)
     def kwh_consumed(self) -> float:
         """Consumed kWh"""
-        return self._powermeter_data[1][POWERMETER_KWH_IMPORTED]
+        return round(self._powermeter_data[1][POWERMETER_KWH_IMPORTED], 2)
 
     @property
     @get_item(float)
     def kwh_produced(self) -> float:
         """Produced kWh"""
-        return self._powermeter_data[0][POWERMETER_KWH_IMPORTED]
+        return round(self._powermeter_data[0][POWERMETER_KWH_IMPORTED], 2)
 
     @property
     @get_item(float)
@@ -508,7 +502,7 @@ class Sonnen:
             Returns:
                 watts
         """
-        return self._powermeter_data[0][POWERMETER_WATTS_TOTAL]
+        return round(self._powermeter_data[0][POWERMETER_WATTS_TOTAL], 2)
 
     @property
     @get_item(float)
@@ -517,7 +511,16 @@ class Sonnen:
             Returns:
                 Amps
         """
-        return  self._powermeter_data[0][POWERMETER_AMPERE_L1]
+        return  round(self._powermeter_data[0][POWERMETER_AMPERE_L1], 2)
+
+    @property
+    @get_item(float)
+    def production_volts(self) -> float:
+        """Powermeter production Volts"
+            Returns:
+                Volts
+        """
+        return  round(self._powermeter_data[0][POWERMETER_VOLT_L1], 1)
 
     @property
     @get_item(float)
@@ -536,7 +539,7 @@ class Sonnen:
         Power Factor = Real Power / Apparent Power
         """
         apparent_power = self.production_total_w + self.production_reactive_power
-        return self.production_total_w / apparent_power if apparent_power > 0 else 0
+        return round(self.production_total_w / apparent_power, 1) if apparent_power > 0 else 0
 
     @property
     @get_item(float)
@@ -545,7 +548,7 @@ class Sonnen:
             Returns:
                 watts
         """
-        return  self._powermeter_data[1][POWERMETER_WATTS_TOTAL]
+        return  round(self._powermeter_data[1][POWERMETER_WATTS_TOTAL], 2)
 
     @property
     @get_item(float)
@@ -554,14 +557,23 @@ class Sonnen:
             Returns:
                 Amps
         """
-        return  self._powermeter_data[1][POWERMETER_AMPERE_L1]
+        return  round(self._powermeter_data[1][POWERMETER_AMPERE_L1], 2)
+
+    @property
+    @get_item(float)
+    def consumption_volts(self) -> float:
+        """Powermeter consumption Volts"
+            Returns:
+                Volts
+        """
+        return  round(self._powermeter_data[1][POWERMETER_VOLT_L1], 1)
 
     @property
     @get_item(float)
     def consumption_reactive_power(self) -> float:
         """Powermeter production VAR total
         """
-        return self._powermeter_data[1][POWERMETER_REACTIVE_POWER]
+        return round(self._powermeter_data[1][POWERMETER_REACTIVE_POWER], 2)
 
     @property
     @get_item(float)
@@ -570,7 +582,7 @@ class Sonnen:
             Returns:
                 reactance?
         """
-        return  self._powermeter_data[1][POWERMETER_REACTIVE_POWER]
+        return  round(self._powermeter_data[1][POWERMETER_REACTIVE_POWER], 2)
 
     @property
     @get_item(float)
@@ -580,7 +592,7 @@ class Sonnen:
         Power Factor = Real Power / Apparent Power
         """
         apparent_power = self.consumption_total_w + self.consumption_reactive_power
-        return self.consumption_total_w / apparent_power if apparent_power > 0 else 0
+        return round(self.consumption_total_w / apparent_power, 1) if apparent_power > 0 else 0
 
     @property
     @get_item(int)
@@ -611,15 +623,6 @@ class Sonnen:
 
     @property
     @get_item(int)
-    def installed_modules(self) -> int:
-        """Battery modules installed in the system
-            Returns:
-                Number of modules
-        """
-        return self._latest_details_data[IC_STATUS][STATUS_MODULES_INSTALLED]
-
-    @property
-    @get_item(int)
     def u_soc(self) -> int:
         """Useable state of charge
             Returns:
@@ -635,15 +638,6 @@ class Sonnen:
                 Integer Percent
         """
         return self._latest_details_data[DETAIL_RSOC]
-
-    @property
-    @get_item(int)
-    def full_charge_capacity(self) -> int:
-        """Full charge capacity of the battery
-            Returns:
-                Capacity in Wh
-        """
-        return self._latest_details_data[DETAIL_FULL_CHARGE_CAPACITY]
 
     @property
     def state_bms(self) -> str:
@@ -691,11 +685,11 @@ class Sonnen:
     @property
     @get_item(float)
     def capacity_until_reserve(self) -> float:
-        """Capacity until reserve is reached (battery goes standby).
+        """Capacity until reserve is reached (battery state goes standby).
             Returns:
                 Wh
         """
-        return self.battery_remaining_capacity_wh - self.backup_buffer_capacity_wh
+        return round(self.battery_remaining_capacity_wh - self.backup_buffer_capacity_wh, 1)
 
     @property
     def backup_reserve_at(self) -> Optional[datetime.datetime]:
@@ -744,7 +738,7 @@ class Sonnen:
     @property
     @get_item(int)
     def discharging(self) -> int:
-        """Actual battery discharging value
+        """Actual battery discharging value.
             Returns:
                 Discharging value in watt
         """
@@ -760,9 +754,45 @@ class Sonnen:
         return  datetime.datetime.strptime(self._latest_details_data[IC_STATUS]["timestamp"], '%a %b %d %H:%M:%S %Y').astimezone()
 
     @property
+    @get_item(float)
+    def full_charge_capacity(self) -> float:
+        """Full charge capacity of the battery.
+            Returns:
+                Capacity in Wh
+        """
+        return round(self._latest_details_data[DETAIL_FULL_CHARGE_CAPACITY], 2)
+
+    @property
+    @get_item(float)
+    def used_capacity(self) -> float:
+        """Used capacity from Full charge.
+            Returns:
+                Capacity in Wh
+        """
+        return round(self.battery_full_charge_capacity_wh - self.status_remaining_capacity_wh, 1)
+
+    @property
+    @get_item(int)
+    def usable_capacity(self) -> int:
+        """Usable amount of Full charge capacity.
+            Returns:
+                Capacity in Wh
+        """
+        return round((self.full_charge_capacity * self.u_soc / 100), 1)
+
+    @property
+    @get_item(int)
+    def unusable_capacity(self) -> int:
+        """Unusable amount of Full charge due to DoD limit.
+            Returns:
+                Capacity in Wh
+        """
+        return round(self.full_charge_capacity * BATTERY_UNUSABLE_RESERVE, 1)
+
+    @property
     @get_item(int)
     def battery_cycle_count(self) -> int:
-        """Number of charge/discharge cycles
+        """Number of charge/discharge cycles.
             Returns:
                 Int count
         """
@@ -771,7 +801,7 @@ class Sonnen:
     @property
     @get_item(int)
     def battery_dod_limit(self) -> int:
-        """Depth Of Discharge limit
+        """Depth Of Discharge limit.
             Returns:
                 Int percent
         """
@@ -780,7 +810,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_max_cell_temp(self) -> float:
-        """Max cell temperature
+        """Max cell temperature.
             Returns:
                 Maximum cell temperature in ºC
         """
@@ -789,7 +819,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_min_cell_temp(self) -> float:
-        """Min cell temperature
+        """Min cell temperature.
             Returns:
                 Minimum cell temperature in ºC
         """
@@ -798,7 +828,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_min_cell_voltage(self) -> float:
-        """Min cell voltage
+        """Min cell voltage.
             Returns:
                 Minimum cell voltage in Volt
         """
@@ -807,7 +837,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_max_cell_voltage(self) -> float:
-        """Max cell voltage
+        """Max cell voltage.
             Returns:
                 Maximum cell voltage in Volt
         """
@@ -816,7 +846,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_max_module_current(self) -> float:
-        """Max module DC current
+        """Max module DC current.
             Returns:
                 Maximum module DC current in Ampere
         """
@@ -825,7 +855,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_max_module_voltage(self) -> float:
-        """Max module DC voltage
+        """Max module DC voltage.
             Returns:
                 Maximum module DC voltage in Volt
         """
@@ -834,7 +864,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_max_module_temp(self) -> float:
-        """Max module DC temperature
+        """Max module DC temperature.
             Returns:
                 Maximum module DC temperature in ºC
         """
@@ -843,7 +873,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_min_module_current(self) -> float:
-        """Min module DC current
+        """Min module DC current.
             Returns:
                 Minimum module DC current in Ampere
         """
@@ -852,7 +882,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_min_module_voltage(self) -> float:
-        """Min module DC voltage
+        """Min module DC voltage.
             Returns:
                 Minimum module DC voltage in Volt
         """
@@ -861,7 +891,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_min_module_temp(self) -> float:
-        """Min module DC temperature
+        """Min module DC temperature.
             Returns:
                 Minimum module DC temperature in ºC
         """
@@ -870,7 +900,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_rsoc(self) -> float:
-        """Relative state of charge
+        """Relative state of charge.
             Returns:
                 Relative state of charge in %
         """
@@ -879,7 +909,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_full_charge_capacity(self) -> float:
-        """Fullcharge capacity
+        """Fullcharge capacity.
             Returns:
                 Fullcharge capacity in Ah
         """
@@ -888,16 +918,16 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_full_charge_capacity_wh(self) -> float:
-        """Full charge capacity
+        """Full charge capacity.
             Returns:
                 Fullcharge capacity in Wh
         """
-        return self._battery_status[BATTERY_FULL_CHARGE_CAPACITY_WH]
+        return round(self._battery_status[BATTERY_FULL_CHARGE_CAPACITY_WH], 2)
 
     @property
     @get_item(float)
     def battery_unusable_capacity_wh(self) -> float:
-        """Unusable capacity Wh calculated from Ah
+        """Unusable capacity Wh calculated from Ah.
             Returns:
                 float Wh
         """
@@ -906,7 +936,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_remaining_capacity(self) -> float:
-        """Remaining capacity
+        """Remaining capacity.
             Returns:
                 Remaining capacity in Ah
         """
@@ -915,17 +945,35 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_remaining_capacity_wh(self) -> float:
-        """Remaining capacity Wh calculated from Ah
+        """Remaining capacity Wh calculated from Ah.
             use instead of status RemainingCapacity_Wh which is incorrect
             Returns:
-                Wh
+                Wh rounded to whole number by .03 tolerance
         """
-        return self.battery_remaining_capacity * self.battery_module_dc_voltage
+        return round(self.battery_remaining_capacity * self.battery_module_dc_voltage, 1)
+
+    @property
+    @get_item(float)
+    def battery_usable_remaining_capacity(self) -> float:
+        """Usable Remaining capacity.
+            Returns:
+                Usable Remaining capacity in Ah
+        """
+        return self._battery_status[BATTERY_USABLE_REMAINING_CAPACITY]
+
+    @property
+    @get_item(float)
+    def battery_usable_remaining_capacity_wh(self) -> float:
+        """Usable Remaining capacity.
+            Returns:
+                Usable Remaining capacity in Wh
+        """
+        return round(self.battery_usable_remaining_capacity * self.battery_module_dc_voltage, 1)
 
     @property
     @get_item(float)
     def battery_module_dc_voltage(self) -> float:
-        """Battery module voltage
+        """Battery module voltage.
             value is consistent with Ah & Wh values reported
 
             Returns:
@@ -936,7 +984,7 @@ class Sonnen:
     @property
     @get_item(float)
     def battery_system_dc_voltage(self) -> float:
-        """System battery voltage
+        """System battery voltage.
             seems to be module voltage * num modules
             Returns:
                 Voltage in Volt
@@ -945,26 +993,8 @@ class Sonnen:
 
     @property
     @get_item(float)
-    def battery_usable_remaining_capacity(self) -> float:
-        """Usable Remaining capacity
-            Returns:
-                Usable Remaining capacity in Ah
-        """
-        return self._battery_status[BATTERY_USABLE_REMAINING_CAPACITY]
-
-    @property
-    @get_item(float)
-    def battery_usable_remaining_capacity_wh(self) -> float:
-        """Usable Remaining capacity
-            Returns:
-                Usable Remaining capacity in Wh
-        """
-        return self.battery_usable_remaining_capacity * self.battery_module_dc_voltage
-
-    @property
-    @get_item(float)
     def battery_system_current(self) -> float:
-        """System current
+        """System current.
             Returns:
                 System current in Ampere
         """
@@ -973,7 +1003,7 @@ class Sonnen:
     @property
     @get_item(int)
     def seconds_until_fully_charged(self) -> Union[int, None]:
-        """Time remaining until fully charged
+        """Time remaining until fully charged.
             Returns:
                 Time in seconds - None when not charging, zero when fully charged
         """
@@ -985,7 +1015,7 @@ class Sonnen:
     @property
     @get_item(int)
     def seconds_until_fully_discharged(self) -> Union[int, None]:
-        """Time remaining until fully discharged
+        """Time remaining until fully discharged.
             Returns:
                 Time in seconds - None when not discharging, zero when fully discharged
         """
@@ -996,7 +1026,7 @@ class Sonnen:
 
     @property
     def fully_charged_at(self) -> Optional[datetime.datetime]:
-        """ Calculate time until fully charged
+        """ Calculate time until fully charged.
             Timezone must be provided for hass sensor.
             Returns:
                 Datetime with timezone or None when not charging
@@ -1015,7 +1045,7 @@ class Sonnen:
     @property
     @get_item(int)
     def seconds_until_reserve(self) -> Union[int, None]:
-        """Time until battery capacity at backup reserve
+        """Time until battery capacity at backup reserve.
             Above reserve:
                 Charging - None
                 Discharging - seconds to reserve
@@ -1026,20 +1056,21 @@ class Sonnen:
             Returns:
                 Time in seconds or None
         """
-        capacity_until_reserve = self.battery_remaining_capacity_wh - self.backup_buffer_capacity_wh
-        if capacity_until_reserve > 0:
-            seconds = int((capacity_until_reserve / self.discharging) * 3600) if self.discharging else None
+        if self.capacity_until_reserve > 0:
+            seconds = int((self.capacity_until_reserve / self.discharging) * 3600) if self.discharging else None
+        elif self.capacity_until_reserve == 0:
+            return 0
         else:
             if self.charging:
-                seconds = int(abs(capacity_until_reserve) / self.charging * 3600)
+                seconds = int(abs(self.capacity_until_reserve) / self.charging * 3600)
             else:
-                seconds = None # int(capacity_until_reserve / self.discharging * 3600)
+                seconds = None # int(self.capacity_until_reserve / self.discharging * 3600)
         return seconds
 
     @property
     @get_item(int)
     def configuration_em_operatingmode(self) -> int:
-        """Operating Mode
+        """Operating Mode.
             Returns:
                 Integer code
         """
@@ -1047,7 +1078,7 @@ class Sonnen:
 
     @property
     def configuration_em_operatingmode_name(self) -> str:
-        """Operating Mode code translated
+        """Operating Mode code translated.
             Returns:
                 string
         """
@@ -1062,7 +1093,7 @@ class Sonnen:
 
     @property
     def configuration_de_software(self) -> str:
-        """Software version
+        """Software version.
             Returns:
                 String
         """
@@ -1070,17 +1101,36 @@ class Sonnen:
 
     @property
     @get_item(int)
+    def configuration_module_capacity(self) -> int:
+        """User State Of Charge - BackupBuffer value.
+            Returns:
+                Integer Percent
+        """
+        return self._configurations[CONFIGURATION_MODULECAPACITY]
+
+    @property
+    @get_item(int)
+    def installed_modules(self) -> int:
+        """Number Battery modules installed in the system.
+            Returns:
+                Number of modules
+        """
+#        return self._latest_details_data[IC_STATUS][STATUS_MODULES_INSTALLED]
+        return self._configurations[CONFIGURATION_BATTERYMODULES]
+
+    @property
+    @get_item(int)
     def installed_capacity(self) -> int:
-        """Battery modules installed in the system
+        """Capacity of all modules.
             Returns:
                 total installed capacity Wh
         """
-        return self._configurations[CONFIGURATION_MODULECAPACITY] * self.installed_modules
+        return self.configuration_module_capacity * self.installed_modules
 
     @property
     @get_item(int)
     def configuration_em_usoc(self) -> int:
-        """User State Of Charge - BackupBuffer value (includes unusable reserve)
+        """User State Of Charge - BackupBuffer value.
             Returns:
                 Integer Percent
         """
@@ -1089,7 +1139,7 @@ class Sonnen:
     @property
     @get_item(int)
     def consumption_average(self) -> int:
-        """Average consumption in watt
+        """Average consumption in watt.
            Returns:
                average consumption in watt
         """
@@ -1116,16 +1166,16 @@ class Sonnen:
     @property
     @get_item(float)
     def status_frequency(self) -> float:
-        """AC Frequency
+        """AC Frequency.
            Returns:
               Hz
         """
-        return self._status_data[STATUS_FREQUENCY]
+        return round(self._status_data[STATUS_FREQUENCY], 1)
 
     @property
     @get_item(int)
     def status_rsoc(self) -> int:
-        """Relative state of charge
+        """Relative state of charge.
             Returns:
                 percent
         """
@@ -1134,7 +1184,7 @@ class Sonnen:
     @property
     @get_item(int)
     def status_usoc(self) -> int:
-        """Usable state of charge
+        """Usable state of charge.
             Returns:
                 percent
         """
@@ -1143,33 +1193,31 @@ class Sonnen:
     @property
     @get_item(float)
     def status_remaining_capacity_wh(self) -> float:
-        """Remaining capacity Wh calculated from rsoc of full_charge
-            use instead of status RemainingCapacity_Wh which is incorrect
+        """Remaining capacity Wh calculated from rsoc of full_charge.
             Returns:
                 Wh
         """
-        return self.battery_full_charge_capacity_wh * self.status_rsoc / 100
+        return round(self.battery_full_charge_capacity_wh * self.status_rsoc / 100, 1)
 
     @property
     @get_item(float)
     def status_usable_capacity_wh(self) -> float:
-        """Remaining usable capacity Wh calculated from usoc of full_charge
-            use instead of status RemainingCapacity_Wh which is incorrect
+        """Remaining usable capacity Wh calculated from usoc of full_charge.
             Returns:
                 Wh
         """
-        return self.battery_full_charge_capacity_wh * self.status_usoc / 100
+        return round(self.battery_full_charge_capacity_wh * self.status_usoc / 100, 1)
 
-    @property
-    @get_item(int)
-    def remaining_capacity_wh(self) -> int:
-        """ Remaining capacity in watt-hours
-        IMPORTANT NOTE: Why is this double as high as it should be???
-            use battery_remaining_capacity_wh for calculated value
-            Returns:
-                Remaining USABLE capacity of the battery in Wh
-        """
-        return self._status_data[STATUS_REMAININGCAPACITY_WH]
+    # @property
+    # @get_item(int)
+    # def remaining_capacity_wh(self) -> int:
+    #     """ Remaining capacity in watt-hours
+    #     IMPORTANT NOTE: Why is this double as high as it should be???
+    #         use battery_remaining_capacity_wh for calculated value
+    #         Returns:
+    #             Remaining USABLE capacity of the battery in Wh
+    #     """
+    #     return self._status_data[STATUS_REMAININGCAPACITY_WH]
 
     @property
     @get_item(int)
@@ -1234,13 +1282,31 @@ class Sonnen:
         return flows
 
     @property
-    @get_item(int)
-    def status_grid_feed_in(self) -> int:
+    @get_item(float)
+    def status_grid_feedin(self) -> float:
         """GridFeedIn_W
             Returns:
-                Feed watts, -ve is export (actually float with zero decimal part)
+                FeedIn watts, -ve is export (actually float with zero decimal part)
         """
-        return int(self._status_data[STATUS_GRIDFEEDIN_W])
+        return self._status_data[STATUS_GRIDFEEDIN_W]
+
+    @property
+    @get_item(int)
+    def status_grid_import(self) -> int:
+        """Grid Import is +ve Feed_In
+            Returns:
+                Import watts when +ve
+        """
+        return self.status_grid_feedin if self.status_grid_feedin > 0 else 0
+
+    @property
+    @get_item(int)
+    def status_grid_export(self) -> int:
+        """Grid export is -ve Feed_In
+            Returns:
+                Export watts when -ve
+        """
+        return abs(self.status_grid_feedin) if self.status_grid_feedin < 0 else 0
 
     @property
     @get_item(bool)
@@ -1261,7 +1327,7 @@ class Sonnen:
         buffer_percent = self.status_backup_buffer / 100 #self.configuration_em_usoc
         full_charge = self.battery_full_charge_capacity_wh
 
-        return full_charge * buffer_percent
+        return round(full_charge * buffer_percent, 1)
 
     @property
     @get_item(float)
@@ -1285,16 +1351,19 @@ class Sonnen:
         if self.status_battery_charging:
             battery_status = "charging"
         elif self.status_battery_discharging:
-            if self.battery_remaining_capacity_wh > self.backup_buffer_capacity_wh:
+            if self.status_rsoc > self.status_backup_buffer:
                 battery_status = "discharging"
             else:
                 battery_status = "discharging reserve"
         elif self.battery_rsoc > 98: # look at usable capacity over long term?
             battery_status = "charged"
-        elif self.battery_usable_remaining_capacity < 2:
+        elif self.status_usoc < 3:
             battery_status = "discharged"
         else:
-            battery_status = "standby"
+            if self.status_rsoc > self.status_backup_buffer:
+                battery_status = "standby"
+            else:
+                battery_status = "standby reserve"
 
         return battery_status
 
@@ -1335,7 +1404,7 @@ class Sonnen:
         return  self._inverter_data[INVERTER_UBAT]
 
     @property
-    def ic_eclipse_led(self) -> str:
+    def ic_eclipse_led(self) -> dict:
         """System-Status:
                 "Eclipse Led":{
                     "Blinking Red":false,
@@ -1346,7 +1415,7 @@ class Sonnen:
                     "Solid Red":false
                 }
             Returns:
-                JSON String
+                Dict
         """
         # print(f"eclipse: {self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED]}")
         # print(f"ic_status: {self._latest_details_data[IC_STATUS]}")
@@ -1370,9 +1439,6 @@ class Sonnen:
         leds = self.ic_eclipse_led
         (Blinking_Red, Brightness, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
 
-    #    print(f'leds: {leds}')
-    #    print(f'leds: white: {Pulsing_White} red: {Solid_Red}')
-
         if Blinking_Red is True:
             return f"Blinking Red {Brightness}%"
         elif Pulsing_Green is True:
@@ -1385,3 +1451,41 @@ class Sonnen:
             return f"Solid Red {Brightness}%"
         else:
             return "off"
+
+    @property
+    def led_state_text(self) -> str:
+        """Text meaning of LED state.
+            Returns:
+                String
+        """
+        leds = self.ic_eclipse_led
+        (Blinking_Red, Brightness, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
+
+        if Blinking_Red is True:
+            return "Error - call installer!"
+        elif Pulsing_Green is True:
+            return "Off Grid."
+        elif Pulsing_Orange is True:
+            return  "No Internet connection!"
+        elif Pulsing_White is True:
+            return "Normal Operation."
+        elif Solid_Red is True:
+            return "Critical Error - call installer!"
+        else:
+            return "Off Grid."
+
+    @property
+    def dc_shutdown_reason(self) -> dict:
+        """Error conditions and their state
+            Returns:
+                Dict
+        """
+        return self._latest_details_data[IC_STATUS][DC_SHUTDOWN_REASON]
+
+    @property
+    def microgrid_status(self) -> dict:
+        """Microgrid Status attributes when OffGrid
+            Returns:
+                Dict
+        """
+        return self._latest_details_data[IC_STATUS][MICROGRID_STATUS]

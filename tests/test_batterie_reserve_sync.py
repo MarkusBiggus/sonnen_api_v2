@@ -1,7 +1,7 @@
 """pytest tests/test_batterie_reserve_sync.py -s -v -x
 3. Sync update called from sync method
 """
-import datetime
+#import datetime
 import logging
 import pytest
 from freezegun import freeze_time

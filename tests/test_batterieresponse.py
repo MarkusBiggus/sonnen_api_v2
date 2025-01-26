@@ -1,7 +1,5 @@
 """pytest tests/test_batterieresponse.py -s -v -x -k test_batterieresponse_works
 
-"""pytest tests/test_batterieresponse.py -s -v -x -k test_batterieresponse_works
-
 1. Async update called from an async method.
 """
 import datetime
@@ -17,9 +15,7 @@ from aiohttp import ConnectionTimeoutError
 import pytest
 from freezegun import freeze_time
 from unittest.mock import patch
-from unittest.mock import patch
 
-from sonnen_api_v2 import Batterie, BatterieBackup, BatterieResponse, BatterieAuthError, BatterieHTTPError, BatterieSensorError, BatterieError
 from sonnen_api_v2 import Batterie, BatterieBackup, BatterieResponse, BatterieAuthError, BatterieHTTPError, BatterieSensorError, BatterieError
 
 from .battery_charging_asyncio import fixture_battery_charging
@@ -29,16 +25,9 @@ from .mock_battery_responses import (
     __battery_AuthError_401,
     __battery_HTTPError_301,
 )
-#from .mock_sonnenbatterie_v2_charging import __mock_configurations
-from .mock_battery_responses import (
-    __battery_auth200,
-    __battery_AuthError_401,
-    __battery_HTTPError_301,
-)
 
 LOGGER_NAME = None # "sonnenapiv2" #
 
-logging.getLogger("batterieResponse").setLevel(logging.WARNING)
 logging.getLogger("batterieResponse").setLevel(logging.WARNING)
 
 if LOGGER_NAME is not None:
@@ -58,19 +47,14 @@ if LOGGER_NAME is not None:
     logger.addHandler(fh)
     logger.addHandler(ch)
     logger.info ('BatterieResponse for HA mock data tests')
-    logger.info ('BatterieResponse for HA mock data tests')
 
 
 @pytest.mark.asyncio
-#@pytest.mark.usefixtures("battery_charging")
 #@pytest.mark.usefixtures("battery_charging")
 @freeze_time("20-11-2023 17:00:00")
 @patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_auth200)
 async def test_batterieresponse_works(battery_charging: Batterie) -> None:
     """BackupBatterie Response using mock data"""
-@patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_auth200)
-async def test_batterieresponse_works(battery_charging: Batterie) -> None:
-    """BackupBatterie Response using mock data"""
 
     _batterie = BatterieBackup('fakeToken', 'fakeHost')
 
@@ -82,18 +66,7 @@ async def test_batterieresponse_works(battery_charging: Batterie) -> None:
         last_updated=datetime.datetime(2023, 11, 20, 17, 0, tzinfo=tzlocal.get_localzone()),
         sensor_values={}
     )
-    _batterie = BatterieBackup('fakeToken', 'fakeHost')
 
-    response = await _batterie.validate_token()
-
-    assert isinstance(response, BatterieResponse) is True
-    assert response == BatterieResponse(
-        version='1.14.5',
-        last_updated=datetime.datetime(2023, 11, 20, 17, 0, tzinfo=tzlocal.get_localzone()),
-        sensor_values={}
-    )
-
-    response = await _batterie.refresh_response()
     response = await _batterie.refresh_response()
 
     #print(f'response: {response}')

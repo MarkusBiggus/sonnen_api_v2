@@ -20,10 +20,7 @@ def check_charge_results(battery_charging: Batterie):
     assert battery_charging.grid_out >= 0
     assert battery_charging.production == 2972
     assert battery_charging.u_soc == 81
-    assert battery_charging.u_soc == 81
     assert battery_charging.r_soc == 88
-    assert battery_charging.status_rsoc == 88
-    assert battery_charging.status_usoc == 81
     assert battery_charging.status_rsoc == 88
     assert battery_charging.status_usoc == 81
     assert battery_charging.seconds_until_fully_charged == 6412
@@ -38,7 +35,6 @@ def check_charge_results(battery_charging: Batterie):
     assert battery_charging.used_capacity == 2482.0
     assert battery_charging.fully_charged_at.strftime('%d.%b.%Y %H:%M') == '20.Nov.2023 18:46'
     assert battery_charging.seconds_until_reserve is None
-    assert battery_charging.battery_activity_state == 'charging'
     assert battery_charging.battery_activity_state == 'charging'
 
 def check_discharge_results(battery_discharging: Batterie):
@@ -59,9 +55,6 @@ def check_discharge_results(battery_discharging: Batterie):
     assert battery_discharging.u_soc == 81
     assert battery_discharging.status_rsoc == 88
     assert battery_discharging.status_usoc == 81
-    assert battery_discharging.u_soc == 81
-    assert battery_discharging.status_rsoc == 88
-    assert battery_discharging.status_usoc == 81
     assert battery_discharging.production == 103
     assert battery_discharging.grid_out == 0
     assert battery_discharging.charging == 0
@@ -77,7 +70,6 @@ def check_discharge_results(battery_discharging: Batterie):
     assert battery_discharging.status_battery_discharging is True
     assert battery_discharging.system_status == 'OnGrid'
     assert battery_discharging.battery_activity_state == 'discharging'
-    assert battery_discharging.battery_activity_state == 'discharging'
 
 def check_reserve_results(battery_discharging_reserve: Batterie):
     assert battery_discharging_reserve.seconds_until_reserve is None #-1032
@@ -92,11 +84,7 @@ def check_reserve_results(battery_discharging_reserve: Batterie):
     assert battery_discharging_reserve.time_since_full == datetime.timedelta(seconds=2574)
     assert battery_discharging_reserve.seconds_until_fully_discharged == 9321
     assert battery_discharging_reserve.fully_discharged_at.strftime('%d.%b.%Y %H:%M') == '20.Nov.2023 19:36'
-    assert battery_discharging_reserve.fully_discharged_at.strftime('%d.%b.%Y %H:%M') == '20.Nov.2023 19:36'
     assert battery_discharging_reserve.r_soc == 18
-    assert battery_discharging_reserve.u_soc == 11
-    assert battery_discharging_reserve.status_rsoc == 18
-    assert battery_discharging_reserve.status_usoc == 11
     assert battery_discharging_reserve.u_soc == 11
     assert battery_discharging_reserve.status_rsoc == 18
     assert battery_discharging_reserve.status_usoc == 11
@@ -109,5 +97,4 @@ def check_reserve_results(battery_discharging_reserve: Batterie):
     assert battery_discharging_reserve.status_battery_charging is False
     assert battery_discharging_reserve.status_battery_discharging is True
     assert battery_discharging_reserve.system_status == 'OffGrid'
-    assert battery_discharging_reserve.battery_activity_state == 'discharging reserve'
     assert battery_discharging_reserve.battery_activity_state == 'discharging reserve'

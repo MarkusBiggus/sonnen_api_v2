@@ -7,12 +7,6 @@ from typing import Any #, Dict, Optional, Union, Tuple
 
 from sonnen_api_v2.sonnen import Sonnen as Batterie, BatterieError, BatterieAuthError, BatterieHTTPError, BatterieSensorError
 from .const import DEFAULT_PORT
-from collections.abc import Awaitable
-from collections import namedtuple
-from typing import Any #, Dict, Optional, Union, Tuple
-
-from sonnen_api_v2.sonnen import Sonnen as Batterie, BatterieError, BatterieAuthError, BatterieHTTPError, BatterieSensorError
-from .const import DEFAULT_PORT
 
 __version__ = '0.5.13'
 
@@ -46,24 +40,6 @@ class BatterieResponse(
 ):
     """Sonnen Batterie response for ha component."""
 
-class BatterieResponse(
-    namedtuple(
-        "BatterieResponse",
-        [
-            "version",
-            "last_updated",
-#            "configurations",
-            "sensor_values"
-#            "status",
-#            "latestdata",
-#            "battery",
-#            "powermeter",
-#            "inverter"
-        ],
-    )
-):
-    """Sonnen Batterie response for ha component."""
-
 
 class BatterieBackup:
     """Sonnen Batterie real time API.
@@ -73,7 +49,6 @@ class BatterieBackup:
 
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, auth_token:str , ip_address:str, port=DEFAULT_PORT) -> None:
     def __init__(self, auth_token:str , ip_address:str, port=DEFAULT_PORT) -> None:
         """Initialize the API client."""
 
@@ -102,10 +77,6 @@ class BatterieBackup:
         success = await self._battery.async_update()
 
         self._attr_available = success
-
-        success = await self._battery.async_update()
-
-        self._attr_available = success
         if success is False:
             _LOGGER.error(f'BatterieBackup: Error updating batterie data! from: {self._battery.hostname}')
             raise BatterieError(f'BatterieBackup: Error updating batterie data! from: {self._battery.hostname}')
@@ -125,31 +96,8 @@ class BatterieBackup:
         if success is not True:
             _LOGGER.error(f'BatterieBackup: Error validating API token! ({self._battery.api_token})')
             raise BatterieAuthError(f'BatterieBackup: Error validating API token! ({self._battery.api_token})')
-            _LOGGER.error(f'BatterieBackup: Error updating batterie data! from: {self._battery.hostname}')
-            raise BatterieError(f'BatterieBackup: Error updating batterie data! from: {self._battery.hostname}')
 
         return BatterieResponse(
-            version = self._battery.configuration_de_software,
-            last_updated = self._battery.last_updated,
-            sensor_values = {},
-        )
-
-    async def validate_token(self) -> Awaitable[BatterieResponse]:
-        """Query the real time API."""
-
-        success = await self._battery.async_validate_token()
-
-        self._attr_available = success
-        if success is not True:
-            _LOGGER.error(f'BatterieBackup: Error validating API token! ({self._battery.api_token})')
-            raise BatterieAuthError(f'BatterieBackup: Error validating API token! ({self._battery.api_token})')
-
-        return BatterieResponse(
-            version = self._battery.configuration_de_software,
-            last_updated = self._battery.last_configurations,
-            sensor_values = {},
-        )
-
             version = self._battery.configuration_de_software,
             last_updated = self._battery.last_configurations,
             sensor_values = {},

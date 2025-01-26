@@ -59,14 +59,11 @@ STATUS_FLOW_GRID_BATTERY = 'FlowGridBattery'
 STATUS_FLOW_PRODUCTION_BATTERY = 'FlowProductionBattery'
 STATUS_FLOW_PRODUCTION_GRID = 'FlowProductionGrid'
 STATUS_FREQUENCY = 'Fac'
-STATUS_FREQUENCY = 'Fac'
 STATUS_GRIDFEEDIN_W = 'GridFeedIn_W'
 STATUS_MODULES_INSTALLED = 'nrbatterymodules'
 STATUS_PAC_TOTAL_W = 'Pac_total_W'
 STATUS_PRODUCTION_W = 'Production_W'
 STATUS_REMAININGCAPACITY_WH = 'RemainingCapacity_Wh'
-STATUS_RSOC = 'RSOC'
-STATUS_USOC = 'USOC'
 STATUS_RSOC = 'RSOC'
 STATUS_USOC = 'USOC'
 STATUS_SYSTEMSTATUS = 'SystemStatus'
@@ -75,10 +72,7 @@ INVERTER_PAC_TOTAL = 'pac_total'        #OnGrid
 INVERTER_PAC_MICROGRID = 'pac_microgrid' #OffGrid
 INVERTER_UAC = 'uac'
 INVERTER_UBAT = 'ubat'
-INVERTER_PAC_TOTAL = 'pac_total'        #OnGrid
-INVERTER_PAC_MICROGRID = 'pac_microgrid' #OffGrid
-INVERTER_UAC = 'uac'
-INVERTER_UBAT = 'ubat'
+
 
 # default timeout (seconds)
 TIMEOUT = 20

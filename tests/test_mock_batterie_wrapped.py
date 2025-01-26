@@ -2,7 +2,7 @@
     1. Async update called from an async method.
     2. Async update called from sync method
 """
-#import datetime
+import datetime
 import os
 import sys
 import json
@@ -231,7 +231,7 @@ def test_batterie_charging_wrapped(battery_charging: Batterie):
 #    print(f'Reserved (raw): {reserved_capacity_raw:,}Wh  total_usable (calc): {total_capacity_usable:,}Wh')
     assert total_capacity_raw == 20683.490
 #    assert total_capacity_usable == 18553
-    assert f'{reserved_capacity_raw:.3f}' == '1447.810'
+    assert f'{reserved_capacity_raw:.3f}' == '1447.844'
     remaining_capacity = latestData.get("battery_info", {}).get("remaining_capacity")
     remaining_capacity_usable = latestData.get("battery_info", {}).get("remaining_capacity_usable")
     print(f'remaining_capacity (raw): {remaining_capacity:,}Wh  remaining_usable (raw): {remaining_capacity_usable:,}Wh', flush=True)

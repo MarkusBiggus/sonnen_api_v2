@@ -1291,13 +1291,13 @@ class Sonnen:
         return flows
 
     @property
-    @get_item(int)
-    def status_grid_feed_in(self) -> int:
+    @get_item(float)
+    def status_grid_feedin(self) -> float:
         """GridFeedIn_W
             Returns:
                 FeedIn watts, -ve is export (actually float with zero decimal part)
         """
-        return int(self._status_data[STATUS_GRIDFEEDIN_W])
+        return self._status_data[STATUS_GRIDFEEDIN_W]
 
     @property
     @get_item(int)
@@ -1306,7 +1306,7 @@ class Sonnen:
             Returns:
                 Import watts when +ve
         """
-        return self.status_grid_feed_in if self.status_grid_feed_in > 0 else 0
+        return self.status_grid_feedin if self.status_grid_feedin > 0 else 0
 
     @property
     @get_item(int)
@@ -1315,7 +1315,7 @@ class Sonnen:
             Returns:
                 Export watts when -ve
         """
-        return abs(self.status_grid_feed_in) if self.status_grid_feed_in < 0 else 0
+        return abs(self.status_grid_feedin) if self.status_grid_feedin < 0 else 0
 
     @property
     @get_item(bool)
@@ -1336,7 +1336,7 @@ class Sonnen:
         buffer_percent = self.status_backup_buffer / 100 #self.configuration_em_usoc
         full_charge = self.battery_full_charge_capacity_wh
 
-        return full_charge * buffer_percent
+        return round(full_charge * buffer_percent, 1)
 
     @property
     @get_item(float)

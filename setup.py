@@ -37,4 +37,8 @@ setup(
         "setuptools~=75.7.0",
     ],
     python_requires=">=3.12",
+        'yarl~=1.18.3',
+        "setuptools~=75.7.0",
+    ],
+    python_requires=">=3.12",
 )

@@ -16,6 +16,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 @responses.activate
 @freeze_time("20-11-2023 17:00:55")
+@freeze_time("20-11-2023 17:00:55")
 @pytest.mark.usefixtures("battery_discharging")
 def test_sync_methods(battery_discharging: Batterie) -> None:
     if LOGGER_NAME is not None:
@@ -25,6 +26,7 @@ def test_sync_methods(battery_discharging: Batterie) -> None:
 
     assert battery_discharging.discharging > 0
     assert battery_discharging.charging == 0
+    assert battery_discharging.fully_discharged_at.strftime('%d.%b.%Y %H:%M') == '21.Nov.2023 05:40'
     assert battery_discharging.fully_discharged_at.strftime('%d.%b.%Y %H:%M') == '21.Nov.2023 05:40'
 
     # sync wrapped methods used by ha component

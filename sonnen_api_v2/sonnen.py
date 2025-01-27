@@ -79,17 +79,17 @@ class Sonnen:
         self.ip_address = ip_address
         self.auth_token = auth_token
         self._hostname = f'{ip_address}:{ip_port}'
-        self.url = f'http://{self._hostname}'
+        self._url = f'http://{self._hostname}'
         self.header = {'Auth-Token': self.auth_token}
         self.request_timeouts = (TIMEOUT, TIMEOUT)  # noqa: F405
         self.client_timeouts = aiohttp.ClientTimeout(connect=TIMEOUT, sock_read=TIMEOUT)  # noqa: F405
         # read api endpoints
-        self.status_api_endpoint = f'{self.url}/api/v2/status'
-        self.latest_details_api_endpoint = f'{self.url}/api/v2/latestdata'
-        self.battery_api_endpoint = f'{self.url}/api/v2/battery'
-        self.powermeter_api_endpoint = f'{self.url}/api/v2/powermeter'
-        self.configurations_api_endpoint = f'{self.url}/api/v2/configurations'
-        self.inverter_api_endpoint = f'{self.url}/api/v2/inverter'
+        self.status_api_endpoint = f'{self._url}/api/v2/status'
+        self.latest_details_api_endpoint = f'{self._url}/api/v2/latestdata'
+        self.battery_api_endpoint = f'{self._url}/api/v2/battery'
+        self.powermeter_api_endpoint = f'{self._url}/api/v2/powermeter'
+        self.configurations_api_endpoint = f'{self._url}/api/v2/configurations'
+        self.inverter_api_endpoint = f'{self._url}/api/v2/inverter'
 
         # api data
         self._configurations:Dict = None
@@ -435,6 +435,11 @@ class Sonnen:
         return self._fetch_api_endpoint(
             self.inverter_api_endpoint
         )
+
+    @property
+    def url(self) -> str:
+        """Device url."""
+        return self._url
 
     @property
     def api_token(self) -> Dict:
@@ -1347,7 +1352,7 @@ class Sonnen:
         if self.configurations is None:
             return "unavailable"
 
-        """ current_state index of: ["standby", "charging", "discharging", "discharging reserve", "charged", "discharged"] """
+        """ current_state index of: ["standby", "charging", "discharging", "discharging reserve", "charged", "discharged", "standby reserve"] """
         if self.status_battery_charging:
             battery_status = "charging"
         elif self.status_battery_discharging:
@@ -1361,9 +1366,9 @@ class Sonnen:
             battery_status = "discharged"
         else:
             if self.status_rsoc > self.status_backup_buffer:
-                battery_status = "standby"
+                battery_status = "standby" # standby @ reserve
             else:
-                battery_status = "standby reserve"
+                battery_status = "standby reserve" # standby below reserve
 
         return battery_status
 
@@ -1406,14 +1411,7 @@ class Sonnen:
     @property
     def ic_eclipse_led(self) -> dict:
         """System-Status:
-                "Eclipse Led":{
-                    "Blinking Red":false,
-                    "Brightness":100,
-                    "Pulsing Green":false,
-                    "Pulsing Orange":false,
-                    "Pulsing White":true,
-                    "Solid Red":false
-                }
+                "Eclipse Led":{...}
             Returns:
                 Dict
         """
@@ -1424,7 +1422,8 @@ class Sonnen:
 
     @property
     def led_state(self) -> str:
-        """System-Status:
+        """Text of current LED state.
+            System-Status:
                 "Eclipse Led":{
                     "Blinking Red":false,
                     "Brightness":100,
@@ -1436,7 +1435,19 @@ class Sonnen:
             Returns:
                 String
         """
-        leds = self.ic_eclipse_led
+
+        return self.led_xlate_state()
+
+
+    def led_xlate_state(self, leds:dict = None) -> str:
+        """Text of LED state.
+            Returns:
+                String
+        """
+
+        if leds is None:
+            leds = self.ic_eclipse_led
+
         (Blinking_Red, Brightness, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
 
         if Blinking_Red is True:
@@ -1450,15 +1461,25 @@ class Sonnen:
         elif Solid_Red is True:
             return f"Solid Red {Brightness}%"
         else:
-            return "off"
+            return "Off"
 
     @property
     def led_state_text(self) -> str:
+        """Text meaning of current LED state.
+            Returns:
+                String
+        """
+
+        return self.led_xlate_state_text()
+
+    def led_xlate_state_text(self, leds:dict = None) -> str:
         """Text meaning of LED state.
             Returns:
                 String
         """
-        leds = self.ic_eclipse_led
+        if leds is None:
+            leds = self.ic_eclipse_led
+
         (Blinking_Red, Brightness, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
 
         if Blinking_Red is True:
@@ -1476,7 +1497,8 @@ class Sonnen:
 
     @property
     def dc_shutdown_reason(self) -> dict:
-        """Error conditions and their state
+        """Error conditions and their state.
+
             Returns:
                 Dict
         """
@@ -1484,7 +1506,7 @@ class Sonnen:
 
     @property
     def microgrid_status(self) -> dict:
-        """Microgrid Status attributes when OffGrid
+        """Microgrid Status attributes when OffGrid.
             Returns:
                 Dict
         """

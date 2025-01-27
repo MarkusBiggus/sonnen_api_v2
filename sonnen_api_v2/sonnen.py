@@ -1498,6 +1498,7 @@ class Sonnen:
     @property
     def dc_shutdown_reason(self) -> dict:
         """Error conditions and their state.
+
             Returns:
                 Dict
         """

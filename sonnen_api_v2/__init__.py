@@ -60,6 +60,11 @@ class BatterieBackup:
         """Device availability."""
         return self._attr_available
 
+    @property
+    def url(self) -> str:
+        """Device url."""
+        return self._battery.url
+
     def get_sensor_value(self, sensor_name:str) -> Any:
         """Get sensor value by name from battery property.
             refresh_response must have been called at least once before any sensor value is retrieved.

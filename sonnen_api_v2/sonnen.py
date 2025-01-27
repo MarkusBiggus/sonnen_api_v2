@@ -1226,21 +1226,33 @@ class Sonnen:
 
     @property
     @get_item(int)
-    def grid_in(self) -> int:
-        """Actual grid feed in value
+    def grid_feedin(self) -> int:
+        """GridFeedIn_W
             Returns:
-                Value in watt
+                FeedIn watts, -ve is import (actually float with zero decimal part)
         """
-        return self._status_data[STATUS_GRIDFEEDIN_W] if self._status_data[STATUS_GRIDFEEDIN_W] > 0 else 0
+
+        return self._status_data[STATUS_GRIDFEEDIN_W]
+
+    @property
+    @get_item(int)
+    def grid_in(self) -> int:
+        """Actual grid feed in (export)
+            Returns:
+                watts
+        """
+
+        return self.grid_feedin if self.grid_feedin > 0 else 0
 
     @property
     @get_item(int)
     def grid_out(self) -> int:
-        """Actual grid out value
+        """Actual grid import
             Returns:
-                Value in watt
+                watts
         """
-        return abs(self._status_data[STATUS_GRIDFEEDIN_W]) if self._status_data[STATUS_GRIDFEEDIN_W] < 0 else 0
+
+        return abs(self.grid_feedin) if self.grid_feedin < 0 else 0
 
     @property
     @get_item(int)
@@ -1258,6 +1270,7 @@ class Sonnen:
             Returns:
                 true when charging
         """
+
         return self._status_data[STATUS_BATTERY_CHARGING]
 
     @property
@@ -1267,6 +1280,7 @@ class Sonnen:
             Returns:
                 true when discharging
         """
+
         return self._status_data[STATUS_BATTERY_DISCHARGING]
 
     @property
@@ -1276,6 +1290,7 @@ class Sonnen:
             Returns:
                 dict of name:bool
         """
+
         flows = {
             "FlowConsumptionBattery":self._status_data[STATUS_FLOW_CONSUMPTION_BATTERY],
             "FlowConsumptionGrid":self._status_data[STATUS_FLOW_CONSUMPTION_GRID],
@@ -1291,27 +1306,29 @@ class Sonnen:
     def status_grid_feedin(self) -> float:
         """GridFeedIn_W
             Returns:
-                FeedIn watts, -ve is export (actually float with zero decimal part)
+                FeedIn watts, -ve is import (actually float with zero decimal part)
         """
+
         return self._status_data[STATUS_GRIDFEEDIN_W]
 
     @property
     @get_item(int)
     def status_grid_import(self) -> int:
-        """Grid Import is +ve Feed_In
+        """Grid Import is -ve FeedIn
             Returns:
-                Import watts when +ve
+                Import watts when -ve
         """
-        return self.status_grid_feedin if self.status_grid_feedin > 0 else 0
+
+        return abs(self.status_grid_feedin) if self.status_grid_feedin < 0 else 0
 
     @property
     @get_item(int)
     def status_grid_export(self) -> int:
-        """Grid export is -ve Feed_In
+        """Grid export is +ve FeedIn
             Returns:
-                Export watts when -ve
+                Export watts when +ve
         """
-        return abs(self.status_grid_feedin) if self.status_grid_feedin < 0 else 0
+        return self.status_grid_feedin if self.status_grid_feedin > 0 else 0
 
     @property
     @get_item(bool)

@@ -1231,7 +1231,7 @@ class Sonnen:
             Returns:
                 Value in watt
         """
-        return self._status_data[STATUS_GRIDFEEDIN_W] if self._status_data[STATUS_GRIDFEEDIN_W] > 0 else 0
+        return self._status_data[STATUS_GRIDFEEDIN_W] if self._status_data[STATUS_GRIDFEEDIN_W] < 0 else 0
 
     @property
     @get_item(int)
@@ -1240,7 +1240,7 @@ class Sonnen:
             Returns:
                 Value in watt
         """
-        return abs(self._status_data[STATUS_GRIDFEEDIN_W]) if self._status_data[STATUS_GRIDFEEDIN_W] < 0 else 0
+        return abs(self._status_data[STATUS_GRIDFEEDIN_W]) if self._status_data[STATUS_GRIDFEEDIN_W] > 0 else 0
 
     @property
     @get_item(int)

@@ -117,7 +117,7 @@ class Sonnen:
         conn = urllib3.connection_from_url(self.configurations_api_endpoint,headers=self.header, retries=False)
         timeouts = Timeout(TIMEOUT, TIMEOUT)
         try:
-            response = conn._urlopen('GET',
+            response = conn.urlopen('GET',
                 self.configurations_api_endpoint,
                 None,
                 self.header,
@@ -1421,8 +1421,9 @@ class Sonnen:
         return self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED]
 
     @property
-    def led_state(self, leds:dict = None) -> str:
-        """System-Status:
+    def led_state(self) -> str:
+        """Text of current LED state.
+            System-Status:
                 "Eclipse Led":{
                     "Blinking Red":false,
                     "Brightness":100,
@@ -1439,6 +1440,11 @@ class Sonnen:
 
 
     def led_xlate_state(self, leds:dict = None) -> str:
+        """Text of LED state.
+            Returns:
+                String
+        """
+
         if leds is None:
             leds = self.ic_eclipse_led
 
@@ -1455,11 +1461,11 @@ class Sonnen:
         elif Solid_Red is True:
             return f"Solid Red {Brightness}%"
         else:
-            return "off"
+            return "Off"
 
     @property
-    def led_state_text(self, leds:dict = None) -> str:
-        """Text meaning of LED state.
+    def led_state_text(self) -> str:
+        """Text meaning of current LED state.
             Returns:
                 String
         """
@@ -1491,7 +1497,7 @@ class Sonnen:
 
     @property
     def dc_shutdown_reason(self) -> dict:
-        """Error conditions and their state
+        """Error conditions and their state.
             Returns:
                 Dict
         """
@@ -1499,7 +1505,7 @@ class Sonnen:
 
     @property
     def microgrid_status(self) -> dict:
-        """Microgrid Status attributes when OffGrid
+        """Microgrid Status attributes when OffGrid.
             Returns:
                 Dict
         """

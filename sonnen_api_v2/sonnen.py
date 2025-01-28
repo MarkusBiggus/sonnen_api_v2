@@ -783,7 +783,7 @@ class Sonnen:
             Returns:
                 Capacity in Wh
         """
-        return round((self.full_charge_capacity * self.u_soc / 100), 1)
+        return round((self.full_charge_capacity * self.u_soc / 100) - self.unusable_capacity, 1)
 
     @property
     @get_item(int)
@@ -1211,7 +1211,7 @@ class Sonnen:
             Returns:
                 Wh
         """
-        return round(self.battery_full_charge_capacity_wh * self.status_usoc / 100, 1)
+        return round((self.battery_full_charge_capacity_wh * self.status_usoc / 100) - self.unusable_capacity, 1)
 
     # @property
     # @get_item(int)

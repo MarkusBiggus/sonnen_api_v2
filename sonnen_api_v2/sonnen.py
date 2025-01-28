@@ -959,7 +959,7 @@ class Sonnen:
                 Used Capacity in Wh
         """
 
-        return round(self.used_capacity * self.battery_module_dc_voltage, 1)
+        return round(self.battery_used_capacity * self.battery_module_dc_voltage, 1)
 
     @property
     @get_item(float)

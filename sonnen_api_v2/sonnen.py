@@ -689,12 +689,27 @@ class Sonnen:
 
     @property
     @get_item(float)
-    def capacity_until_reserve(self) -> float:
-        """Capacity until reserve is reached (battery state goes standby).
+    def capacity_to_reserve(self) -> float:
+        """Capacity to reserve.
+            Below reserve capacity to reserve charge (charging).
             Returns:
                 Wh
         """
-        return round(self.battery_remaining_capacity_wh - self.backup_buffer_capacity_wh, 1)
+
+        until_reserve = self.battery_remaining_capacity_wh - self.backup_buffer_capacity_wh
+        return round(abs(until_reserve), 1) if until_reserve < 0 else 0
+
+    @property
+    @get_item(float)
+    def capacity_until_reserve(self) -> float:
+        """Capacity until reserve is reached (battery state goes standby).
+            Above reserve capacity until reserve charge (discharging).
+            Returns:
+                Wh
+        """
+
+        until_reserve = self.battery_remaining_capacity_wh - self.backup_buffer_capacity_wh
+        return round(until_reserve, 1) if until_reserve > 0 else 0
 
     @property
     def backup_reserve_at(self) -> Optional[datetime.datetime]:
@@ -965,6 +980,7 @@ class Sonnen:
     @get_item(float)
     def battery_remaining_capacity(self) -> float:
         """Remaining capacity.
+            Appears to NOT include BATTERY_UNUSABLE_RESERVE.
             Returns:
                 Remaining capacity in Ah
         """
@@ -978,7 +994,7 @@ class Sonnen:
             Returns:
                 Wh rounded to 1 decimal place
         """
-        return round(self.battery_remaining_capacity * self.battery_module_dc_voltage, 1)
+        return round((self.battery_remaining_capacity * self.battery_module_dc_voltage) + self.battery_unusable_capacity_wh, 1)
 
     @property
     @get_item(float)

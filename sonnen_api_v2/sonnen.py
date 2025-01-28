@@ -945,11 +945,21 @@ class Sonnen:
     def battery_used_capacity(self) -> float:
         """Used capacity from Full charge.
             Returns:
-                Capacity in Ah
+                Used Capacity in Ah
         """
 
         used_capacity = self.battery_full_charge_capacity - self.battery_remaining_capacity
         return used_capacity if used_capacity > 0 else 0
+
+    @property
+    @get_item(float)
+    def battery_used_capacity_wh(self) -> float:
+        """Calculate Used capacity from Full charge.
+            Returns:
+                Used Capacity in Wh
+        """
+
+        return round(self.used_capacity * self.battery_module_dc_voltage, 1)
 
     @property
     @get_item(float)

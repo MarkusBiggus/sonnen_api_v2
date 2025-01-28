@@ -774,7 +774,9 @@ class Sonnen:
             Returns:
                 Capacity in Wh
         """
-        return round(self.battery_full_charge_capacity_wh - self.status_remaining_capacity_wh, 1)
+
+        used_capacity = round(self.battery_full_charge_capacity_wh - self.status_remaining_capacity_wh, 1)
+        return used_capacity if used_capacity > 0 else 0
 
     @property
     @get_item(int)

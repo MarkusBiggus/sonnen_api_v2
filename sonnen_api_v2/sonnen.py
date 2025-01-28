@@ -774,7 +774,9 @@ class Sonnen:
             Returns:
                 Capacity in Wh
         """
-        return round(self.battery_full_charge_capacity_wh - self.status_remaining_capacity_wh, 1)
+
+        used_capacity = round(self.battery_full_charge_capacity_wh - self.status_remaining_capacity_wh, 1)
+        return used_capacity if used_capacity > 0 else 0
 
     @property
     @get_item(int)
@@ -783,7 +785,7 @@ class Sonnen:
             Returns:
                 Capacity in Wh
         """
-        return round((self.full_charge_capacity * self.u_soc / 100), 1)
+        return round((self.full_charge_capacity * self.u_soc / 100) - self.unusable_capacity, 1)
 
     @property
     @get_item(int)
@@ -940,6 +942,27 @@ class Sonnen:
 
     @property
     @get_item(float)
+    def battery_used_capacity(self) -> float:
+        """Used capacity from Full charge.
+            Returns:
+                Used Capacity in Ah
+        """
+
+        used_capacity = self.battery_full_charge_capacity - self.battery_remaining_capacity
+        return used_capacity if used_capacity > 0 else 0
+
+    @property
+    @get_item(float)
+    def battery_used_capacity_wh(self) -> float:
+        """Calculate Used capacity from Full charge.
+            Returns:
+                Used Capacity in Wh
+        """
+
+        return round(self.battery_used_capacity * self.battery_module_dc_voltage, 1)
+
+    @property
+    @get_item(float)
     def battery_remaining_capacity(self) -> float:
         """Remaining capacity.
             Returns:
@@ -953,7 +976,7 @@ class Sonnen:
         """Remaining capacity Wh calculated from Ah.
             use instead of status RemainingCapacity_Wh which is incorrect
             Returns:
-                Wh rounded to whole number by .03 tolerance
+                Wh rounded to 1 decimal place
         """
         return round(self.battery_remaining_capacity * self.battery_module_dc_voltage, 1)
 
@@ -1211,7 +1234,7 @@ class Sonnen:
             Returns:
                 Wh
         """
-        return round(self.battery_full_charge_capacity_wh * self.status_usoc / 100, 1)
+        return round((self.battery_full_charge_capacity_wh * self.status_usoc / 100) - self.unusable_capacity, 1)
 
     # @property
     # @get_item(int)
@@ -1333,7 +1356,7 @@ class Sonnen:
     @property
     @get_item(bool)
     def status_discharge_not_allowed(self) -> bool:
-        """dischargeNotAllowed - Surplus Fullchage feature in progress
+        """dischargeNotAllowed - Surplus Fullcharge feature in progress
             Returns:
                 Bool
         """

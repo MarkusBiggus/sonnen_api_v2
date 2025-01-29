@@ -855,16 +855,15 @@ class Sonnen:
     @get_item(int)
     def battery_dod_limit(self) -> int:
         """Depth Of Discharge limit as a percentage of full charge.
-            When battery status has not been fetched, use estimate BATTERY_UNUSABLE_RESERVE
+            When battery status has not been fetched, return estimate BATTERY_UNUSABLE_RESERVE
             Returns:
                 percent of full charge
         """
 
         if self._battery_status is not None:
             self.dod_limit = (self.battery_remaining_capacity - self.battery_usable_remaining_capacity) / self.battery_full_charge_capacity
-        print(f'dod: {self.dod_limit:.2f}')
+    #    print(f'dod: {self.dod_limit:.2f}')
         return 100 - (round(self.dod_limit, 2) * 100)
-#        return 100 - int(BATTERY_UNUSABLE_RESERVE * 100)
 
     @property
     @get_item(float)

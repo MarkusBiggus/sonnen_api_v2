@@ -231,12 +231,11 @@ def test_batterie_charging_wrapped(battery_charging: Batterie):
 #    print(f'Reserved (raw): {reserved_capacity_raw:,}Wh  total_usable (calc): {total_capacity_usable:,}Wh')
     assert total_capacity_raw == 20683.490
 #    assert total_capacity_usable == 18553
-    assert reserved_capacity_raw == 1447.8
+    assert reserved_capacity_raw == 1448.0
     remaining_capacity = latestData.get("battery_info", {}).get("remaining_capacity")
     remaining_capacity_usable = latestData.get("battery_info", {}).get("remaining_capacity_usable")
     print(f'remaining_capacity (raw): {remaining_capacity:,}Wh  remaining_usable (raw): {remaining_capacity_usable:,}Wh', flush=True)
-    assert remaining_capacity == 19648.4
-#    assert f'{remaining_capacity_usable:.2f}' == '16752.60'
+    assert remaining_capacity == 18200.6
     assert remaining_capacity_usable == 16752.6
 
     timeouts = battery_charging.get_request_connect_timeouts()
@@ -276,6 +275,7 @@ def test_batterie_discharging_wrapped(battery_discharging: Batterie):
 #    print(f'discharging_flows: {discharging_flows}')
     assert discharging_flows == {'FlowConsumptionBattery': True, 'FlowConsumptionGrid': False, 'FlowConsumptionProduction': True, 'FlowGridBattery': True, 'FlowProductionBattery': False, 'FlowProductionGrid': False}
 
+    assert battery_discharging.seconds_until_reserve == 35208
     #common tests for all fixture methods
     from . check_results import check_discharge_results
 

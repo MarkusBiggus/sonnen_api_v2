@@ -862,8 +862,8 @@ class Sonnen:
 
         if self._battery_status is not None:
             self.dod_limit = (self.battery_remaining_capacity - self.battery_usable_remaining_capacity) / self.battery_full_charge_capacity
-
-        return 100 - round(self.dod_limit * 100)
+        print(f'dod: {self.dod_limit:.2f}')
+        return 100 - (round(self.dod_limit, 2) * 100)
 #        return 100 - int(BATTERY_UNUSABLE_RESERVE * 100)
 
     @property

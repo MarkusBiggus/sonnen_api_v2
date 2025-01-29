@@ -169,7 +169,7 @@ def _aug_configurations(self) -> Dict:
     """
 
     if self._configurations is not None:
-        self._configurations['DepthOfDischargeLimit'] = int(self.battery_dod_limit * 100)
+        self._configurations['DepthOfDischargeLimit'] = self.battery_dod_limit
     return self._configurations
 
 def get_status(self) -> Dict:

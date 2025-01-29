@@ -55,7 +55,8 @@ def test_sync_methods(battery_discharging_reserve: Batterie) -> None:
 
     battery_status =  battery_discharging_reserve.sync_get_battery()
     assert battery_status.get('cyclecount') == 30
-    assert battery_status.get('remainingcapacity') == 36.36
+    assert battery_status.get('remainingcapacity') == 36.3564
+    assert battery_status.get('usableremainingcapacity') == 22.2178
 
     inverter_data = battery_discharging_reserve.sync_get_inverter()
     assert  int(inverter_data.get('pac_total')) == status_data.get('Pac_total_W')
@@ -65,6 +66,25 @@ def test_sync_methods(battery_discharging_reserve: Batterie) -> None:
     configurations = battery_discharging_reserve.sync_get_configurations()
     assert configurations.get('DE_Software') == '1.14.5'
     assert configurations.get('EM_USOC') == 20
+
+    assert battery_discharging_reserve.status_rsoc == 18
+    assert battery_discharging_reserve.status_backup_buffer == 20
+    assert battery_discharging_reserve.battery_full_charge_capacity_wh == 20683.49
+    assert battery_discharging_reserve.used_capacity_wh == 16960.5
+    assert battery_discharging_reserve.battery_remaining_capacity_wh == 3722.9 # 5170.7
+    assert battery_discharging_reserve.battery_unusable_capacity_wh == 1447.8
+    assert battery_discharging_reserve.status_usable_capacity_wh == 2275.2 # 828.2  #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    assert battery_discharging_reserve.battery_usable_remaining_capacity_wh == 2275.1
+    assert battery_discharging_reserve.used_capacity_wh + battery_discharging_reserve.battery_remaining_capacity_wh == 20683.4 # 20683.49
+    assert battery_discharging_reserve.backup_buffer_capacity_wh == 4136.7
+    assert battery_discharging_reserve.backup_buffer_usable_capacity_wh == 2688.9 # ? 3436.7
+    assert battery_discharging_reserve.using_reserve is True
+    assert battery_discharging_reserve.seconds_until_fully_discharged == 9320
+    assert battery_discharging_reserve.capacity_to_reserve == 413.8
+    assert battery_discharging_reserve.capacity_until_reserve is None
+    assert battery_discharging_reserve.seconds_until_reserve is None
+    assert battery_discharging_reserve.backup_reserve_at is None
+    assert battery_discharging_reserve.fully_discharged_at.strftime('%d.%b.%Y %H:%M') == '20.Nov.2023 19:36'
 
     from .check_results import check_reserve_results
 

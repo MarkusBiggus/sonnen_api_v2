@@ -2,6 +2,8 @@
 
     home assistant component uses only sync methods called by asyncio.run_in_executor.
 """
+
+from math import ceil
 from typing import Dict
 import datetime
 import aiohttp
@@ -112,6 +114,7 @@ def sync_get_update(self) -> bool:
         self.sync_get_battery()
         success = (self._battery_status is not None)
     if success:
+        dod_limit = self.battery_dod_limit
         self.sync_get_powermeter()
         success = (self._powermeter_data is not None)
     if success:
@@ -160,12 +163,13 @@ def sync_get_configurations(self)-> Dict:
 
 def _aug_configurations(self) -> Dict:
     """Augment Configurations for sonnenbatterie wrapper.
-
+        Add DepthOfDischarge percent, as calculated from battery_status
         Returns:
             json response
     """
+
     if self._configurations is not None:
-        self._configurations['DepthOfDischargeLimit'] = int((1.0 - BATTERY_UNUSABLE_RESERVE) * 100)
+        self._configurations['DepthOfDischargeLimit'] = int(self.battery_dod_limit * 100)
     return self._configurations
 
 def get_status(self) -> Dict:
@@ -289,12 +293,15 @@ def _aug_battery(self) -> Dict:
         Returns:
             json response
     """
+
+    dod_limit = self.battery_dod_limit
+
     if self._configurations is None:
-        self._battery_status['total_installed_capacity'] = 0
+        self._battery_status['total_installed_capacity'] = ceil(self.battery_full_charge_capacity_wh)
     else:
         self._battery_status['total_installed_capacity'] = int(self._configurations.get('IC_BatteryModules')) * int(self._configurations.get('CM_MarketingModuleCapacity'))
 
-    self._battery_status['reserved_capacity'] = self.battery_unusable_capacity_wh
+    self._battery_status['dod_reserved_capacity'] = self.battery_unusable_capacity_wh
     self._battery_status['remaining_capacity'] = self.battery_remaining_capacity_wh
     self._battery_status['remaining_capacity_usable'] = self.battery_usable_remaining_capacity_wh
     self._battery_status['backup_buffer_usable'] = self.backup_buffer_usable_capacity_wh

@@ -86,7 +86,7 @@ async def test_batterieresponse_works(battery_charging: Batterie) -> None:
     assert _batterie.get_sensor_value('inverter_uac') == 233.55
     assert _batterie.get_sensor_value('status_remaining_capacity_wh') == 18201.5
     assert _batterie.get_sensor_value('battery_full_charge_capacity_wh') == 20683.49
-    assert _batterie.get_sensor_value('used_capacity') == (20683.5 - 18201.5)
+    assert _batterie.get_sensor_value('used_capacity_wh') == (20683.5 - 18201.5)
 
     assert _batterie.get_sensor_value('status_usable_capacity_wh') == 16753.6
     assert _batterie.get_sensor_value('battery_min_cell_temp') == 18.95

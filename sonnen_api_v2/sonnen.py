@@ -69,6 +69,7 @@ class Sonnen:
         self._last_updated = None #rate limiters
         self._last_get_updated = None
         self._last_configurations = None
+        self.dod_limit = BATTERY_UNUSABLE_RESERVE #default depth of discharge limit until battery status
 
         logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         if logger_name is not None:
@@ -201,6 +202,7 @@ class Sonnen:
             self._battery_status = await self.async_fetch_battery_status()
             success = (self._battery_status is not None)
         if success:
+            dod_limit = self.battery_dod_limit
             self._powermeter_data = await self.async_fetch_powermeter()
             success = (self._powermeter_data is not None)
         if success:
@@ -263,6 +265,7 @@ class Sonnen:
     #        print(f'_battery: {self._battery_status}')
             success = (self._battery_status is not None)
         if success:
+            dod_limit = self.battery_dod_limit
             self._powermeter_data = self.fetch_powermeter()
     #        print(f'_powermeter: {self._powermeter_data}')
             success = (self._powermeter_data is not None)
@@ -685,13 +688,13 @@ class Sonnen:
             Returns:
                 Bool - true when reserve in use
         """
-        return self.capacity_until_reserve < 0
+        return self.battery_remaining_capacity_wh < self.backup_buffer_capacity_wh
 
     @property
     @get_item(float)
     def capacity_to_reserve(self) -> float:
         """Capacity to reserve.
-            Below reserve capacity to reserve charge (charging).
+            Below reserve capacity to reserve charge (how much to charge).
             Returns:
                 Wh
         """
@@ -703,13 +706,13 @@ class Sonnen:
     @get_item(float)
     def capacity_until_reserve(self) -> float:
         """Capacity until reserve is reached (battery state goes standby).
-            Above reserve capacity until reserve charge (discharging).
+            Above reserve capacity until reserve charge (how much to discharge).
             Returns:
-                Wh
+                Wh or None when below backup reserve
         """
 
         until_reserve = self.battery_remaining_capacity_wh - self.backup_buffer_capacity_wh
-        return round(until_reserve, 1) if until_reserve > 0 else 0
+        return round(until_reserve, 1) if until_reserve > 0 else None
 
     @property
     def backup_reserve_at(self) -> Optional[datetime.datetime]:
@@ -737,22 +740,23 @@ class Sonnen:
                 Discharging - seconds to reserve
             Below Reserve
                 Charging - seconds to reserve
-                Discharging - None (negative seconds since reserve?)
+                Discharging - None
                 Standby - None
             Returns:
                 Time in seconds or None
         """
 
-        if self.capacity_until_reserve > 0:
-            seconds = int((self.capacity_until_reserve / self.discharging) * 3600) if self.discharging else None
-        elif self.capacity_until_reserve == 0:
+        until_reserve = self.battery_remaining_capacity_wh - self.backup_buffer_capacity_wh
+
+        if until_reserve > 0:
+            return int((until_reserve / self.discharging) * 3600) if self.discharging else None
+        elif round(until_reserve) == 0:
             return 0
-        elif self.capacity_to_reserve > 0:
+        elif until_reserve < 0:
             if self.status_battery_charging:
-                seconds = int(abs(self.capacity_to_reserve) / self.charging * 3600) if self.charging else None
+                return int(abs(until_reserve) / self.charging * 3600) if self.charging else None
             else:
-                seconds = None
-        return seconds
+                return None
 
     @property
     def state_core_control_module(self) -> str:
@@ -811,7 +815,7 @@ class Sonnen:
 
     @property
     @get_item(float)
-    def used_capacity(self) -> float:
+    def used_capacity_wh(self) -> float:
         """Used capacity from Full charge.
             Returns:
                 Capacity in Wh
@@ -822,21 +826,21 @@ class Sonnen:
 
     @property
     @get_item(int)
-    def usable_capacity(self) -> int:
+    def usable_capacity_wh(self) -> int:
         """Usable amount of Full charge capacity.
             Returns:
                 Capacity in Wh
         """
         return round((self.full_charge_capacity * self.u_soc / 100) - self.unusable_capacity, 1)
 
-    @property
-    @get_item(int)
-    def unusable_capacity(self) -> int:
-        """Unusable amount of Full charge due to DoD limit.
-            Returns:
-                Capacity in Wh
-        """
-        return round(self.full_charge_capacity * BATTERY_UNUSABLE_RESERVE, 1)
+    # @property
+    # @get_item(int)
+    # def unusable_capacity_wh(self) -> int:
+    #     """Unusable amount of Full charge due to DoD limit.
+    #         Returns:
+    #             Capacity in Wh
+    #     """
+    #     return round(self.full_charge_capacity * self.dod_limit, 1)
 
     @property
     @get_item(int)
@@ -850,11 +854,17 @@ class Sonnen:
     @property
     @get_item(int)
     def battery_dod_limit(self) -> int:
-        """Depth Of Discharge limit.
+        """Depth Of Discharge limit as a percentage of full charge.
+            When battery status has not been fetched, use estimate BATTERY_UNUSABLE_RESERVE
             Returns:
-                Int percent
+                percent of full charge
         """
-        return 100 - int(BATTERY_UNUSABLE_RESERVE * 100)
+
+        if self._battery_status is not None:
+            self.dod_limit = (self.battery_remaining_capacity - self.battery_usable_remaining_capacity) / self.battery_full_charge_capacity
+
+        return 100 - round(self.dod_limit * 100)
+#        return 100 - int(BATTERY_UNUSABLE_RESERVE * 100)
 
     @property
     @get_item(float)
@@ -980,7 +990,7 @@ class Sonnen:
             Returns:
                 float Wh
         """
-        return self.battery_full_charge_capacity_wh * BATTERY_UNUSABLE_RESERVE
+        return round(self.battery_full_charge_capacity_wh * self.dod_limit, 1)
 
     @property
     @get_item(float)
@@ -1007,7 +1017,6 @@ class Sonnen:
     @get_item(float)
     def battery_remaining_capacity(self) -> float:
         """Remaining capacity.
-            Appears to NOT include BATTERY_UNUSABLE_RESERVE.
             Returns:
                 Remaining capacity in Ah
         """
@@ -1021,7 +1030,8 @@ class Sonnen:
             Returns:
                 Wh rounded to 1 decimal place
         """
-        return round((self.battery_remaining_capacity * self.battery_module_dc_voltage) + self.battery_unusable_capacity_wh, 1)
+#        return round((self.battery_remaining_capacity * self.battery_module_dc_voltage) + self.battery_unusable_capacity_wh, 1)
+        return round(self.battery_remaining_capacity * self.battery_module_dc_voltage, 1)
 
     @property
     @get_item(float)
@@ -1252,7 +1262,8 @@ class Sonnen:
             Returns:
                 Wh
         """
-        return round((self.battery_full_charge_capacity_wh * self.status_usoc / 100) - self.unusable_capacity, 1)
+        return round((self.battery_full_charge_capacity_wh * self.status_usoc / 100), 1)
+#        return round((self.battery_full_charge_capacity_wh * self.status_usoc / 100) - self.unusable_capacity, 1)
 
     # @property
     # @get_item(int)
@@ -1399,9 +1410,9 @@ class Sonnen:
             Returns:
                 Usable Backup Buffer in Wh
         """
-        buffer_percent = self.status_backup_buffer / 100 #configuration_em_usoc
+        buffer_percent = self.status_backup_buffer / 100
 
-        return self.battery_full_charge_capacity_wh * (buffer_percent - BATTERY_UNUSABLE_RESERVE) if buffer_percent > BATTERY_UNUSABLE_RESERVE else 0
+        return round(self.battery_full_charge_capacity_wh * (buffer_percent - self.dod_limit), 1) if buffer_percent > self.dod_limit else 0
 
     @property
     def battery_activity_state(self) -> str:

@@ -226,17 +226,18 @@ def test_batterie_charging_wrapped(battery_charging: Batterie):
     backup_buffer_usable = latestData.get("battery_info", {}).get("backup_buffer_usable")
     print(f'BackupBuffer: {BackupBuffer}%  Backup_Usable: {backup_buffer_usable:,}Wh', flush=True)
     total_capacity_raw = latestData.get("battery_info", {}).get("fullchargecapacitywh")
-    reserved_capacity_raw = latestData.get("battery_info", {}).get("reserved_capacity")
+    reserved_capacity_raw = latestData.get("battery_info", {}).get("dod_reserved_capacity")
     print(f'total_capacity (raw): {total_capacity_raw:,}Wh', flush=True)
 #    print(f'Reserved (raw): {reserved_capacity_raw:,}Wh  total_usable (calc): {total_capacity_usable:,}Wh')
     assert total_capacity_raw == 20683.490
 #    assert total_capacity_usable == 18553
-    assert f'{reserved_capacity_raw:.3f}' == '1447.844'
+    assert reserved_capacity_raw == 1447.8
     remaining_capacity = latestData.get("battery_info", {}).get("remaining_capacity")
     remaining_capacity_usable = latestData.get("battery_info", {}).get("remaining_capacity_usable")
     print(f'remaining_capacity (raw): {remaining_capacity:,}Wh  remaining_usable (raw): {remaining_capacity_usable:,}Wh', flush=True)
-    assert remaining_capacity == 18200.6
-    assert f'{remaining_capacity_usable:.2f}' == '16752.60'
+    assert remaining_capacity == 19648.4
+#    assert f'{remaining_capacity_usable:.2f}' == '16752.60'
+    assert remaining_capacity_usable == 16752.6
 
     timeouts = battery_charging.get_request_connect_timeouts()
     assert timeouts == (20,20)

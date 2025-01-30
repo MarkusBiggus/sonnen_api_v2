@@ -223,20 +223,20 @@ def test_batterie_charging_wrapped(battery_charging: Batterie):
     #         - latestData.get("battery_info", {}).get("reserved_capacity", 0)
     # )
     BackupBuffer = latestData.get("status", {}).get("BackupBuffer")
-    backup_buffer_usable = latestData.get("battery_info", {}).get("backup_buffer_usable")
-    print(f'BackupBuffer: {BackupBuffer}%  Backup_Usable: {backup_buffer_usable:,}Wh', flush=True)
+    backup_buffer_capacity = latestData.get("battery_info", {}).get("backup_buffer_capacity")
+    print(f'BackupBuffer: {BackupBuffer}%  Backup_Usable: {backup_buffer_capacity:,}Wh', flush=True)
     total_capacity_raw = latestData.get("battery_info", {}).get("fullchargecapacitywh")
-    reserved_capacity_raw = latestData.get("battery_info", {}).get("reserved_capacity")
+    reserved_capacity_raw = latestData.get("battery_info", {}).get("dod_reserved_capacity")
     print(f'total_capacity (raw): {total_capacity_raw:,}Wh', flush=True)
 #    print(f'Reserved (raw): {reserved_capacity_raw:,}Wh  total_usable (calc): {total_capacity_usable:,}Wh')
     assert total_capacity_raw == 20683.490
 #    assert total_capacity_usable == 18553
-    assert f'{reserved_capacity_raw:.3f}' == '1447.844'
+    assert reserved_capacity_raw == 1448.0
     remaining_capacity = latestData.get("battery_info", {}).get("remaining_capacity")
     remaining_capacity_usable = latestData.get("battery_info", {}).get("remaining_capacity_usable")
     print(f'remaining_capacity (raw): {remaining_capacity:,}Wh  remaining_usable (raw): {remaining_capacity_usable:,}Wh', flush=True)
     assert remaining_capacity == 18200.6
-    assert f'{remaining_capacity_usable:.2f}' == '16752.60'
+    assert remaining_capacity_usable == 16752.6
 
     timeouts = battery_charging.get_request_connect_timeouts()
     assert timeouts == (20,20)
@@ -268,8 +268,8 @@ def test_batterie_discharging_wrapped(battery_discharging: Batterie):
     success = battery_discharging.update()
     assert success is not False
 
-    assert battery_discharging.seconds_until_reserve == 35208
-    assert battery_discharging.backup_reserve_at.strftime('%d.%b.%Y %H:%M')  == '21.Nov.2023 02:47'
+    assert battery_discharging.seconds_until_reserve ==  31583
+    assert battery_discharging.backup_reserve_at.strftime('%d.%b.%Y %H:%M')  == '21.Nov.2023 01:47'
 
     discharging_flows = battery_discharging.status_flows
 #    print(f'discharging_flows: {discharging_flows}')

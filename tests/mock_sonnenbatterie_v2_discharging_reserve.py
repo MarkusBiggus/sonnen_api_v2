@@ -155,14 +155,14 @@ def __mock_battery_discharging(*args)-> json:
         "minimummoduletemperature":-273.15,
         "nominalmoduledcvoltage":102.4,
         "relativestateofcharge":18.0,
-        "remainingcapacity":36.36,
+        "remainingcapacity":36.3564,
         "systemalarm":0.0,
         "systemcurrent":0.0,
         "systemdcvoltage":208.3,
         "systemstatus":49,
         "systemtime":0.0,
         "systemwarning":0.0,
-        "usableremainingcapacity":22.22
+        "usableremainingcapacity":22.2178
     }
 
 def __mock_inverter_discharging(*args)-> json:

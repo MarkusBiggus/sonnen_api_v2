@@ -55,7 +55,8 @@ def test_sync_methods(battery_discharging_reserve: Batterie) -> None:
 
     battery_status =  battery_discharging_reserve.sync_get_battery()
     assert battery_status.get('cyclecount') == 30
-    assert battery_status.get('remainingcapacity') == 36.36
+    assert battery_status.get('remainingcapacity') == 36.3564
+    assert battery_status.get('usableremainingcapacity') == 22.2178
 
     inverter_data = battery_discharging_reserve.sync_get_inverter()
     assert  int(inverter_data.get('pac_total')) == status_data.get('Pac_total_W')
@@ -65,6 +66,9 @@ def test_sync_methods(battery_discharging_reserve: Batterie) -> None:
     configurations = battery_discharging_reserve.sync_get_configurations()
     assert configurations.get('DE_Software') == '1.14.5'
     assert configurations.get('EM_USOC') == 20
+
+    assert battery_discharging_reserve.battery_rsoc == 18.0
+    assert battery_discharging_reserve.battery_usoc == 11.0
 
     from .check_results import check_reserve_results
 

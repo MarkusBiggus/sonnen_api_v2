@@ -83,5 +83,5 @@ RATE_LIMIT = 3 #seconds
 DEFAULT_PORT = 80
 DEFAULT_PORT = 80
 
-# Manufacturer reserve 7%
-BATTERY_UNUSABLE_RESERVE = .07
+# Manufacturer reserve 8%
+BATTERY_UNUSABLE_RESERVE = .08

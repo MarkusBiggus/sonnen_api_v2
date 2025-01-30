@@ -744,18 +744,19 @@ class Sonnen:
     @get_item(int)
     def seconds_until_reserve(self) -> Union[int, None]:
         """Time until battery capacity at backup reserve.
+            Reserve reached when USoC == BRC.
             Above reserve:
                 Charging - None
                 Discharging - seconds to reserve
             Below Reserve
                 Charging - seconds to reserve
                 Discharging - None
-                Standby - None
+            Standby - zero seconds
             Returns:
                 Time in seconds or None
         """
 
-        until_reserve = self.battery_remaining_capacity_wh - self.backup_buffer_capacity_wh
+        until_reserve = self.battery_usable_remaining_capacity_wh - self.backup_buffer_capacity_wh
 
         if round(until_reserve) > 0:
             return int((until_reserve / self.discharging) * 3600) if self.discharging else None

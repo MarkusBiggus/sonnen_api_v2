@@ -5,6 +5,8 @@ def check_charge_results(battery_charging: Batterie):
     """Common results for each method of updating
         Batterie object from network device
     """
+    assert battery_charging.battery_rsoc == 88.0
+    assert battery_charging.battery_usoc == 81.0
     assert battery_charging.status_battery_charging is True
     assert battery_charging.status_battery_discharging is False
     assert battery_charging.system_status == 'OnGrid'
@@ -38,15 +40,17 @@ def check_charge_results(battery_charging: Batterie):
     assert battery_charging.battery_activity_state == 'charging'
 
 def check_discharge_results(battery_discharging: Batterie):
-    assert battery_discharging.backup_reserve_at.strftime('%d.%b.%Y %H:%M')  == '21.Nov.2023 02:47'
+    assert battery_discharging.battery_rsoc == 88.0
+    assert battery_discharging.battery_usoc == 81.0
     assert battery_discharging.seconds_until_fully_discharged == 45564
     assert battery_discharging.fully_discharged_at.strftime('%d.%b.%Y %H:%M') == '21.Nov.2023 05:40'
 
-    assert battery_discharging.seconds_until_reserve == 35208
+    assert battery_discharging.seconds_until_reserve == 31583
+    assert battery_discharging.backup_reserve_at.strftime('%d.%b.%Y %H:%M')  == '21.Nov.2023 01:47'
     assert battery_discharging.battery_full_charge_capacity_wh == 20683.49
     assert battery_discharging.battery_remaining_capacity_wh == 18200.6
     assert battery_discharging.backup_buffer_capacity_wh ==  4136.7
-    assert battery_discharging.capacity_until_reserve == 14063.9
+    assert battery_discharging.capacity_until_reserve == 12616.5
     assert battery_discharging.status_remaining_capacity_wh == 18201.5
     assert battery_discharging.status_usable_capacity_wh == 16753.6
     assert battery_discharging.seconds_since_full == 574
@@ -73,6 +77,8 @@ def check_discharge_results(battery_discharging: Batterie):
     assert battery_discharging.battery_activity_state == 'discharging'
 
 def check_reserve_results(battery_discharging_reserve: Batterie):
+    assert battery_discharging_reserve.battery_rsoc == 18.0
+    assert battery_discharging_reserve.battery_usoc == 11.0
     assert battery_discharging_reserve.battery_full_charge_capacity == 201.98
     assert battery_discharging_reserve.status_remaining_capacity_wh == 3723.0
     assert battery_discharging_reserve.seconds_since_full == 2574
@@ -85,9 +91,8 @@ def check_reserve_results(battery_discharging_reserve: Batterie):
     assert battery_discharging_reserve.battery_usable_remaining_capacity_wh == 2275.1
     assert battery_discharging_reserve.used_capacity_wh + battery_discharging_reserve.battery_remaining_capacity_wh == 20683.4 # 20683.49
     assert battery_discharging_reserve.backup_buffer_capacity_wh == 4136.7
-    assert battery_discharging_reserve.backup_buffer_usable_capacity_wh == 2688.9 # ? 3436.7
     assert battery_discharging_reserve.seconds_until_fully_discharged == 9320
-    assert battery_discharging_reserve.capacity_to_reserve == 413.8
+    assert battery_discharging_reserve.capacity_to_reserve == 1861.5
     assert battery_discharging_reserve.fully_discharged_at.strftime('%d.%b.%Y %H:%M') == '20.Nov.2023 19:36'
     assert battery_discharging_reserve.using_reserve is True
     assert battery_discharging_reserve.capacity_until_reserve is None

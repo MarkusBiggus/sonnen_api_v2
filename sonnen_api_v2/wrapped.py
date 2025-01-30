@@ -304,7 +304,7 @@ def _aug_battery(self) -> Dict:
     self._battery_status['dod_reserved_capacity'] = self.battery_unusable_capacity_wh
     self._battery_status['remaining_capacity'] = self.battery_remaining_capacity_wh
     self._battery_status['remaining_capacity_usable'] = self.battery_usable_remaining_capacity_wh
-    self._battery_status['backup_buffer_usable'] = self.backup_buffer_usable_capacity_wh
+    self._battery_status['backup_buffer_capacity'] = self.backup_buffer_capacity_wh
     return self._battery_status
 
 def get_powermeter(self) -> Dict:

@@ -223,8 +223,8 @@ def test_batterie_charging_wrapped(battery_charging: Batterie):
     #         - latestData.get("battery_info", {}).get("reserved_capacity", 0)
     # )
     BackupBuffer = latestData.get("status", {}).get("BackupBuffer")
-    backup_buffer_usable = latestData.get("battery_info", {}).get("backup_buffer_usable")
-    print(f'BackupBuffer: {BackupBuffer}%  Backup_Usable: {backup_buffer_usable:,}Wh', flush=True)
+    backup_buffer_capacity = latestData.get("battery_info", {}).get("backup_buffer_capacity")
+    print(f'BackupBuffer: {BackupBuffer}%  Backup_Usable: {backup_buffer_capacity:,}Wh', flush=True)
     total_capacity_raw = latestData.get("battery_info", {}).get("fullchargecapacitywh")
     reserved_capacity_raw = latestData.get("battery_info", {}).get("dod_reserved_capacity")
     print(f'total_capacity (raw): {total_capacity_raw:,}Wh', flush=True)
@@ -268,14 +268,13 @@ def test_batterie_discharging_wrapped(battery_discharging: Batterie):
     success = battery_discharging.update()
     assert success is not False
 
-    assert battery_discharging.seconds_until_reserve == 35208
-    assert battery_discharging.backup_reserve_at.strftime('%d.%b.%Y %H:%M')  == '21.Nov.2023 02:47'
+    assert battery_discharging.seconds_until_reserve ==  31583
+    assert battery_discharging.backup_reserve_at.strftime('%d.%b.%Y %H:%M')  == '21.Nov.2023 01:47'
 
     discharging_flows = battery_discharging.status_flows
 #    print(f'discharging_flows: {discharging_flows}')
     assert discharging_flows == {'FlowConsumptionBattery': True, 'FlowConsumptionGrid': False, 'FlowConsumptionProduction': True, 'FlowGridBattery': True, 'FlowProductionBattery': False, 'FlowProductionGrid': False}
 
-    assert battery_discharging.seconds_until_reserve == 35208
     #common tests for all fixture methods
     from . check_results import check_discharge_results
 

@@ -710,9 +710,10 @@ class Sonnen:
     @property
     @get_item(float)
     def capacity_until_reserve(self) -> float:
-        """Capacity until reserve is reached (battery state goes standby).
-            Capacity above reserve until reserve charge (how much to discharge).
+        """Capacity until backup reserve is reached (battery state goes standby).
+            Capacity above Backup Reserve Charge (BRC) is how much to discharge until standby.
             Standby state is reached when battery_usoc == status_backup_buffer.
+            until_reserve = USoc - BRC
             Returns:
                 Wh or None when below backup reserve
         """
@@ -836,10 +837,11 @@ class Sonnen:
     @get_item(int)
     def usable_capacity_wh(self) -> int:
         """Usable amount of Full charge capacity.
+            prefer battery_uable_capacity_wh over this status value.
             Returns:
                 Capacity in Wh
         """
-        return round((self.full_charge_capacity * self.u_soc / 100) - self.unusable_capacity, 1)
+        return round((self.full_charge_capacity * self.u_soc / 100), 1)
 
     # @property
     # @get_item(int)
@@ -1004,17 +1006,20 @@ class Sonnen:
             Returns:
                 Remaining capacity in Ah
         """
+
         return self._battery_status[BATTERY_REMAINING_CAPACITY]
 
     @property
     @get_item(float)
     def battery_rsoc(self) -> float:
         """Relative state of charge.
+            Calcuated from battery Amps reported.
             Returns:
                 Relative state of charge %
         """
-    #    return self._battery_status[BATTERY_RSOC]
+
         return round(self.battery_remaining_capacity / self.battery_full_charge_capacity * 100, 1)
+    #    return self._battery_status[BATTERY_RSOC]
 
     @property
     @get_item(float)
@@ -1022,9 +1027,9 @@ class Sonnen:
         """Remaining capacity Wh calculated from Ah.
             use instead of status RemainingCapacity_Wh which is incorrect
             Returns:
-                Wh rounded to 1 decimal place
+                Remaining capacity in Wh
         """
-#        return round((self.battery_remaining_capacity * self.battery_module_dc_voltage) + self.battery_unusable_capacity_wh, 1)
+
         return round(self.battery_remaining_capacity * self.battery_module_dc_voltage, 1)
 
     @property
@@ -1034,12 +1039,14 @@ class Sonnen:
             Returns:
                 Usable Remaining capacity in Ah
         """
+
         return self._battery_status[BATTERY_USABLE_REMAINING_CAPACITY]
 
     @property
     @get_item(float)
     def battery_usoc(self) -> float:
         """Usable state of charge.
+            Calcuated from battery Amps reported.
             Returns:
                 Usable state of charge %
         """
@@ -1072,11 +1079,12 @@ class Sonnen:
     @get_item(float)
     def battery_module_dc_voltage(self) -> float:
         """Battery module voltage.
-            value is consistent with Ah & Wh values reported
+            value is consistent with Ah & Wh values reported.
 
             Returns:
                 Voltage in Volt
         """
+
         return self._battery_status[BATTERY_NOMINAL_MODULE_VOLTAGE]
 
     @property
@@ -1096,6 +1104,7 @@ class Sonnen:
             Returns:
                 System current in Ampere
         """
+
         return self._battery_status[BATTERY_SYSTEM_CURRENT]
 
     @property
@@ -1105,6 +1114,7 @@ class Sonnen:
             Returns:
                 Time in seconds - None when not charging, zero when fully charged
         """
+
         remaining_charge = self.battery_full_charge_capacity_wh - self.battery_remaining_capacity_wh
         seconds = int(remaining_charge / self.charging * 3600) if self.charging else None
 
@@ -1117,6 +1127,7 @@ class Sonnen:
             Returns:
                 Time in seconds - None when not discharging, zero when fully discharged
         """
+
         remaining_charge = self.battery_remaining_capacity_wh
         seconds = int(remaining_charge / self.discharging * 3600) if self.discharging else None
 
@@ -1129,6 +1140,7 @@ class Sonnen:
             Returns:
                 Datetime with timezone or None when not charging
         """
+
         return (datetime.datetime.now().astimezone() + datetime.timedelta(seconds=self.seconds_until_fully_charged)) if self.charging else None
 
     @property
@@ -1138,6 +1150,7 @@ class Sonnen:
             Returns:
                 Datetime discharged or None when not discharging
         """
+
         return (datetime.datetime.now().astimezone() + datetime.timedelta(seconds=self.seconds_until_fully_discharged)) if self.discharging else None
 
     @property
@@ -1147,6 +1160,7 @@ class Sonnen:
             Returns:
                 Integer code
         """
+
         return self._configurations[CONFIGURATION_EM_OPERATINGMODE]
 
     @property
@@ -1170,6 +1184,7 @@ class Sonnen:
             Returns:
                 String
         """
+
         return self._configurations[CONFIGURATION_DE_SOFTWARE]
 
     @property
@@ -1179,6 +1194,7 @@ class Sonnen:
             Returns:
                 Integer Percent
         """
+
         return self._configurations[CONFIGURATION_MODULECAPACITY]
 
     @property
@@ -1188,7 +1204,7 @@ class Sonnen:
             Returns:
                 Number of modules
         """
-#        return self._latest_details_data[IC_STATUS][STATUS_MODULES_INSTALLED]
+
         return self._configurations[CONFIGURATION_BATTERYMODULES]
 
     @property
@@ -1198,6 +1214,7 @@ class Sonnen:
             Returns:
                 total installed capacity Wh
         """
+
         return self.configuration_module_capacity * self.installed_modules
 
     @property
@@ -1207,6 +1224,7 @@ class Sonnen:
             Returns:
                 Integer Percent
         """
+
         return self._configurations[CONFIGURATION_EM_USOC]
 
     @property
@@ -1216,6 +1234,7 @@ class Sonnen:
            Returns:
                average consumption in watt
         """
+
         return self._status_data[STATUS_CONSUMPTION_AVG]
 
     @property
@@ -1224,6 +1243,7 @@ class Sonnen:
             Returns:
                 String
         """
+
         return self._status_data[STATUS_SYSTEMSTATUS]
 
     @property
@@ -1234,6 +1254,7 @@ class Sonnen:
             Returns:
                 datetime with timezone
         """
+
         return  datetime.datetime.fromisoformat(self._status_data[STATUS_TIMESTAMP]).astimezone()
 
     @property
@@ -1243,6 +1264,7 @@ class Sonnen:
            Returns:
               Hz
         """
+
         return round(self._status_data[STATUS_FREQUENCY], 1)
 
     @property
@@ -1252,6 +1274,7 @@ class Sonnen:
             Returns:
                 percent
         """
+
         return self._status_data[STATUS_RSOC]
 
     @property
@@ -1261,6 +1284,7 @@ class Sonnen:
             Returns:
                 percent
         """
+
         return self._status_data[STATUS_USOC]
 
     @property
@@ -1270,6 +1294,7 @@ class Sonnen:
             Returns:
                 Wh
         """
+
         return round(self.battery_full_charge_capacity_wh * self.status_rsoc / 100, 1)
 
     @property
@@ -1279,8 +1304,8 @@ class Sonnen:
             Returns:
                 Wh
         """
+
         return round((self.battery_full_charge_capacity_wh * self.status_usoc / 100), 1)
-#        return round((self.battery_full_charge_capacity_wh * self.status_usoc / 100) - self.unusable_capacity, 1)
 
     # @property
     # @get_item(int)
@@ -1442,19 +1467,19 @@ class Sonnen:
         if self.status_battery_charging:
             battery_status = "charging"
         elif self.status_battery_discharging:
-            if self.status_rsoc > self.status_backup_buffer:
+            if self.battery_usoc > self.status_backup_buffer:
                 battery_status = "discharging"
             else:
                 battery_status = "discharging reserve"
         elif self.battery_rsoc > 98: # look at usable capacity over long term?
             battery_status = "charged"
-        elif self.status_usoc < 3:
+        elif self.battery_usoc < 2:
             battery_status = "discharged"
         else:
-            if self.status_rsoc > self.status_backup_buffer:
-                battery_status = "standby" # standby @ reserve
-            else:
-                battery_status = "standby reserve" # standby below reserve
+#           if round(self.battery_usoc) == self.status_backup_buffer:
+            battery_status = "standby" # standby @ reserve
+#            else:
+#                battery_status = "standby reserve" # standby below reserve
 
         return battery_status
 

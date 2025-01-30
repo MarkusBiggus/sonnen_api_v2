@@ -697,6 +697,7 @@ class Sonnen:
     def capacity_to_reserve(self) -> float:
         """Capacity to reserve.
             Below reserve capacity to reserve charge (how much to charge).
+
             Returns:
                 Wh
         """
@@ -842,7 +843,7 @@ class Sonnen:
             Returns:
                 Capacity in Wh
         """
-        return round((self.full_charge_capacity * self.u_soc / 100), 1)
+        return round((self.full_charge_capacity * self.u_soc / 100) - self.unusable_capacity, 1)
 
     # @property
     # @get_item(int)
@@ -1002,8 +1003,30 @@ class Sonnen:
 
     @property
     @get_item(float)
+    def battery_used_capacity(self) -> float:
+        """Used capacity from Full charge.
+            Returns:
+                Used Capacity in Ah
+        """
+
+        used_capacity = self.battery_full_charge_capacity - self.battery_remaining_capacity
+        return used_capacity if used_capacity > 0 else 0
+
+    @property
+    @get_item(float)
+    def battery_used_capacity_wh(self) -> float:
+        """Calculate Used capacity from Full charge.
+            Returns:
+                Used Capacity in Wh
+        """
+
+        return round(self.battery_used_capacity * self.battery_module_dc_voltage, 1)
+
+    @property
+    @get_item(float)
     def battery_remaining_capacity(self) -> float:
         """Remaining capacity.
+            Appears to NOT include BATTERY_UNUSABLE_RESERVE.
             Returns:
                 Remaining capacity in Ah
         """
@@ -1307,6 +1330,7 @@ class Sonnen:
         """
 
         return round((self.battery_full_charge_capacity_wh * self.status_usoc / 100), 1)
+
 
     # @property
     # @get_item(int)

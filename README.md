@@ -78,11 +78,13 @@ async def validate() -> BatterieResponse:
 
 async def update() -> BatterieResponse:
     _batterie = BatterieBackup(auth_token, ip_address, port)
-    return await _batterie.get_response()
+    return await _batterie.refresh_response()
 
 
 # hass will call from its running event loop
 loop = asyncio.new_event_loop()
 asyncio.set_event_loop(loop)
 response = loop.run_until_complete(update())
+
+assert isinstance(response, BatterieResponse) is True
 ```

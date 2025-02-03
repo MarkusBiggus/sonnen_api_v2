@@ -692,7 +692,6 @@ class Sonnen:
         """
 
         return self.u_soc < self.status_backup_buffer
-#        return self.battery_usoc < self.status_backup_buffer
 
     @property
     @get_item(float)
@@ -714,7 +713,7 @@ class Sonnen:
     def capacity_until_reserve(self) -> float:
         """Capacity until backup reserve is reached (battery state goes standby).
             Capacity above Backup Reserve Charge (BRC) is how much to discharge until standby.
-            Standby state is reached when battery_usoc == status_backup_buffer.
+            Standby state is reached when u_soc == status_backup_buffer.
             until_reserve = USoc - BRC
             Returns:
                 Wh or None when below backup reserve
@@ -1474,23 +1473,20 @@ class Sonnen:
         if self.configurations is None:
             return "unavailable"
 
-        """ current_state index of: ["standby", "charging", "discharging", "discharging reserve", "charged", "discharged", "standby reserve"] """
+        """ current_state index of: ["standby", "charging", "discharging", "discharging reserve", "charged", "discharged"] """
         if self.status_battery_charging:
             battery_status = "charging"
         elif self.status_battery_discharging:
-            if self.battery_usoc > self.status_backup_buffer:
-                battery_status = "discharging"
-            else:
+            if self.u_soc < self.status_backup_buffer:
                 battery_status = "discharging reserve"
-        elif self.battery_rsoc > 98: # look at usable capacity over long term?
+            else:
+                battery_status = "discharging"
+        elif self.r_soc > 98: # look at usable capacity over long term?
             battery_status = "charged"
-        elif self.battery_usoc < 2:
+        elif self.u_soc < 2:
             battery_status = "discharged"
         else:
-#           if round(self.battery_usoc) == self.status_backup_buffer:
             battery_status = "standby" # standby @ reserve
-#            else:
-#                battery_status = "standby reserve" # standby below reserve
 
         return battery_status
 

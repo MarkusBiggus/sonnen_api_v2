@@ -98,6 +98,9 @@ async def test_batterieresponse_works(battery_charging: Batterie) -> None:
     assert _batterie.get_sensor_value('consumption_total_w') == 59.30
     assert _batterie.get_sensor_value('state_bms') == 'ready'
     assert _batterie.get_sensor_value('state_inverter') == 'running'
+    assert _batterie.get_sensor_value('microgrid_enabled') is False
+    assert _batterie.get_sensor_value('mg_minimum_soc_reached') is False
+    assert _batterie.get_sensor_value('dc_minimum_rsoc_reached') is False
 
 
 @pytest.mark.asyncio

@@ -90,7 +90,6 @@ def check_reserve_results(battery_discharging_reserve: Batterie):
     assert battery_discharging_reserve.battery_unusable_capacity_wh == 1447.8
     assert battery_discharging_reserve.usable_remaining_capacity_wh == 2220.6
     assert battery_discharging_reserve.battery_usable_remaining_capacity_wh == 2275.1
-#    assert battery_discharging_reserve.used_capacity_wh + battery_discharging_reserve.battery_remaining_capacity_wh == 20683.4 # 20683.49
     assert battery_discharging_reserve.backup_buffer_capacity_wh == 4037.4
     assert battery_discharging_reserve.seconds_until_fully_discharged == 9320
     assert battery_discharging_reserve.capacity_to_reserve == 1816.8

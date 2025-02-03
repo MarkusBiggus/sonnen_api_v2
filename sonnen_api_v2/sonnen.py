@@ -703,8 +703,6 @@ class Sonnen:
                 Wh or None when not below backup reserve
         """
 
-        # until_reserve = (self.battery_usable_remaining_capacity / self.battery_full_charge_capacity) - (self.status_backup_buffer / 100)
-        # return round(self.battery_full_charge_capacity_wh * abs(until_reserve), 1) if until_reserve < 0 else None
         until_reserve = self.u_soc - self.status_backup_buffer
         return round(self.full_charge_capacity_wh * abs(until_reserve) / 100, 1) if until_reserve < 0 else None
 
@@ -719,8 +717,6 @@ class Sonnen:
                 Wh or None when below backup reserve
         """
 
-        # until_reserve = (self.battery_usable_remaining_capacity / self.battery_full_charge_capacity) - (self.status_backup_buffer / 100)
-        # return round(self.battery_full_charge_capacity_wh * until_reserve, 1) if until_reserve > 0 else None
         until_reserve = self.u_soc - self.status_backup_buffer
         return round(self.full_charge_capacity_wh * until_reserve / 100, 1) if until_reserve >= 0 else None
 
@@ -848,7 +844,6 @@ class Sonnen:
                 Capacity in Wh
         """
 
-#        used_capacity = round(self.battery_full_charge_capacity_wh - self.status_remaining_capacity_wh, 1)
         used_capacity = self.full_charge_capacity_wh - self.usable_remaining_capacity_wh
         return round(used_capacity, 1) if used_capacity > 0 else 0
 
@@ -860,8 +855,7 @@ class Sonnen:
                 Wh
         """
 
-    #    return round(self.battery_full_charge_capacity_wh * self.status_rsoc / 100, 1)
-        return round(self.battery_full_charge_capacity_wh * self.r_soc / 100, 1)
+         return round(self.battery_full_charge_capacity_wh * self.r_soc / 100, 1)
 
     @property
     @get_item(float)
@@ -871,17 +865,7 @@ class Sonnen:
                 Wh
         """
 
-    #    return round((self.battery_full_charge_capacity_wh * self.status_usoc / 100), 1)
         return round((self.full_charge_capacity_wh * self.u_soc / 100), 1)
-
-    # @property
-    # @get_item(int)
-    # def unusable_capacity_wh(self) -> int:
-    #     """Unusable amount of Full charge due to DoD limit.
-    #         Returns:
-    #             Capacity in Wh
-    #     """
-    #     return round(self.full_charge_capacity * self.dod_limit, 1)
 
     @property
     @get_item(int)

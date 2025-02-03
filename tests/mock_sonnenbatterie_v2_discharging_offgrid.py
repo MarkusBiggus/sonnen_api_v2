@@ -35,7 +35,7 @@ def __mock_status_discharging(*args)-> json:
 
 def __mock_latest_discharging(*args)-> json:
     return {
-        'FullChargeCapacity': 20683.490,
+        'FullChargeCapacity': 20187.086,
         'GridFeedIn_W': 0,
         'Pac_total_W': 1439,
         'Consumption_W': 1541,

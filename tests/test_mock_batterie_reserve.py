@@ -65,7 +65,6 @@ async def test_batterie_discharging_reserve(battery_discharging_reserve: Batteri
 #    print(f'discharging_flows: {discharging_flows}')
     assert discharging_flows == {'FlowConsumptionBattery': True, 'FlowConsumptionGrid': False, 'FlowConsumptionProduction': True, 'FlowGridBattery': True, 'FlowProductionBattery': False, 'FlowProductionGrid': False}
 
-
     #common tests for all fixture methods
     from . check_results import check_reserve_results
 

@@ -249,6 +249,7 @@ def test_batterie_charging_wrapped(battery_charging: Batterie):
     latestData["configurations"] = battery_charging.get_configurations()
     assert latestData["configurations"] .get("DepthOfDischargeLimit") == 93
 
+    assert battery_charging.used_capacity_wh == 3835.6
     #common tests for all fixture methods
     from . check_results import check_charge_results
 
@@ -268,8 +269,8 @@ def test_batterie_discharging_wrapped(battery_discharging: Batterie):
     success = battery_discharging.update()
     assert success is not False
 
-    assert battery_discharging.seconds_until_reserve ==  31583
-    assert battery_discharging.backup_reserve_at.strftime('%d.%b.%Y %H:%M')  == '21.Nov.2023 01:47'
+    assert battery_discharging.seconds_until_reserve ==  30828
+    assert battery_discharging.backup_reserve_at.strftime('%d.%b.%Y %H:%M')  == '21.Nov.2023 01:34'
 
     discharging_flows = battery_discharging.status_flows
 #    print(f'discharging_flows: {discharging_flows}')

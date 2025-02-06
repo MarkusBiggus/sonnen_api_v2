@@ -1269,7 +1269,7 @@ class Sonnen:
 
     @property
     def system_status(self) -> str:
-        """System Status: Config, OnGrid, OffGrid, Critical Error, ...
+        """System Status: Init, Config, OnGrid, OffGrid, Critical Error, ...
             Returns:
                 String
         """

@@ -681,7 +681,8 @@ class Sonnen:
            Returns:
                DateTime with timezone
         """
-        return datetime.datetime.now().astimezone() - self.time_since_full
+#        return datetime.datetime.now().astimezone() - self.time_since_full
+        return self._last_updated.astimezone() - self.time_since_full
 
     @property
     @get_item(bool)
@@ -733,7 +734,8 @@ class Sonnen:
             return None
 
 #        if seconds > 0:
-        return (datetime.datetime.now().astimezone() + datetime.timedelta(seconds=seconds)) # if self.discharging else None
+#        return (datetime.datetime.now().astimezone() + datetime.timedelta(seconds=seconds)) # if self.discharging else None
+        return (self._last_updated.astimezone() + datetime.timedelta(seconds=seconds)) # if self.discharging else None
         # if seconds < 0:
         #     return (datetime.datetime.now().astimezone() - datetime.timedelta(seconds=abs(seconds))) if self.discharging else None
 
@@ -855,7 +857,7 @@ class Sonnen:
                 Wh
         """
 
-         return round(self.battery_full_charge_capacity_wh * self.r_soc / 100, 1)
+        return round(self.battery_full_charge_capacity_wh * self.r_soc / 100, 1)
 
     @property
     @get_item(float)
@@ -1167,7 +1169,8 @@ class Sonnen:
                 Datetime with timezone or None when not charging
         """
 
-        return (datetime.datetime.now().astimezone() + datetime.timedelta(seconds=self.seconds_until_fully_charged)) if self.charging else None
+#        return (datetime.datetime.now().astimezone() + datetime.timedelta(seconds=self.seconds_until_fully_charged)) if self.charging else None
+        return (self._last_updated.astimezone() + datetime.timedelta(seconds=self.seconds_until_fully_charged)) if self.charging else None
 
     @property
     def fully_discharged_at(self) -> Optional[datetime.datetime]:
@@ -1177,7 +1180,8 @@ class Sonnen:
                 Datetime discharged or None when not discharging
         """
 
-        return (datetime.datetime.now().astimezone() + datetime.timedelta(seconds=self.seconds_until_fully_discharged)) if self.discharging else None
+#        return (datetime.datetime.now().astimezone() + datetime.timedelta(seconds=self.seconds_until_fully_discharged)) if self.discharging else None
+        return (self._last_updated.astimezone() + datetime.timedelta(seconds=self.seconds_until_fully_discharged)) if self.discharging else None
 
     @property
     @get_item(int)

@@ -3,6 +3,7 @@
 """
 import logging
 import pytest
+from freezegun import freeze_time
 
 from sonnen_api_v2 import Batterie
 
@@ -14,6 +15,7 @@ LOGGER_NAME = "sonnenapiv2"
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 @pytest.fixture(name="battery_discharging")
+@freeze_time("20-11-2023 17:00:55") # discharging time
 def fixture_battery_discharging(mocker) -> Batterie:
     if LOGGER_NAME is not None:
         logging.basicConfig(filename=(f'/tests/logs/{LOGGER_NAME}.log'), level=logging.DEBUG)

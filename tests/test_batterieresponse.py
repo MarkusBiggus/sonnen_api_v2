@@ -51,8 +51,8 @@ if LOGGER_NAME is not None:
 
 @pytest.mark.asyncio
 #@pytest.mark.usefixtures("battery_charging")
-@freeze_time("20-11-2023 17:00:00")
 @patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_auth200)
+@freeze_time("20-11-2023 17:00:00")
 async def test_batterieresponse_works(battery_charging: Batterie) -> None:
     """BackupBatterie Response using mock data"""
 
@@ -92,7 +92,7 @@ async def test_batterieresponse_works(battery_charging: Batterie) -> None:
     assert _batterie.get_sensor_value('remaining_capacity_wh') == 18201.5
     assert _batterie.get_sensor_value('battery_min_cell_temp') == 18.95
     assert _batterie.get_sensor_value('battery_max_cell_temp') == 19.95
-    assert _batterie.get_sensor_value('battery_dod_limit') == 93
+    assert _batterie.get_sensor_value('battery_dod_limit') == 7
     assert _batterie.get_sensor_value('production_total_w') == 609.5
     assert _batterie.get_sensor_value('consumption_total_w') == 59.30
     assert _batterie.get_sensor_value('state_bms') == 'ready'
@@ -152,9 +152,9 @@ async def __mock_async_update(self):
 
 @pytest.mark.asyncio
 @pytest.mark.usefixtures("battery_charging")
-@freeze_time("20-11-2023 17:00:00")
 @patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_auth200)
 @patch.object(Batterie, 'async_update', __mock_async_update)
+@freeze_time("20-11-2023 17:00:00")
 async def test_batterieresponse_BatterieError(battery_charging: Batterie) -> None:
     """BackupBatterie Response using mock data"""
 

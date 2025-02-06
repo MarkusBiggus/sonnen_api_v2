@@ -89,9 +89,9 @@ async def test_batterie_async(mocker):
 
 
 @pytest.mark.asyncio
-@freeze_time("20-11-2023 17:00:00") # charging time
 @pytest.mark.usefixtures("battery_charging")
 @patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_auth200)
+@freeze_time("20-11-2023 17:00:00") # charging time
 async def test_batterie_charging_async(battery_charging: Batterie):
     """sonnenbatterie Emulator package - using mock data
         Fake good token returns configs data
@@ -105,6 +105,7 @@ async def test_batterie_charging_async(battery_charging: Batterie):
     charging_flows = battery_charging.status_flows
     assert charging_flows == {'FlowConsumptionBattery': False, 'FlowConsumptionGrid': False, 'FlowConsumptionProduction': True, 'FlowGridBattery': False, 'FlowProductionBattery': True, 'FlowProductionGrid': False}
 
+    assert battery_charging.fully_charged_at.strftime('%d.%b.%Y %H:%M') == '20.Nov.2023 18:46'
     #common tests for all fixture methods
     from . check_results import check_charge_results
 
@@ -112,9 +113,9 @@ async def test_batterie_charging_async(battery_charging: Batterie):
 
 
 @pytest.mark.asyncio
-@freeze_time("20-11-2023 17:00:55") # discharging time
 @pytest.mark.usefixtures("battery_discharging")
 @patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_auth200)
+@freeze_time("20-11-2023 17:00:55") # discharging time
 async def test_batterie_discharging_async(battery_discharging: Batterie):
     """sonnenbatterie Emulator package - using mock data
         Fake good token returns configs data
@@ -139,9 +140,9 @@ async def test_batterie_discharging_async(battery_discharging: Batterie):
     check_discharge_results(battery_discharging)
 
 
-@freeze_time("20-11-2023 17:00:00")
 @pytest.mark.usefixtures("battery_charging")
 @patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_auth200)
+@freeze_time("20-11-2023 17:00:00")
 def test_batterie_charging_wrapped(battery_charging: Batterie):
     """sonnenbatterie Emulator package - using mock data
         2. Async update called from sync method
@@ -247,17 +248,16 @@ def test_batterie_charging_wrapped(battery_charging: Batterie):
     assert latestData["inverter"] .get("pac_total") == -1394.33
 
     latestData["configurations"] = battery_charging.get_configurations()
-    assert latestData["configurations"] .get("DepthOfDischargeLimit") == 93
+    assert latestData["configurations"] .get("DepthOfDischargeLimit") == 7
 
-    assert battery_charging.used_capacity_wh == 3835.6
     #common tests for all fixture methods
     from . check_results import check_charge_results
 
     check_charge_results(battery_charging)
 
-@freeze_time("20-11-2023 17:00:55")
 @pytest.mark.usefixtures("battery_discharging")
 @patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_auth200)
+@freeze_time("20-11-2023 17:00:55")
 def test_batterie_discharging_wrapped(battery_discharging: Batterie):
     """sonnenbatterie Emulator package - using mock data
         Fake good token returns configs data

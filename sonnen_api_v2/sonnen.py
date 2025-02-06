@@ -143,7 +143,7 @@ class Sonnen:
             raise BatterieHTTPError(f'HTTP Error fetching endpoint "{self.configurations_api_endpoint}" status: {response.status}')
 
         self._configurations = json.loads(response._body)
-        self._last_configurations = datetime.datetime.now()
+        self._last_configurations = datetime.datetime.now().astimezone()
         return True
 
     def _force_HTTPError(self) -> bool:
@@ -180,7 +180,7 @@ class Sonnen:
             called again within rate limit interval.
         """
 
-        now = datetime.datetime.now()
+        now = datetime.datetime.now().astimezone()
         if self._last_updated is not None:
             diff = now - self._last_updated
             if diff.total_seconds() < RATE_LIMIT:
@@ -238,7 +238,7 @@ class Sonnen:
             called again within rate limit interval
         """
 
-        now = datetime.datetime.now()
+        now = datetime.datetime.now().astimezone()
         if self._last_updated is not None:
             diff = now - self._last_updated
             if diff.total_seconds() < RATE_LIMIT:
@@ -355,7 +355,7 @@ class Sonnen:
     async def async_fetch_configurations(self) -> Awaitable[Dict]:
         """Wait for Fetch Configurations endpoint."""
 
-        now = datetime.datetime.now()
+        now = datetime.datetime.now().astimezone()
         if self._last_configurations is not None:
             diff = now - self._last_configurations
             if diff.total_seconds() < RATE_LIMIT:
@@ -369,7 +369,7 @@ class Sonnen:
     def fetch_configurations(self) -> Dict:
         """Fetch Configurations endpoint."""
 
-        now = datetime.datetime.now()
+        now = datetime.datetime.now().astimezone()
         if self._last_configurations is not None:
             diff = now - self._last_configurations
             if diff.total_seconds() < RATE_LIMIT:
@@ -1091,7 +1091,7 @@ class Sonnen:
         if self._battery_status is not None:
             self.dod_limit = (self.battery_remaining_capacity - self.battery_usable_remaining_capacity) / self.battery_full_charge_capacity
     #    return 100 - (round(self.dod_limit, 2) * 100)
-        return round(self.dod_limit, 2) * 10
+        return round(self.dod_limit, 2) * 100
 
     @property
     @get_item(float)

@@ -42,21 +42,22 @@ def get_item(_type):
     return decorator
 
 class BatterieError(Exception):
-    """Indicates network error communicating with batterie."""
+    """Indicates general error communicating with batterie."""
     pass
 
-class BatterieAuthError(Exception):
-    """Indicates error authorising with batterie."""
+class BatterieAuthError(BatterieError):
+    """Indicates error authenticating with batterie."""
     pass
 
-class BatterieHTTPError(Exception):
-    """Indicates (internal?) HTTP error with batterie."""
+class BatterieHTTPError(BatterieError):
+    """Indicates (internal?) HTTP error with batterie API."""
     pass
 
 
-class BatterieSensorError(Exception):
+class BatterieSensorError(BatterieError):
     """Indicates Sensor attribute requested does not exist."""
     pass
+
 
 class Sonnen:
     """Class for managing Sonnen API V2 data."""

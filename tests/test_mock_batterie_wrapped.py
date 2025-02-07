@@ -250,6 +250,7 @@ def test_batterie_charging_wrapped(battery_charging: Batterie):
     latestData["configurations"] = battery_charging.get_configurations()
     assert latestData["configurations"] .get("DepthOfDischargeLimit") == 7
 
+    assert battery_charging.used_capacity_wh == 3835.6
     #common tests for all fixture methods
     from . check_results import check_charge_results
 

@@ -15,8 +15,8 @@ LOGGER_NAME = "sonnenapiv2"
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 @responses.activate
-@freeze_time("20-11-2023 17:00:59")
 @pytest.mark.usefixtures("battery_discharging_reserve")
+@freeze_time("20-11-2023 17:00:59")
 def test_sync_methods(battery_discharging_reserve: Batterie) -> None:
     if LOGGER_NAME is not None:
         logging.basicConfig(filename=(f'/tests/logs/{LOGGER_NAME}.log'), level=logging.DEBUG)

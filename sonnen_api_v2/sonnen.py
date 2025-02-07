@@ -143,7 +143,7 @@ class Sonnen:
             raise BatterieHTTPError(f'HTTP Error fetching endpoint "{self.configurations_api_endpoint}" status: {response.status}')
 
         self._configurations = json.loads(response._body)
-        self._last_configurations = datetime.datetime.now()
+        self._last_configurations = datetime.datetime.now().astimezone()
         return True
 
     def _force_HTTPError(self) -> bool:
@@ -180,7 +180,7 @@ class Sonnen:
             called again within rate limit interval.
         """
 
-        now = datetime.datetime.now()
+        now = datetime.datetime.now().astimezone()
         if self._last_updated is not None:
             diff = now - self._last_updated
             if diff.total_seconds() < RATE_LIMIT:
@@ -238,7 +238,7 @@ class Sonnen:
             called again within rate limit interval
         """
 
-        now = datetime.datetime.now()
+        now = datetime.datetime.now().astimezone()
         if self._last_updated is not None:
             diff = now - self._last_updated
             if diff.total_seconds() < RATE_LIMIT:
@@ -355,7 +355,7 @@ class Sonnen:
     async def async_fetch_configurations(self) -> Awaitable[Dict]:
         """Wait for Fetch Configurations endpoint."""
 
-        now = datetime.datetime.now()
+        now = datetime.datetime.now().astimezone()
         if self._last_configurations is not None:
             diff = now - self._last_configurations
             if diff.total_seconds() < RATE_LIMIT:
@@ -369,7 +369,7 @@ class Sonnen:
     def fetch_configurations(self) -> Dict:
         """Fetch Configurations endpoint."""
 
-        now = datetime.datetime.now()
+        now = datetime.datetime.now().astimezone()
         if self._last_configurations is not None:
             diff = now - self._last_configurations
             if diff.total_seconds() < RATE_LIMIT:
@@ -681,7 +681,8 @@ class Sonnen:
            Returns:
                DateTime with timezone
         """
-        return datetime.datetime.now().astimezone() - self.time_since_full
+#        return datetime.datetime.now().astimezone() - self.time_since_full
+        return self._last_updated.astimezone() - self.time_since_full
 
     @property
     @get_item(bool)
@@ -733,7 +734,8 @@ class Sonnen:
             return None
 
 #        if seconds > 0:
-        return (datetime.datetime.now().astimezone() + datetime.timedelta(seconds=seconds)) # if self.discharging else None
+#        return (datetime.datetime.now().astimezone() + datetime.timedelta(seconds=seconds)) # if self.discharging else None
+        return (self._last_updated.astimezone() + datetime.timedelta(seconds=seconds)) # if self.discharging else None
         # if seconds < 0:
         #     return (datetime.datetime.now().astimezone() - datetime.timedelta(seconds=abs(seconds))) if self.discharging else None
 
@@ -855,7 +857,7 @@ class Sonnen:
                 Wh
         """
 
-         return round(self.battery_full_charge_capacity_wh * self.r_soc / 100, 1)
+        return round(self.battery_full_charge_capacity_wh * self.r_soc / 100, 1)
 
     @property
     @get_item(float)
@@ -1080,16 +1082,16 @@ class Sonnen:
     @property
     @get_item(int)
     def battery_dod_limit(self) -> int:
-        """Depth Of Discharge limit as a percentage of full charge.
+        """Depth Of Discharge limit as a percentage of full charge remaining.
             When battery status has not been fetched, return estimate BATTERY_UNUSABLE_RESERVE
             Returns:
-                percent of full charge
+                percent of full charge remaining
         """
 
         if self._battery_status is not None:
             self.dod_limit = (self.battery_remaining_capacity - self.battery_usable_remaining_capacity) / self.battery_full_charge_capacity
-    #    print(f'dod: {self.dod_limit:.2f}')
-        return 100 - (round(self.dod_limit, 2) * 100)
+    #    return 100 - (round(self.dod_limit, 2) * 100)
+        return round(self.dod_limit, 2) * 100
 
     @property
     @get_item(float)
@@ -1167,7 +1169,8 @@ class Sonnen:
                 Datetime with timezone or None when not charging
         """
 
-        return (datetime.datetime.now().astimezone() + datetime.timedelta(seconds=self.seconds_until_fully_charged)) if self.charging else None
+#        return (datetime.datetime.now().astimezone() + datetime.timedelta(seconds=self.seconds_until_fully_charged)) if self.charging else None
+        return (self._last_updated.astimezone() + datetime.timedelta(seconds=self.seconds_until_fully_charged)) if self.charging else None
 
     @property
     def fully_discharged_at(self) -> Optional[datetime.datetime]:
@@ -1177,7 +1180,8 @@ class Sonnen:
                 Datetime discharged or None when not discharging
         """
 
-        return (datetime.datetime.now().astimezone() + datetime.timedelta(seconds=self.seconds_until_fully_discharged)) if self.discharging else None
+#        return (datetime.datetime.now().astimezone() + datetime.timedelta(seconds=self.seconds_until_fully_discharged)) if self.discharging else None
+        return (self._last_updated.astimezone() + datetime.timedelta(seconds=self.seconds_until_fully_discharged)) if self.discharging else None
 
     @property
     @get_item(int)
@@ -1265,7 +1269,7 @@ class Sonnen:
 
     @property
     def system_status(self) -> str:
-        """System Status: Config, OnGrid, OffGrid, Critical Error, ...
+        """System Status: Init, Config, OnGrid, OffGrid, Critical Error, ...
             Returns:
                 String
         """

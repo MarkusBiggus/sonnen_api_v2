@@ -45,7 +45,6 @@ def check_discharge_results(battery_discharging: Batterie):
     assert battery_discharging.battery_usoc == 81.0
     assert battery_discharging.seconds_until_fully_discharged == 45564
     assert battery_discharging.fully_discharged_at.strftime('%d.%b.%Y %H:%M') == '21.Nov.2023 05:40'
-
     assert battery_discharging.seconds_until_reserve == 30828
     assert battery_discharging.backup_reserve_at.strftime('%d.%b.%Y %H:%M')  == '21.Nov.2023 01:34'
     assert battery_discharging.battery_full_charge_capacity_wh == 20683.49

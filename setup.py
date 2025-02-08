@@ -27,12 +27,13 @@ setup(
     author_email='katamave@gmail.com',
     description=read_file('README.md'),
     install_requires=[
-        'requests~=2.32',
-        'aiohttp>=3.1.1',
-        'isal==1.7.1',
-        'aiohttp-fast-zlib>=0.1.1,<4.0.0',
+        'requests~=2.32.3',
+        'aiohttp~=3.11.11',
+        'isal~=1.7.1',
+        'aiohttp-fast-zlib~=0.2.1,<4.0.0',
         'urllib3>=1.26.20,<2.0.0',
-        'load_dotenv>=0.1.0',
-        'yarl==1.16.0'
-    ]
+        'yarl~=1.18.3',
+        "setuptools~=75.7.0",
+    ],
+    python_requires=">=3.12",
 )

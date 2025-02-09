@@ -72,6 +72,7 @@ class Sonnen:
         self._last_updated = None #rate limiters
         self._last_get_updated = None
         self._last_configurations = None
+        self._last_fully_charged = None
         self.dod_limit = BATTERY_UNUSABLE_RESERVE #default depth of discharge limit until battery status
 
         logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -199,13 +200,17 @@ class Sonnen:
             self._latest_details_data = await self.async_fetch_latest_details()
             success = (self._latest_details_data is not None)
         if success:
+            if self.seconds_since_full == 0 and self._last_fully_charged is None:
+                self._last_fully_charged = now
+            elif self._last_fully_charged is not None and self.seconds_since_full != 0:
+                self._last_fully_charged = None
             self._status_data = await self.async_fetch_status()
             success = (self._status_data is not None)
         if success:
             self._battery_status = await self.async_fetch_battery_status()
             success = (self._battery_status is not None)
         if success:
-            dod_limit = self.battery_dod_limit
+            self.battery_dod_limit
             self._powermeter_data = await self.async_fetch_powermeter()
             success = (self._powermeter_data is not None)
         if success:
@@ -253,28 +258,26 @@ class Sonnen:
         self._inverter_data = None
 
         self._configurations = self.fetch_configurations()
-    #    print(f'_configurations: {self._configurations}')
         success = (self._configurations is not None)
         if success:
             self._latest_details_data = self.fetch_latest_details()
-    #        print(f'_latest_details: {self._latest_details_data}')
             success = (self._latest_details_data is not None)
         if success:
+            if self.seconds_since_full == 0 and self._last_fully_charged is None:
+                self._last_fully_charged = now
+            elif self._last_fully_charged is not None and self.seconds_since_full != 0:
+                self._last_fully_charged = None
             self._status_data = self.fetch_status()
-    #        print(f'status: {self._status_data}')
             success = (self._status_data is not None)
         if success:
             self._battery_status = self.fetch_battery_status()
-    #        print(f'_battery: {self._battery_status}')
             success = (self._battery_status is not None)
         if success:
-            dod_limit = self.battery_dod_limit
+            self.battery_dod_limit
             self._powermeter_data = self.fetch_powermeter()
-    #        print(f'_powermeter: {self._powermeter_data}')
             success = (self._powermeter_data is not None)
         if success:
             self._inverter_data = self.fetch_inverter()
-    #        print(f'_inverter: {self._inverter_data}')
             success = (self._inverter_data is not None)
 
         self._last_updated = now if success else None
@@ -625,15 +628,6 @@ class Sonnen:
 
     @property
     @get_item(int)
-    def seconds_since_full(self) -> int:
-        """Latest details seconds since full charge.
-            Returns:
-                seconds as integer
-        """
-        return self._latest_details_data[IC_STATUS][DETAIL_SECONDS_SINCE_FULLCHARGE]
-
-    @property
-    @get_item(int)
     def u_soc(self) -> int:
         """Latest details Useable State of Charge
             Returns:
@@ -669,21 +663,38 @@ class Sonnen:
         return self._latest_details_data[IC_STATUS][DETAIL_STATE_INVERTER]
 
     @property
+    @get_item(int)
+    def seconds_since_full(self) -> int:
+        """Latest details seconds since full charge.
+            This value is zero each time whilst battery is fully charged.
+            Calculate seconds when _last_fully_charged is cached.
+            Returns:
+                seconds as integer
+        """
+        if self._last_fully_charged is None:
+            return self._latest_details_data[IC_STATUS][DETAIL_SECONDS_SINCE_FULLCHARGE]
+        else:
+            return (datetime.datetime.now().astimezone() - self._last_fully_charged).total_seconds()
+
+    @property
     def time_since_full(self) -> datetime.timedelta:
         """Calculates time since full charge.
+           Cache the first time seconds_since_full is zero until is it not zero.
            Returns:
                Time in format days hours minutes seconds
         """
         return datetime.timedelta(seconds=self.seconds_since_full)
 
     @property
-    def last_time_full(self) -> datetime.datetime:
-        """Calculates last time at full charge.
+    def last_time_full(self) -> Optional[datetime.datetime]:
+        """Calculates last time at full charge when _last_fully_charged is not cached.
            Returns:
-               DateTime with timezone
+               DateTime with timezone or None
         """
-#        return datetime.datetime.now().astimezone() - self.time_since_full
-        return self._last_updated.astimezone() - self.time_since_full
+        if self._last_fully_charged is None:
+            return self._last_updated.astimezone() - self.time_since_full if self._last_updated is not None else None
+        else:
+            return self._last_fully_charged
 
     @property
     @get_item(bool)

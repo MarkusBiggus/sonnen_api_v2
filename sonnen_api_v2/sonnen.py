@@ -1222,13 +1222,13 @@ class Sonnen:
             Returns:
                 string
         """
+
         _EM_OPERATINGMODE = {
             "1": 'Manual',
             "2": 'Automatic - Self Consumption',
             "6": 'Battery-Module-Extension (30%)',
             "10": 'Time-Of-Use'
         }
-
         return _EM_OPERATINGMODE[self._configurations[CONFIGURATION_EM_OPERATINGMODE]]
 
     @property
@@ -1364,7 +1364,7 @@ class Sonnen:
     @property
     @get_item(int)
     def grid_in(self) -> int:
-        """Actual grid feed in (export)
+        """Actual grid feed in +ve (export)
             Returns:
                 watts
         """
@@ -1374,7 +1374,7 @@ class Sonnen:
     @property
     @get_item(int)
     def grid_out(self) -> int:
-        """Actual grid import
+        """Actual grid import -ve (comes out of grid)
             Returns:
                 watts
         """

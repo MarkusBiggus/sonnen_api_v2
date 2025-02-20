@@ -197,16 +197,16 @@ class Sonnen:
         self._configurations = await self.async_fetch_configurations()
         success = (self._configurations is not None)
         if success:
+            self._status_data = await self.async_fetch_status()
+            success = (self._status_data is not None)
+        if success:
             self._latest_details_data = await self.async_fetch_latest_details()
             success = (self._latest_details_data is not None)
         if success:
             if self.seconds_since_full == 0 and self._last_fully_charged is None:
-                self._last_fully_charged = now
+                self._last_fully_charged = self.system_status_timestamp
             elif self._last_fully_charged is not None and self.seconds_since_full != 0:
                 self._last_fully_charged = None
-            self._status_data = await self.async_fetch_status()
-            success = (self._status_data is not None)
-        if success:
             self._battery_status = await self.async_fetch_battery_status()
             success = (self._battery_status is not None)
         if success:
@@ -260,16 +260,16 @@ class Sonnen:
         self._configurations = self.fetch_configurations()
         success = (self._configurations is not None)
         if success:
+            self._status_data = self.fetch_status()
+            success = (self._status_data is not None)
+        if success:
             self._latest_details_data = self.fetch_latest_details()
             success = (self._latest_details_data is not None)
         if success:
             if self.seconds_since_full == 0 and self._last_fully_charged is None:
-                self._last_fully_charged = now
+                self._last_fully_charged = self.system_status_timestamp
             elif self._last_fully_charged is not None and self.seconds_since_full != 0:
                 self._last_fully_charged = None
-            self._status_data = self.fetch_status()
-            success = (self._status_data is not None)
-        if success:
             self._battery_status = self.fetch_battery_status()
             success = (self._battery_status is not None)
         if success:
@@ -674,7 +674,7 @@ class Sonnen:
         if self._last_fully_charged is None:
             return self._latest_details_data[IC_STATUS][DETAIL_SECONDS_SINCE_FULLCHARGE]
         else:
-            return (datetime.datetime.now().astimezone() - self._last_fully_charged).total_seconds()
+            return (self.system_status_timestamp - self._last_fully_charged).total_seconds()
 
     @property
     def time_since_full(self) -> datetime.timedelta:
@@ -692,7 +692,7 @@ class Sonnen:
                DateTime with timezone or None
         """
         if self._last_fully_charged is None:
-            return self._last_updated.astimezone() - self.time_since_full if self._last_updated is not None else None
+            return self.system_status_timestamp - self.time_since_full if self._last_updated is not None else None
         else:
             return self._last_fully_charged
 

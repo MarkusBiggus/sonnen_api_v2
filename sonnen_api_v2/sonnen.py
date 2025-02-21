@@ -72,7 +72,7 @@ class Sonnen:
         self._last_updated = None #rate limiters
         self._last_get_updated = None
         self._last_configurations = None
-        self._last_fully_charged = None
+        self._last_fully_charged:datetime.datetime = None
         self.dod_limit = BATTERY_UNUSABLE_RESERVE #default depth of discharge limit until battery status
 
         logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -667,7 +667,7 @@ class Sonnen:
     def seconds_since_full(self) -> int:
         """Latest details seconds since full charge.
             This value is zero each time whilst battery is fully charged.
-            Calculate seconds when _last_fully_charged is cached.
+            Calculate seconds since _last_fully_charged when it is cached.
             Returns:
                 seconds as integer
         """
@@ -680,19 +680,22 @@ class Sonnen:
     def time_since_full(self) -> datetime.timedelta:
         """Calculates time since full charge.
            Cache the first time seconds_since_full is zero until is it not zero.
+           All last_time_full related calculations must be done in the context of
+           the device timestamp for consistency.
            Returns:
-               Time in format days hours minutes seconds
+               timedelta since last_time_full
         """
         return datetime.timedelta(seconds=self.seconds_since_full)
 
     @property
     def last_time_full(self) -> Optional[datetime.datetime]:
         """Calculates last time at full charge when _last_fully_charged is not cached.
+            Check _latest_details_data for edge condition before first update completes.
            Returns:
                DateTime with timezone or None
         """
         if self._last_fully_charged is None:
-            return self.system_status_timestamp - self.time_since_full if self._last_updated is not None else None
+            return self.system_status_timestamp - self.time_since_full if self._latest_details_data is not None else None
         else:
             return self._last_fully_charged
 

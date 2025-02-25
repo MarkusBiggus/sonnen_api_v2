@@ -694,6 +694,7 @@ class Sonnen:
            Returns:
                DateTime with timezone or None
         """
+
         if self._last_fully_charged is None:
             return self.system_status_timestamp - self.time_since_full if self._latest_details_data is not None else None
         else:

@@ -29,7 +29,7 @@ setup(
     install_requires=[
         'aiohttp>=3.9.5',
         'aiohttp-fast-zlib>=0.1.1,<4.0.0',
-        "attrs~=23.2,~=24.2",
+        "attrs>=23.2.0",
         'isal~=1.7.1',
         "propcache~=0.2",
         'requests~=2.32.3',

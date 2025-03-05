@@ -1,8 +1,10 @@
-#must be compatible versions with home assistant
-aiohttp~=3.11.11,<4.0.0
-aiohttp-fast-zlib~=0.2.1,<4.0.0
+#must be compatible versions with home assistant 24.7 or later
+aiohttp>=3.9.5,<4.0.0
+aiohttp-fast-zlib>=0.1.1,<4.0.0
+attrs~=23.2,~=24.2
 isal~=1.7.1
-urllib3>=1.26.20,<2.0.0
+propcache~=0.2
+requests~=2.32.3
+tzlocal>=5.2
+urllib3~=1.26.5,<2.0.0
 yarl~=1.18.3
-setuptools~=75.7.0
-requests~=2.32

@@ -8,3 +8,4 @@ requests~=2.32.3
 tzlocal>=5.2
 urllib3~=1.26.5,<2.0.0
 yarl~=1.18.3
+setuptools~=75.7

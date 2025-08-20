@@ -591,6 +591,13 @@ class Sonnen:
     @property
     @get_item(float)
     def consumption_reactive_power(self) -> float:
+        """Powermeter production VAR total.
+        """
+        return round(self._powermeter_data[1][POWERMETER_REACTIVE_POWER], 2)
+
+    @property
+    @get_item(float)
+    def consumption_total_var(self) -> float:
         """Powermeter consumption VAR total.
             Returns:
                 VAR
@@ -809,7 +816,6 @@ class Sonnen:
         elif until_reserve == 0:
             return 0
         elif until_reserve < 0:
-#            if self.status_battery_charging:
             if self.inverter_pac_total < 0 or self.inverter_pac_microgrid > 0:
                 return int(self.full_charge_capacity_wh * abs(until_reserve) / self.charging * 36) if self.charging else None
             else:

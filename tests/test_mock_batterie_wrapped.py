@@ -2,10 +2,10 @@
     1. Async update called from an async method.
     2. Async update called from sync method
 """
-import datetime
+#import datetime
 import os
 import sys
-import json
+#import json
 
 import logging
 import urllib3
@@ -16,10 +16,10 @@ from unittest.mock import patch
 from asyncmock import AsyncMock
 from freezegun import freeze_time
 
-from sonnen_api_v2 import Batterie, BatterieAuthError, BatterieHTTPError, BatterieError
+from sonnen_api_v2 import Batterie, BatterieAuthError, BatterieHTTPError , BatterieError
 
 from .mock_sonnenbatterie_v2_charging import __mock_status_charging, __mock_latest_charging, __mock_configurations, __mock_battery, __mock_powermeter, __mock_inverter
-from .mock_sonnenbatterie_v2_discharging import __mock_status_discharging, __mock_latest_discharging, __mock_battery_discharging
+#from .mock_sonnenbatterie_v2_discharging import __mock_status_discharging, __mock_latest_discharging, __mock_battery_discharging
 from .mock_battery_responses import (
     __battery_auth200,
     __battery_AuthError_401,
@@ -29,7 +29,7 @@ from .mock_battery_responses import (
 
 from .battery_charging_asyncio import fixture_battery_charging
 #from .battery_charging_sync import fixture_battery_charging
-from .battery_discharging_sync import fixture_battery_discharging
+#from .battery_discharging_sync import fixture_battery_discharging
 
 LOGGER_NAME = None # "sonnenapiv2" #
 

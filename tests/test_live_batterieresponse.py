@@ -12,6 +12,9 @@ from sonnen_api_v2 import Batterie, BatterieBackup, BatterieResponse, BatterieAu
 
 from dotenv import load_dotenv
 
+# create .env from env.example
+assert os.path.exists("tests/.env")  # == True
+
 load_dotenv()
 
 BATTERIE_HOST = os.getenv('BATTERIE_HOST','X')

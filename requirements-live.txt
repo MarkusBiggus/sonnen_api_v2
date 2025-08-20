@@ -5,4 +5,3 @@ isal~=1.7
 requests~=2.32.4
 urllib3>=2.0
 yarl~=1.20.1
-#setuptools~=75.7.0

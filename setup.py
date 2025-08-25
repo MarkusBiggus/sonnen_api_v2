@@ -16,16 +16,23 @@ def get_version(file):
     else:
         raise RuntimeError('Version not found!')
 
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
 
 setup(
     name='sonnen_api_v2',
+#    use_scm_version=True,
     version=get_version('sonnen_api_v2/__init__.py'),
     packages=find_packages(exclude='tests'),
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     url='https://github.com/Katamave/sonnen_api_v2.git',
-    license=read_file('LICENSE'),
+    license="MIT",
     author='Vaclav Silhan',
     author_email='katamave@gmail.com',
-    description=read_file('README.md'),
+#    description=read_file('README.md'),
+    description="Sonnen batterie API V2. Compatible with Home Assistant integrations.",
     install_requires=[
         'aiohttp>=3.11.16,<4.0.0',
         'aiohttp-fast-zlib>=0.2.3,<4.0.0',

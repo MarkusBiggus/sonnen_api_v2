@@ -719,29 +719,29 @@ class Sonnen:
     @property
     @get_item(float)
     def capacity_to_reserve(self) -> float:
-        """Capacity to reserve.
-            Below reserve capacity to reserve charge (how much to charge).
+        """Capacity to reserve by charging.
+            Capacity is below reserve to reserve charge (how much to charge).
 
             Returns:
                 Wh or None when not below backup reserve
         """
 
         until_reserve = self.u_soc - self.status_backup_buffer
-        return round(self.full_charge_capacity_wh * abs(until_reserve) / 100, 1) if until_reserve < 0 else None
+        return round(self.full_charge_capacity_wh * abs(until_reserve) / 100, 1) if until_reserve <= 0 else None
 
     @property
     @get_item(float)
     def capacity_until_reserve(self) -> float:
-        """Capacity until backup reserve is reached (battery state goes standby).
+        """Capacity until backup reserve is reached discharging (battery state goes standby).
             Capacity above Backup Reserve Charge (BRC) is how much to discharge until standby.
-            Standby state is reached when u_soc == status_backup_buffer.
+            Standby state is reached by discharge when u_soc == status_backup_buffer.
             until_reserve = USoc - BRC
             Returns:
                 Wh or None when below backup reserve
         """
 
         until_reserve = self.u_soc - self.status_backup_buffer
-        return round(self.full_charge_capacity_wh * until_reserve / 100, 1) if until_reserve >= 0 else None
+        return round(self.full_charge_capacity_wh * abs(until_reserve) / 100, 1) if until_reserve >= 0 else None
 
     @property
     def backup_reserve_at(self) -> Optional[datetime.datetime]:
@@ -762,7 +762,7 @@ class Sonnen:
         #     return (datetime.datetime.now().astimezone() - datetime.timedelta(seconds=abs(seconds))) if self.discharging else None
 
     @property
-    def time_to_reserve(self) -> datetime.timedelta:
+    def time_to_reserve(self) -> Optional[datetime.timedelta]:
         """Calculates time until backup reserve charge.
            Returns:
                timedelta until_reserve
@@ -788,7 +788,7 @@ class Sonnen:
 
     @property
     @get_item(int)
-    def seconds_until_reserve(self) -> Union[int, None]:
+    def seconds_until_reserve(self) -> Optional[int]:
         """Time until battery capacity is backup reserve capacity (BRC).
             Pessimistic calculation uses the greater of recent average or instant consumption now.
             There is no equvalent average production when charging.
@@ -1264,6 +1264,46 @@ class Sonnen:
         """
 
         return self._configurations[CONFIGURATION_EM_OPERATINGMODE]
+
+    @property
+    @get_item(bool)
+    def configuration_em_reenable_microgrid(self) -> bool:
+        """Reenable Microgrid - Black Start feature
+            Returns:
+                Bool
+        """
+
+        return self._configurations[CONFIGURATION_EM_RE_ENABLE_MICROGRID] == "1"
+
+    @property
+    def configuration_blackstart_time1(self) -> str:
+        """Microgrid - Black Start 1st attempt time
+            eg. "08:00"
+            Returns:
+                string format "hh:mm"
+        """
+        time1 = self._configurations[CONFIGURATION_EM_USER_INPUT_TIME_ONE]
+        return time1 if time1 != "0" else None
+
+    @property
+    def configuration_blackstart_time2(self) -> str:
+        """Microgrid - Black Start 2nd attempt time
+            eg. "09:00"
+            Returns:
+                string format "hh:mm"
+        """
+        time2 = self._configurations[CONFIGURATION_EM_USER_INPUT_TIME_TWO]
+        return time2 if time2 != "0" else None
+
+    @property
+    def configuration_blackstart_time3(self) -> str:
+        """Microgrid - Black Start 3rd attempt time
+            eg. "10:00"
+            Returns:
+                string format "hh:mm"
+        """
+        time3 = self._configurations[CONFIGURATION_EM_USER_INPUT_TIME_THREE]
+        return time3 if time3 != "0" else None
 
     @property
     def configuration_em_operatingmode_name(self) -> str:

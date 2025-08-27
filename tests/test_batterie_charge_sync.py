@@ -61,6 +61,11 @@ def test_sync_methods(battery_charging: Batterie) -> None:
     assert configurations.get('DE_Software') == '1.14.5'
     assert configurations.get('EM_USOC') == 20
 
+    assert configurations.get('EM_RE_ENABLE_MICROGRID') == '1'
+    assert configurations.get('EM_USER_INPUT_TIME_ONE') == "08:00"
+    assert configurations.get('EM_USER_INPUT_TIME_TWO') == "09:05"
+    assert configurations.get('EM_USER_INPUT_TIME_THREE') == "10:10"
+
     from .check_results import check_charge_results
 
     check_charge_results(battery_charging)

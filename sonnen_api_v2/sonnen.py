@@ -188,6 +188,7 @@ class Sonnen:
             if diff.total_seconds() < RATE_LIMIT:
                 return True
 
+        self._configurations = None
         self._latest_details_data = None
         self._status_data = None
         self._battery_status = None
@@ -197,6 +198,7 @@ class Sonnen:
         self._configurations = await self.async_fetch_configurations()
         success = (self._configurations is not None)
         if success:
+            self._last_configurations = now
             self._status_data = await self.async_fetch_status()
             success = (self._status_data is not None)
         if success:
@@ -261,6 +263,7 @@ class Sonnen:
         self._configurations = self.fetch_configurations()
         success = (self._configurations is not None)
         if success:
+            self._last_configurations = now
             self._status_data = self.fetch_status()
             success = (self._status_data is not None)
         if success:
@@ -359,14 +362,14 @@ class Sonnen:
     async def async_fetch_configurations(self) -> Awaitable[Dict]:
         """Wait for Fetch Configurations endpoint."""
 
-        print('async_fetch_configurations')
         now = datetime.datetime.now().astimezone()
         if self._last_configurations is not None:
             diff = now - self._last_configurations
             if diff.total_seconds() < RATE_LIMIT:
                 return self._configurations
 
-        self._last_configurations = now
+        self._last_configurations = None
+        self._configurations = None
         return await self._async_fetch_api_endpoint(
             self.configurations_api_endpoint
         )
@@ -374,19 +377,16 @@ class Sonnen:
     def fetch_configurations(self) -> Dict:
         """Fetch Configurations endpoint."""
 
-        print('fetch_configurations')
-        print(f'_last_configurations: {self._last_configurations}')
+#        print('fetch_configurations')
+#        print(f'_last_configurations: {self._last_configurations}')
         now = datetime.datetime.now().astimezone()
         if self._last_configurations is not None:
             diff = now - self._last_configurations
             if diff.total_seconds() < RATE_LIMIT:
-                print(f'cache configs: {self._configurations}')
                 return self._configurations
 
+        self._last_configurations = None
         self._configurations = None
-        self._last_configurations = now
-        print(f'timestamp: {self._last_configurations}')
-
         return self._fetch_api_endpoint(
             self.configurations_api_endpoint
         )

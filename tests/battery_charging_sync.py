@@ -6,7 +6,6 @@ import pytest
 import json
 from freezegun import freeze_time
 import responses
-import requests
 
 from sonnen_api_v2 import Batterie
 

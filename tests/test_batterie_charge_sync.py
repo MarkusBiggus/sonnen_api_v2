@@ -28,8 +28,11 @@ def test_sync_methods(battery_charging: Batterie) -> None:
         logger.info('Sonnen mock data sync test suite.')
 
 
-    status = battery_charging.sync_get_update() # data already cached by fixture
+    status = battery_charging.sync_get_update() # data already cached by fixture (testing cache)
     assert status is True
+
+    assert battery_charging.led_state == "Pulsing White 100%"
+    assert battery_charging.led_state_text == "Normal Operation."
 
     assert battery_charging.charging > 0
     assert battery_charging.discharging == 0

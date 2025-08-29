@@ -19,13 +19,13 @@ def __mock_status_discharging(*args)-> json:
         'OperatingMode': '2',
         'Pac_total_W': 438,
         'Production_W': 102,
-        'RSOC': 19,
-        'RemainingCapacity_Wh': 3929,
+        'RSOC': 18,
+        'RemainingCapacity_Wh': 5048,
         'Sac1': 438,
         'Sac2': None,
         'Sac3': None,
         'SystemStatus': 'OffGrid',
-        'Timestamp': '2023-11-20 17:00:50',
+        'Timestamp': '2023-11-20 17:00:59',
         'USOC': 12,
         'Uac': 237,
         'Ubat': 211,
@@ -40,9 +40,9 @@ def __mock_latest_discharging(*args)-> json:
         'Pac_total_W': 1439,
         'Consumption_W': 1541,
         'Production_W': 102,
-        'RSOC': 19,
+        'RSOC': 18,
         'SetPoint_W': 439,
-        'Timestamp': '2023-11-20 17:00:50',
+        'Timestamp': '2023-11-20 17:00:59',
         'USOC': 12,
         'UTC_Offet': 2,
         'ic_status': {
@@ -77,9 +77,9 @@ def __mock_latest_discharging(*args)-> json:
             },
             'Eclipse Led': {
                 'Blinking Red': False,
-                'Pulsing Green': False,
+                'Pulsing Green': True,
                 'Pulsing Orange': False,
-                'Pulsing White': True,
+                'Pulsing White': False,
                 'Solid Red': False
             },
             'MISC Status Bits': {
@@ -126,7 +126,7 @@ def __mock_latest_discharging(*args)-> json:
             'statebms': 'ready',
             'statecorecontrolmodule': 'offgrid',
             'stateinverter': 'running',
-            'timestamp': 'Mon Nov 20 17:00:50 2023'
+            'timestamp': 'Mon Nov 20 17:00:59 2023'
         }
     }
 
@@ -160,7 +160,7 @@ def __mock_battery_discharging(*args)-> json:
         "systemstatus":49,
         "systemtime":0.0,
         "systemwarning":0.0,
-        "usableremainingcapacity":22.2178
+        "usableremainingcapacity":24.2376
     }
 
 def __mock_inverter_discharging(*args)-> json:
@@ -169,8 +169,8 @@ def __mock_inverter_discharging(*args)-> json:
         "iac_total": 0.39,
         "ibat": 0.01,
         "ipv": 0.0,
-        "pac_microgrid": 0.0,
-        "pac_total": 1438.67,
+        "pac_microgrid": 1438.67,
+        "pac_total": 0.0,
         "pbat": -0.14,
         "phi": -0.82,
         "ppv": 0.0,

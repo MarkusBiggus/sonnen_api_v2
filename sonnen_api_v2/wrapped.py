@@ -8,8 +8,6 @@ from typing import Dict
 import datetime
 import aiohttp
 import asyncio
-#from sonnen_api_v2 import BatterieError
-#from sonnen_api_v2.batterie_response import BatteryResponse
 
 from .const import RATE_LIMIT
 

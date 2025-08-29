@@ -62,6 +62,8 @@ async def test_async_methods(battery_discharging: Batterie) -> None:
     assert latest_data.get('Production_W') == 103
     assert latest_data.get('Pac_total_W') == 1438
 
+    assert latest_data.get('microgrid_enabled') is True
+
     powermeter = battery_discharging.sync_get_powermeter()
     assert powermeter[0]['direction'] == 'production'
     assert powermeter[1]['direction'] == 'consumption'

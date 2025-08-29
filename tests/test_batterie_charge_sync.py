@@ -57,6 +57,7 @@ def test_sync_methods(battery_charging: Batterie) -> None:
     assert latest_data.get('Consumption_W') == 1578
     assert latest_data.get('Production_W') == 2972
     assert latest_data.get('Pac_total_W') == -1394
+    assert latest_data.get('microgrid_enabled') is False
 
     powermeter = battery_charging.sync_get_powermeter()
     assert powermeter[0]['direction'] == 'production'

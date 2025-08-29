@@ -95,7 +95,7 @@ def __mock_latest_discharging(*args)-> json:
                 'Low Temperature': False,
                 'Max System SOC': False,
                 'Max User SOC': False,
-                'Microgrid Enabled': False,
+                'Microgrid Enabled': True,
                 'Min System SOC': False,
                 'Min User SOC': False,
                 'Over Charge Current': False,

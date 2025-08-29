@@ -5,6 +5,8 @@ import datetime
 import logging
 import pytest
 from freezegun import freeze_time
+from freezegun.api import FakeDatetime
+import tzlocal
 import responses
 
 #from sonnen_api_v2.sonnen import Sonnen as Batterie, BatterieError
@@ -33,9 +35,9 @@ def test_sync_methods(battery_charging: Batterie) -> None:
     assert battery_charging.discharging == 0
     assert battery_charging.fully_charged_at.strftime('%d.%b.%Y %H:%M') == '20.Nov.2023 18:46'
 
-    assert battery_charging.last_configurations == '20-11-2023 17:00:00.54321+10:00'
-    assert battery_charging.last_updated == '20-11-2023 17:00:00.54321+10:00'
-    assert battery_charging.last_get_updated == '20-11-2023 17:00:00.54321+10:00'
+    assert battery_charging.last_configurations == FakeDatetime(2023, 11, 20, 17, 0, 0, 543210, tzlocal.get_localzone()) #'20-11-2023 17:00:00.54321+10:00'
+    assert battery_charging.last_updated ==  FakeDatetime(2023, 11, 20, 17, 0, 0, 543210, tzinfo=tzlocal.get_localzone()) #'20-11-2023 17:00:00.54321+10:00'
+    assert battery_charging.last_get_updated == FakeDatetime(2023, 11, 20, 17, 0, 0, 543210, tzinfo=tzlocal.get_localzone()) # '20-11-2023 17:00:00.54321+10:00'
 
     # sync wrapped methods used by ha component
     status_data = battery_charging.sync_get_status()

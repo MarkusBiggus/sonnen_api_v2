@@ -42,13 +42,6 @@ def get_update(self) -> bool:
             if diff.total_seconds() < RATE_LIMIT:
                 return True
 
-        self._configurations = None
-        self._latest_details_data = None
-        self._status_data = None
-        self._battery_status = None
-        self._powermeter_data = None
-        self._inverter_data = None
-
         self._configurations = await self.async_fetch_configurations()
         success = (self._configurations is not None)
         if success:
@@ -90,21 +83,15 @@ def sync_get_update(self) -> bool:
         called again within rate limit interval
     """
 
+#    print ('sync_get_update')
     now = datetime.datetime.now().astimezone()
     if self._last_get_updated is not None:
         diff = now - self._last_get_updated
         if diff.total_seconds() < RATE_LIMIT:
-            print(f'cache_seconds_get: {diff.total_seconds()}')
+            print(f'cache_get configs: {self._configurations}')
             return True
 
-    self._configurations = None
-    self._latest_details_data = None
-    self._status_data = None
-    self._battery_status = None
-    self._powermeter_data = None
-    self._inverter_data = None
-
-    self.sync_get_configurations()
+    self._configurations = self.sync_get_configurations()
     success = (self._configurations is not None)
     if success:
         self.sync_get_status()
@@ -123,7 +110,6 @@ def sync_get_update(self) -> bool:
         success = (self._inverter_data is not None)
 
     self._last_get_updated = self._last_configurations if success else None
-    print(f'timestamp_get: {self._last_get_updated}')
     return success
 
 def get_configurations(self)-> Dict:
@@ -135,7 +121,6 @@ def get_configurations(self)-> Dict:
     """
 
     async def _get_configurations(self):
-        self._configurations = None
         self._configurations = await self.async_fetch_configurations()
 
     event_loop = asyncio.new_event_loop()
@@ -155,15 +140,13 @@ def sync_get_configurations(self)-> Dict:
             json response
     """
 
+#    print ('sync_get_configurations')
     now = datetime.datetime.now().astimezone()
     if self._last_get_updated is not None:
         diff = now - self._last_get_updated
         if diff.total_seconds() < RATE_LIMIT:
-            print(f'cache_seconds_get: {diff.total_seconds()}')
             return self._configurations
 
-    self._configurations = None
-    print('get_fetch_configurations')
     self._configurations = self.fetch_configurations()
     return _aug_configurations(self)
 
@@ -221,7 +204,6 @@ def get_latest_data(self) -> Dict:
     """
 
     async def _get_latest_data(self):
-        self._latest_details_data = None
         self._latest_details_data = await self.async_fetch_latest_details()
 
     event_loop = asyncio.new_event_loop()
@@ -245,7 +227,6 @@ def sync_get_latest_data(self) -> Dict:
         if diff.total_seconds() < RATE_LIMIT:
             return self._latest_details_data
 
-    self._latest_details_data = None
     self._latest_details_data = self.fetch_latest_details()
     return self._latest_details_data
 
@@ -258,7 +239,6 @@ def get_battery(self) -> Dict:
     """
 
     async def _get_battery(self):
-        self._battery_status = None
         self._battery_status = await self.async_fetch_battery_status()
         if self._configurations is None:
             self._configurations = await self.async_fetch_configurations()
@@ -289,7 +269,6 @@ def sync_get_battery(self) -> Dict:
         if diff.total_seconds() < RATE_LIMIT:
             return self._battery_status
 
-    self._battery_status = None
     self._battery_status = self.fetch_battery_status()
     if self._battery_status is None:
         return None
@@ -325,7 +304,6 @@ def get_powermeter(self) -> Dict:
     """
 
     async def _get_powermeter(self):
-        self._powermeter_data = None
         self._powermeter_data = await self.async_fetch_powermeter()
 
     event_loop = asyncio.new_event_loop()
@@ -350,7 +328,6 @@ def sync_get_powermeter(self) -> Dict:
         if diff.total_seconds() < RATE_LIMIT:
             return self._powermeter_data
 
-    self._powermeter_data = None
     self._powermeter_data = self.fetch_powermeter()
     return self._powermeter_data
 
@@ -362,7 +339,6 @@ def get_inverter(self) -> Dict:
     """
 
     async def _get_inverter(self):
-        self._inverter_data = None
         self._inverter_data = await self.async_fetch_inverter()
 
     event_loop = asyncio.new_event_loop()
@@ -387,6 +363,5 @@ def sync_get_inverter(self) -> Dict:
         if diff.total_seconds() < RATE_LIMIT:
             return self._inverter_data
 
-    self._inverter_data = None
     self._inverter_data = self.fetch_inverter()
     return self._inverter_data

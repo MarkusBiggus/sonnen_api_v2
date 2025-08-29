@@ -244,6 +244,7 @@ class Sonnen:
             called again within rate limit interval
         """
 
+#        print ('sync_update')
         now = datetime.datetime.now().astimezone()
         if self._last_updated is not None:
             diff = now - self._last_updated
@@ -333,7 +334,7 @@ class Sonnen:
 
     # sync for use with run_in_executor in existing event loop
     def _fetch_api_endpoint(self, url: str) -> Dict:
-        """Fetch API coroutine."""
+        """Fetch API requestor."""
 
         try:
             response = requests.get(
@@ -346,7 +347,6 @@ class Sonnen:
         except Exception as error:
             self._log_error(f'Failed Sync fetch "{url}"  error: {error}')
             raise BatterieError(f'Failed Sync fetch "{url}"  error: {error}') from error
-#        print(f'resp: {vars(response)}')
         if response.status_code > 299:
             self._log_error(f'Error fetching endpoint "{url}" status: {response.status}')
             if response.status_code in [401, 403]:
@@ -380,7 +380,7 @@ class Sonnen:
         if self._last_configurations is not None:
             diff = now - self._last_configurations
             if diff.total_seconds() < RATE_LIMIT:
-                print(f'cache_seconds: {diff.total_seconds()}')
+                print(f'cache configs: {self._configurations}')
                 return self._configurations
 
         self._configurations = None

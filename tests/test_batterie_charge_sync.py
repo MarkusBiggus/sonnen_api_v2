@@ -41,6 +41,7 @@ def test_sync_methods(battery_charging: Batterie) -> None:
     assert battery_charging.last_configurations == FakeDatetime(2023, 11, 20, 17, 0, 0, 543210, tzlocal.get_localzone()) #'20-11-2023 17:00:00.54321+10:00'
     assert battery_charging.last_updated ==  FakeDatetime(2023, 11, 20, 17, 0, 0, 543210, tzinfo=tzlocal.get_localzone()) #'20-11-2023 17:00:00.54321+10:00'
     assert battery_charging.last_get_updated == FakeDatetime(2023, 11, 20, 17, 0, 0, 543210, tzinfo=tzlocal.get_localzone()) # '20-11-2023 17:00:00.54321+10:00'
+    assert battery_charging.microgrid_enabled is False
 
     # sync wrapped methods used by ha component
     status_data = battery_charging.sync_get_status()
@@ -57,7 +58,6 @@ def test_sync_methods(battery_charging: Batterie) -> None:
     assert latest_data.get('Consumption_W') == 1578
     assert latest_data.get('Production_W') == 2972
     assert latest_data.get('Pac_total_W') == -1394
-    assert latest_data.get('microgrid_enabled') is False
 
     powermeter = battery_charging.sync_get_powermeter()
     assert powermeter[0]['direction'] == 'production'

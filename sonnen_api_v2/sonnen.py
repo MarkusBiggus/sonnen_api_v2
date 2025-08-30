@@ -1601,7 +1601,7 @@ class Sonnen:
 
         """ current_state index of: ["standby", "charging", "discharging", "discharging reserve", "charged", "discharged"] """
 #        if self.status_battery_charging:
-        if self.inverter_pac_total < 0 or self.inverter_pac_microgrid > 0:
+        if self.inverter_pac_total < 0 or self.inverter_pac_microgrid < 0:
             battery_status = "charging"
 #        elif self.status_battery_discharging:
         elif self.inverter_pac_total > 0 or self.inverter_pac_microgrid > 0:
@@ -1694,7 +1694,11 @@ class Sonnen:
         if leds is None:
             leds = self.ic_eclipse_led
 
-        (Blinking_Red, Brightness, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
+        try:
+            (Blinking_Red, Brightness, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
+        except ValueError:
+            (Blinking_Red, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
+            Brightness = 100
 
         if Blinking_Red is True:
             return f"Blinking Red {Brightness}%"
@@ -1726,7 +1730,10 @@ class Sonnen:
         if leds is None:
             leds = self.ic_eclipse_led
 
-        (Blinking_Red, Brightness, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
+        try:
+            (Blinking_Red, Brightness, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
+        except ValueError:
+            (Blinking_Red, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
 
         if Blinking_Red is True:
             return "Error - call installer!"

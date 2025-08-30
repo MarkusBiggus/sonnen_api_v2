@@ -755,7 +755,7 @@ class Sonnen:
     @get_item(float)
     def capacity_to_reserve(self) -> float:
         """Capacity to reserve by charging.
-            Capacity is below reserve to reserve charge (how much to charge).
+            Usable Capacity is below Reserve Capacity (how much to charge).
 
             Returns:
                 Wh or None when above backup reserve
@@ -787,7 +787,7 @@ class Sonnen:
                 Datetime with timezone charged/discharged to reserve or None when not charging/discharging
         """
 
-        seconds = self.seconds_until_reserve
+        seconds = self.seconds_to_reserve
         if seconds is None:
             return None
 
@@ -796,11 +796,12 @@ class Sonnen:
     @property
     def time_to_reserve(self) -> Optional[datetime.timedelta]:
         """Calculates time until backup reserve charge.
+            Deltatime from seconds_to_reserve.
            Returns:
-               timedelta until_reserve
+               timedelta to_reserve
         """
 
-        seconds = self.seconds_until_reserve
+        seconds = self.seconds_to_reserve
         if seconds is None:
             return None
 
@@ -819,7 +820,7 @@ class Sonnen:
 
     @property
     @get_item(int)
-    def seconds_until_reserve(self) -> Optional[int]:
+    def seconds_to_reserve(self) -> Optional[int]:
         """Time until battery capacity is backup reserve capacity (BRC).
             Pessimistic calculation uses the greater of recent average or instant consumption now.
             There is no equvalent average production when charging.
@@ -835,19 +836,19 @@ class Sonnen:
                 Time in seconds or None
         """
 
-        until_reserve = self.u_soc - self.status_backup_buffer
+        to_reserve = self.u_soc - self.status_backup_buffer
 
-        if until_reserve == 0:
+        if to_reserve == 0:
             return 0
-        elif until_reserve > 0:
+        elif to_reserve > 0:
             if self.discharging:
                 consumption = self.consumption_average if self.discharging < self.consumption_average else self.discharging
-                return int(self.full_charge_capacity_wh * until_reserve / consumption * 36) # optimised: until_reserve / 100 * 3600
+                return int(self.full_charge_capacity_wh * to_reserve / consumption * 36) # optimised: to_reserve / 100 * 3600
             else:
                 return None # both at_reserve & fully_charged
-        elif until_reserve < 0:
+        elif to_reserve < 0:
             if self.inverter_pac_total < 0 or self.inverter_pac_microgrid > 0:
-                return int(self.full_charge_capacity_wh * abs(until_reserve) / self.charging * 36) if self.charging else None
+                return int(self.full_charge_capacity_wh * abs(to_reserve) / self.charging * 36) if self.charging else None
             else:
                 return None
 

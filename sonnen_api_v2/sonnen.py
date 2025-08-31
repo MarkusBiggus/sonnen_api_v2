@@ -1670,19 +1670,40 @@ class Sonnen:
     def led_state(self) -> str:
         """Text of current LED state.
             System-Status:
-                "Eclipse Led":{
-                    "Blinking Red":false,
-                    "Brightness":100,
-                    "Pulsing Green":false,
-                    "Pulsing Orange":false,
-                    "Pulsing White":true,
-                    "Solid Red":false
-                }
+                "Eclipse Led":
+                {
+                "Blinking Green":false,
+                "Blinking Red":false,
+                "Brightness":100,
+                "Eclipse Status":"0x01 - ONGRID_READY",
+                "Pulsing Green":false,
+                "Pulsing Orange":false,
+                "Pulsing White":true,
+                "Solid Red":false
+                },
             Returns:
                 String
         """
 
         return self.led_xlate_state()
+
+    @property
+    def led_status(self, leds:dict = None) -> str:
+        """Eclipse_Status text from LED state.
+            Returns:
+                String
+        """
+
+        if leds is None:
+            leds = self.ic_eclipse_led
+
+        try:
+            (Blinking_Green, Blinking_Red, Brightness, Eclipse_Status, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
+        except ValueError:
+            (Blinking_Red, Brightness, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values() # earlier format
+            Eclipse_Status = self.led_xlate_state_text(leds)
+
+        return Eclipse_Status
 
 
     def led_xlate_state(self, leds:dict = None) -> str:
@@ -1695,12 +1716,14 @@ class Sonnen:
             leds = self.ic_eclipse_led
 
         try:
-            (Blinking_Red, Brightness, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
+            (Blinking_Green, Blinking_Red, Brightness, Eclipse_Status, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
         except ValueError:
-            (Blinking_Red, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
-            Brightness = 100
+            (Blinking_Red, Brightness, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values() # earlier format
+            Blinking_Green = False
 
-        if Blinking_Red is True:
+        if Blinking_Green is True:
+            return f"Blinking Green: {Brightness}%"
+        elif Blinking_Red is True:
             return f"Blinking Red {Brightness}%"
         elif Pulsing_Green is True:
             return f"Pulsing Green {Brightness}%"
@@ -1731,20 +1754,26 @@ class Sonnen:
             leds = self.ic_eclipse_led
 
         try:
-            (Blinking_Red, Brightness, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
+            (Blinking_Green, Blinking_Red, Brightness, Eclipse_Status, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
         except ValueError:
-            (Blinking_Red, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
+            (Blinking_Red, Brightness, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values() # earlier format
+            Eclipse_Status = None
+            Blinking_Green = False
 
-        if Blinking_Red is True:
-            return "Error - call installer!"
+        Eclipse_Status_display = f" [{Eclipse_Status}]" if Eclipse_Status is not None else ""
+
+        if Blinking_Green is True:
+            return f"Blinking Green:{Eclipse_Status_display}"
+        elif Blinking_Red is True:
+            return f"Error - call installer!{Eclipse_Status_display}"
         elif Pulsing_Green is True:
-            return "Off Grid."
+            return f"Off Grid.{Eclipse_Status_display}"
         elif Pulsing_Orange is True:
-            return  "No Internet connection!"
+            return  f"No Internet connection!{Eclipse_Status_display}"
         elif Pulsing_White is True:
-            return "Normal Operation."
+            return f"Normal Operation.{Eclipse_Status_display}"
         elif Solid_Red is True:
-            return "Critical Error - call installer!"
+            return f"Critical Error - call installer!{Eclipse_Status_display}"
         else:
             return "Off Grid."
 

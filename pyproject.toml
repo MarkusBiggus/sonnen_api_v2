@@ -1,27 +1,43 @@
+[build-system]
+requires = ["setuptools>=78.1.1", "wheel"]
+#build-backend = "setuptools.build_meta"
+
 [project]
 name = "sonnen_api_v2"
 version = "0.5.15"
 description = "Sonnen Batterie API V2 package"
 authors = [
+    {name = "Vaclav Silhan", email = "katamave@gmail.com"},
     {name = "MarkusBiggus", email = "6531552+MarkusBiggus@users.noreply.github.com"},
 ]
+#url='https://github.com/Katamave/sonnen_api_v2.git',
+
 dependencies = [
-    "aiohttp>=3.11.16",
-    "aiohttp-fast-zlib>=0.2.3,<4.0.0",
-#    "attrs>=23.2.0",
-    "isal~=1.7.1",
-#    "propcache~=0.2",
-    "requests~=2.32.3",
+    "aiohttp>=3.12.15,<4.0.0",
+#    "aiohttp>=3.11.16,<4.0.0",
+    "aiohttp-fast-zlib~=0.3",
+    "isal~=1.7",
+    "requests~=2.32",
     "tzlocal>=5.2",
-#   "urllib3>=1.26.20,<2.0.0",
-    "urllib3>=2.0",
-    "yarl>=1.18.3",
-#    "setuptools>=76.1.0",
+#    "urllib3>=1.26.20,<2.0.0",
+    "urllib3>=2.5.0",
 ]
 requires-python = ">=3.12"
-readme = "README.md"
+readme = {file="README.md", content-type = "text/markdown"}
 license = {text = "MIT"}
 
+classifiers=[
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
 
-[tool.pdm]
-distribution = false
+dynamic = ["version"]
+
+[tool.setuptools.dynamic]
+version = {attr = "sonnen_api_v2.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["sonnen_api_v2"]  # list of folders that contain the packages (["."] by default)
+exclude = ["tests"]
+namespaces = false  # to disable scanning PEP 420 namespaces (true by default)

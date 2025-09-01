@@ -77,6 +77,7 @@ def __mock_latest_discharging(*args)-> json:
             },
             'Eclipse Led': {
                 'Blinking Red': False,
+                "Brightness":100,
                 'Pulsing Green': True,
                 'Pulsing Orange': False,
                 'Pulsing White': False,

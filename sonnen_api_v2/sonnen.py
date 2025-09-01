@@ -73,7 +73,8 @@ class Sonnen:
         self._last_get_updated:datetime.datetime = None
         self._last_configurations:datetime.datetime = None
         self._last_fully_charged:datetime.datetime = None
-        self.dod_limit = BATTERY_UNUSABLE_RESERVE #default depth of discharge limit until battery status
+        self.dod_limit = BATTERY_UNUSABLE_RESERVE # default depth of discharge limit until battery status
+        self.leds = None # remember param when supplied
 
         logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         if logger_name is not None:
@@ -1669,6 +1670,9 @@ class Sonnen:
     @property
     def led_state(self) -> str:
         """Text of current LED state.
+            When leds param is supplied it is used for following
+                calls to led_status & led_state_text
+
             System-Status:
                 "Eclipse Led":
                 {
@@ -1684,18 +1688,24 @@ class Sonnen:
             Returns:
                 String
         """
+        if self.leds is None:
+            leds = self.ic_eclipse_led
+        else:
+            leds = self.leds
 
-        return self.led_xlate_state()
+        return self.led_xlate_state(leds)
 
     @property
-    def led_status(self, leds:dict = None) -> str:
+    def led_status(self) -> str:
         """Eclipse_Status text from LED state.
             Returns:
                 String
         """
 
-        if leds is None:
+        if self.leds is None:
             leds = self.ic_eclipse_led
+        else:
+            leds = self.leds
 
         try:
             (Blinking_Green, Blinking_Red, Brightness, Eclipse_Status, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
@@ -1712,7 +1722,9 @@ class Sonnen:
                 String
         """
 
-        if leds is None:
+        if leds is not None:
+            self.leds = leds
+        else:
             leds = self.ic_eclipse_led
 
         try:
@@ -1750,8 +1762,10 @@ class Sonnen:
             Returns:
                 String
         """
-        if leds is None:
+        if leds is None and self.leds is None:
             leds = self.ic_eclipse_led
+        else:
+            leds = self.leds
 
         try:
             (Blinking_Green, Blinking_Red, Brightness, Eclipse_Status, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
@@ -1763,17 +1777,17 @@ class Sonnen:
         Eclipse_Status_display = f" [{Eclipse_Status}]" if Eclipse_Status is not None else ""
 
         if Blinking_Green is True:
-            return f"Blinking Green:{Eclipse_Status_display}"
+            return f"Blinking Green:{Eclipse_Status_display}" # undocumented
         elif Blinking_Red is True:
-            return f"Error - call installer!{Eclipse_Status_display}"
+            return "Error - call installer!" #{Eclipse_Status_display}"
         elif Pulsing_Green is True:
-            return f"Off Grid.{Eclipse_Status_display}"
+            return "Off Grid." #{Eclipse_Status_display}"
         elif Pulsing_Orange is True:
-            return  f"No Internet connection!{Eclipse_Status_display}"
+            return "No Internet connection!" #{Eclipse_Status_display}"
         elif Pulsing_White is True:
-            return f"Normal Operation.{Eclipse_Status_display}"
+            return "Normal Operation." #{Eclipse_Status_display}"
         elif Solid_Red is True:
-            return f"Critical Error - call installer!{Eclipse_Status_display}"
+            return "Critical Error - call installer!{Eclipse_Status_display}"
         else:
             return "Off Grid."
 

@@ -25,28 +25,34 @@ def test_sync_methods(battery_charging: Batterie) -> None:
     assert battery_charging.charging > 0
     assert battery_charging.discharging == 0
 
-    led_state =  battery_charging.led_xlate_state(
-                {
-                    "Blinking Red":False,
-                    "Brightness":'100',
-                    "Pulsing Green":False,
-                    "Pulsing Orange":True,
-                    "Pulsing White":False,
-                    "Solid Red":'false'
-                }
-            )
+    # parameter is saved for subsequent calls for text
+    led_state = battery_charging.led_xlate_state(
+        {
+            "Blinking Red":False,
+            "Brightness":'100',
+            "Pulsing Green":False,
+            "Pulsing Orange":True,
+            "Pulsing White":False,
+            "Solid Red": False
+        }
+    )
     assert led_state == "Pulsing Orange 100%"
-    assert battery_charging.led_state == "Pulsing White 100%"
+    assert battery_charging.led_state_text == "No Internet connection!"
 
-    led_state_text =  battery_charging.led_xlate_state_text(
-                {
-                    "Blinking Red":False,
-                    "Brightness":'100',
-                    "Pulsing Green":True,
-                    "Pulsing Orange":False,
-                    "Pulsing White":False,
-                    "Solid Red":'false'
-                }
-            )
-    assert led_state_text == "Off Grid."
+    led_state = battery_charging.led_xlate_state(
+        {
+            "Blinking Red":False,
+            "Brightness":'100',
+            "Pulsing Green":True,
+            "Pulsing Orange":False,
+            "Pulsing White":False,
+            "Solid Red":False
+        }
+    )
+    assert led_state == "Pulsing Green 100%"
+    assert battery_charging.led_state_text == "Off Grid."
+
+    # from mock data
+    assert battery_charging.led_state == "Pulsing White 100%"
     assert battery_charging.led_state_text == "Normal Operation."
+    assert battery_charging.led_status == "0x01 - ONGRID_READY"

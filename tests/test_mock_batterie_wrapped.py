@@ -29,7 +29,7 @@ from .mock_battery_responses import (
 
 from .battery_charging_asyncio import fixture_battery_charging
 #from .battery_charging_sync import fixture_battery_charging
-#from .battery_discharging_sync import fixture_battery_discharging
+from .battery_discharging_sync import fixture_battery_discharging
 
 LOGGER_NAME = None # "sonnenapiv2" #
 

@@ -269,7 +269,7 @@ def test_batterie_discharging_wrapped(battery_discharging: Batterie):
     success = battery_discharging.update()
     assert success is not False
 
-    assert battery_discharging.seconds_until_reserve ==  28362
+    assert battery_discharging.seconds_to_reserve ==  28362
     assert battery_discharging.backup_reserve_at.strftime('%d.%b.%Y %H:%M')  == '21.Nov.2023 00:53'
 
     discharging_flows = battery_discharging.status_flows

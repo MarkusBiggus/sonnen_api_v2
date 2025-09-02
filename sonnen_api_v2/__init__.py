@@ -53,7 +53,7 @@ class BatterieBackup:
         """Initialize the API client."""
 
         self._battery = Batterie(auth_token, ip_address, port)
-        self._attr_available:bool = False
+        self._attr_available:bool = False # not availble until token validated
 
     @property
     def available(self) -> bool:

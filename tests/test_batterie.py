@@ -25,6 +25,11 @@ def test_sync_methods(battery_charging: Batterie) -> None:
     assert battery_charging.charging > 0
     assert battery_charging.discharging == 0
 
+    # from mock data
+    assert battery_charging.led_state == "Pulsing White 100%"
+    assert battery_charging.led_state_text == "Normal Operation."
+    assert battery_charging.led_status == "0x01 - ONGRID_READY"
+
     # parameter is saved for subsequent calls for text
     led_state = battery_charging.led_xlate_state(
         {
@@ -52,7 +57,28 @@ def test_sync_methods(battery_charging: Batterie) -> None:
     assert led_state == "Pulsing Green 100%"
     assert battery_charging.led_state_text == "Off Grid."
 
-    # from mock data
-    assert battery_charging.led_state == "Pulsing White 100%"
-    assert battery_charging.led_state_text == "Normal Operation."
-    assert battery_charging.led_status == "0x01 - ONGRID_READY"
+    led_state = battery_charging.led_xlate_state(
+        {
+            "Blinking Red":False,
+            "Brightness":'100',
+            "Pulsing Green":False,
+            "Pulsing Orange":False,
+            "Pulsing White":False,
+            "Solid Red":True
+        }
+    )
+    assert led_state == "Solid Red 100%"
+    assert battery_charging.led_state_text == "Critical Error - call installer!"
+
+    led_state = battery_charging.led_xlate_state(
+        {
+            "Blinking Red":True,
+            "Brightness":'100',
+            "Pulsing Green":False,
+            "Pulsing Orange":False,
+            "Pulsing White":False,
+            "Solid Red":False
+        }
+    )
+    assert led_state == "Blinking Red 100%"
+    assert battery_charging.led_state_text == "Error - call installer!"

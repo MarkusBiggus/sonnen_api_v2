@@ -32,7 +32,7 @@ def test_sync_methods(battery_charging: Batterie) -> None:
     assert status is True
 
     assert battery_charging.led_state == "Pulsing White 100%"
-    assert battery_charging.led_state_text == "Normal Operation. [0x01 - ONGRID_READY]"
+    assert battery_charging.led_state_text == "Normal Operation."
     assert battery_charging.led_status == "0x01 - ONGRID_READY"
 
     assert battery_charging.charging > 0

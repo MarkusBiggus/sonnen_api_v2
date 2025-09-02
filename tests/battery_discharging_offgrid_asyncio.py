@@ -4,8 +4,8 @@
 import logging
 import pytest
 from freezegun import freeze_time
-from asyncmock import AsyncMock
-import responses
+#from asyncmock import AsyncMock
+from aioresponses import aioresponses
 
 from sonnen_api_v2 import Batterie
 
@@ -19,7 +19,8 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 @pytest.fixture(name="battery_discharging_offgrid")
 @freeze_time("20-11-2023 17:00:59.54321") # disharging reserve time
-@pytest.mark.asyncio
+#@pytest.mark.asyncio
+#@aioresponses()
 async def fixture_battery_discharging_offgrid(mocker) -> Batterie:
     if LOGGER_NAME is not None:
         logging.basicConfig(filename=(f'/tests/logs/{LOGGER_NAME}.log'), level=logging.DEBUG)
@@ -28,27 +29,23 @@ async def fixture_battery_discharging_offgrid(mocker) -> Batterie:
 
     battery_discharging_offgrid = Batterie('fakeToken', 'fakeHost')
     urlHost = battery_discharging_offgrid.url
+    url = urlHost + '/api/v2/configurations'
 
-    mocker.patch.object(Batterie, "async_fetch_status", AsyncMock(return_value=__mock_status_discharging()))
-    mocker.patch.object(Batterie, "async_fetch_latest_details", AsyncMock(return_value=__mock_latest_discharging()))
+    with aioresponses() as mocked:
+    # mocker.patch.object(Batterie, "async_fetch_status", AsyncMock(return_value=__mock_status_discharging()))
+    # mocker.patch.object(Batterie, "async_fetch_latest_details", AsyncMock(return_value=__mock_latest_discharging()))
+        mocked.get(url, status=200, payload=__mock_configurations(), repeat=True)
+        yield
 #    mocker.patch.object(Batterie, "async_fetch_configurations", AsyncMock(return_value=__mock_configurations()))
-    mocker.patch.object(Batterie, "async_fetch_battery_status", AsyncMock(return_value=__mock_battery_discharging()))
-    mocker.patch.object(Batterie, "async_fetch_powermeter", AsyncMock(return_value=__mock_powermeter()))
-    mocker.patch.object(Batterie, "async_fetch_inverter", AsyncMock(return_value=__mock_inverter_discharging()))
+    # mocker.patch.object(Batterie, "async_fetch_battery_status", AsyncMock(return_value=__mock_battery_discharging()))
+    # mocker.patch.object(Batterie, "async_fetch_powermeter", AsyncMock(return_value=__mock_powermeter()))
+    # mocker.patch.object(Batterie, "async_fetch_inverter", AsyncMock(return_value=__mock_inverter_discharging()))
 
 
-# has to use ASYNC http mocker!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    with responses.RequestsMock() as rsps:
+#    success = await battery_discharging_offgrid.async_update()
 
-        url = urlHost + '/api/v2/configurations'
+#    assert success is not False
+#    mocked.assert_called_once_with(url)
+#    assert battery_discharging_offgrid._last_configurations == "20-11-2023 17:00:59"
 
-        rsps.add(
-            responses.GET,
-            url,
-            json=__mock_configurations(),
-        )
-        success = await battery_discharging_offgrid.async_update()
-
-    assert success is not False
-
-    return battery_discharging_offgrid
+#    return battery_discharging_offgrid

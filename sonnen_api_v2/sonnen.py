@@ -189,13 +189,6 @@ class Sonnen:
             if diff.total_seconds() < RATE_LIMIT:
                 return True
 
-        self._configurations = None
-        self._latest_details_data = None
-        self._status_data = None
-        self._battery_status = None
-        self._powermeter_data = None
-        self._inverter_data = None
-
         self._configurations = await self.async_fetch_configurations()
         success = (self._configurations is not None)
         if success:
@@ -253,13 +246,6 @@ class Sonnen:
             diff = now - self._last_updated
             if diff.total_seconds() < RATE_LIMIT:
                 return True
-
-        self._configurations = None
-        self._latest_details_data = None
-        self._status_data = None
-        self._battery_status = None
-        self._powermeter_data = None
-        self._inverter_data = None
 
         self._configurations = self.fetch_configurations()
         success = (self._configurations is not None)
@@ -378,8 +364,6 @@ class Sonnen:
     def fetch_configurations(self) -> Dict:
         """Fetch Configurations endpoint."""
 
-#        print('fetch_configurations')
-#        print(f'_last_configurations: {self._last_configurations}')
         now = datetime.datetime.now().astimezone()
         if self._last_configurations is not None:
             diff = now - self._last_configurations
@@ -401,6 +385,7 @@ class Sonnen:
 
     def fetch_latest_details(self) -> Dict:
         """Fetch Latest_Details endpoint."""
+
         return self._fetch_api_endpoint(
                 self.latest_details_api_endpoint
         )
@@ -1670,9 +1655,7 @@ class Sonnen:
     @property
     def led_state(self) -> str:
         """Text of current LED state.
-            When leds param is supplied it is used for following
-                calls to led_status & led_state_text
-
+            If param has been saved by self.led_xlate_state, reset it now.
             System-Status:
                 "Eclipse Led":
                 {
@@ -1684,14 +1667,15 @@ class Sonnen:
                 "Pulsing Orange":false,
                 "Pulsing White":true,
                 "Solid Red":false
-                },
+                }
             Returns:
                 String
         """
-        if self.leds is None:
-            leds = self.ic_eclipse_led
-        else:
-            leds = self.leds
+
+        if self.leds is not None:
+            self.leds = None
+
+        leds = self.ic_eclipse_led
 
         return self.led_xlate_state(leds)
 
@@ -1718,6 +1702,8 @@ class Sonnen:
 
     def led_xlate_state(self, leds:dict = None) -> str:
         """Text of LED state.
+            When leds param is supplied it is used for following
+                calls to led_status & led_state_text
             Returns:
                 String
         """
@@ -1759,10 +1745,14 @@ class Sonnen:
 
     def led_xlate_state_text(self, leds:dict = None) -> str:
         """Text meaning of LED state.
+            Used param saved by led_xlate_state when present
             Returns:
                 String
         """
-        if leds is None and self.leds is None:
+
+        if leds is not None:
+            self.leds = None
+        elif self.leds is None:
             leds = self.ic_eclipse_led
         else:
             leds = self.leds
@@ -1770,7 +1760,7 @@ class Sonnen:
         try:
             (Blinking_Green, Blinking_Red, Brightness, Eclipse_Status, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
         except ValueError:
-            (Blinking_Red, Brightness, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values() # earlier format
+            (Blinking_Red, Brightness, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values() # earlier pre 1.18 format
             Eclipse_Status = None
             Blinking_Green = False
 
@@ -1787,7 +1777,7 @@ class Sonnen:
         elif Pulsing_White is True:
             return "Normal Operation." #{Eclipse_Status_display}"
         elif Solid_Red is True:
-            return "Critical Error - call installer!{Eclipse_Status_display}"
+            return "Critical Error - call installer!" #{Eclipse_Status_display}"
         else:
             return "Off Grid."
 

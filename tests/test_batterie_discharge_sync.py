@@ -27,6 +27,11 @@ def test_sync_methods(battery_discharging: Batterie) -> None:
     assert battery_discharging.charging == 0
     assert battery_discharging.fully_discharged_at.strftime('%d.%b.%Y %H:%M') == '21.Nov.2023 03:28'
 
+    assert battery_discharging.led_state == "Pulsing White 100%"
+    assert battery_discharging.led_state_text == "Normal Operation."
+    assert battery_discharging.led_status == "Normal Operation." # pre firmware 1.18.x compatibility
+
+
     # sync wrapped methods used by ha component
     status_data = battery_discharging.sync_get_status()
     latest_data = battery_discharging.sync_get_latest_data()

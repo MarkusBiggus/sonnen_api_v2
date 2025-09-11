@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from functools import wraps
-from typing import Dict, Optional, Union
+from typing import Dict, Optional
 from collections.abc import Awaitable
 import json
 
@@ -69,11 +69,12 @@ class Sonnen:
     def __init__(self, auth_token: str, ip_address: str, ip_port: int = 80, logger_name: str = None) -> None:
         """Cache manager Sonnen API V2 data."""
 
-        self._last_updated = None #rate limiters
-        self._last_get_updated = None
-        self._last_configurations = None
+        self._last_updated:datetime.datetime = None #rate limiters
+        self._last_get_updated:datetime.datetime = None
+        self._last_configurations:datetime.datetime = None
         self._last_fully_charged:datetime.datetime = None
-        self.dod_limit = BATTERY_UNUSABLE_RESERVE #default depth of discharge limit until battery status
+        self.dod_limit = BATTERY_UNUSABLE_RESERVE # default depth of discharge limit until battery status
+        self.leds = None # remember param when supplied
 
         logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         if logger_name is not None:
@@ -188,15 +189,10 @@ class Sonnen:
             if diff.total_seconds() < RATE_LIMIT:
                 return True
 
-        self._latest_details_data = None
-        self._status_data = None
-        self._battery_status = None
-        self._powermeter_data = None
-        self._inverter_data = None
-
         self._configurations = await self.async_fetch_configurations()
         success = (self._configurations is not None)
         if success:
+            self._last_configurations = now
             self._status_data = await self.async_fetch_status()
             success = (self._status_data is not None)
         if success:
@@ -244,22 +240,17 @@ class Sonnen:
             called again within rate limit interval
         """
 
+#        print ('sync_update')
         now = datetime.datetime.now().astimezone()
         if self._last_updated is not None:
             diff = now - self._last_updated
             if diff.total_seconds() < RATE_LIMIT:
                 return True
 
-        self._configurations = None
-        self._latest_details_data = None
-        self._status_data = None
-        self._battery_status = None
-        self._powermeter_data = None
-        self._inverter_data = None
-
         self._configurations = self.fetch_configurations()
         success = (self._configurations is not None)
         if success:
+            self._last_configurations = now
             self._status_data = self.fetch_status()
             success = (self._status_data is not None)
         if success:
@@ -333,7 +324,7 @@ class Sonnen:
 
     # sync for use with run_in_executor in existing event loop
     def _fetch_api_endpoint(self, url: str) -> Dict:
-        """Fetch API coroutine."""
+        """Fetch API requestor."""
 
         try:
             response = requests.get(
@@ -346,10 +337,9 @@ class Sonnen:
         except Exception as error:
             self._log_error(f'Failed Sync fetch "{url}"  error: {error}')
             raise BatterieError(f'Failed Sync fetch "{url}"  error: {error}') from error
-
-        if response.status > 299:
+        if response.status_code > 299:
             self._log_error(f'Error fetching endpoint "{url}" status: {response.status}')
-            if response.status in [401, 403]:
+            if response.status_code in [401, 403]:
                 raise BatterieAuthError(f'Auth error fetching endpoint "{url}" status: {response.status}')
             else:
                 raise BatterieHTTPError(f'HTTP error fetching endpoint "{url}" status: {response.status}')
@@ -365,7 +355,8 @@ class Sonnen:
             if diff.total_seconds() < RATE_LIMIT:
                 return self._configurations
 
-        self._last_configurations = now
+        self._last_configurations = None
+        self._configurations = None
         return await self._async_fetch_api_endpoint(
             self.configurations_api_endpoint
         )
@@ -379,68 +370,78 @@ class Sonnen:
             if diff.total_seconds() < RATE_LIMIT:
                 return self._configurations
 
+        self._last_configurations = None
         self._configurations = None
-        self._last_configurations = now
         return self._fetch_api_endpoint(
             self.configurations_api_endpoint
         )
 
     async def async_fetch_latest_details(self) -> Awaitable[Dict]:
         """Wait for Fetch Latest_Details endpoint."""
+
         return await self._async_fetch_api_endpoint(
                 self.latest_details_api_endpoint
         )
 
     def fetch_latest_details(self) -> Dict:
         """Fetch Latest_Details endpoint."""
+
         return self._fetch_api_endpoint(
                 self.latest_details_api_endpoint
         )
 
     async def async_fetch_status(self) -> Awaitable[Dict]:
         """Wait for Fetch Status endpoint."""
+
         return await self._async_fetch_api_endpoint(
             self.status_api_endpoint
         )
 
     def fetch_status(self) -> Dict:
         """Fetch Status endpoint."""
+
         return self._fetch_api_endpoint(
             self.status_api_endpoint
         )
 
     async def async_fetch_battery_status(self) -> Awaitable[Dict]:
         """Wait for Fetch Battery endpoint."""
+
         return await self._async_fetch_api_endpoint(
             self.battery_api_endpoint
         )
 
     def fetch_battery_status(self) -> Dict:
         """Fetch Battery endpoint."""
+
         return self._fetch_api_endpoint(
             self.battery_api_endpoint
         )
 
     async def async_fetch_powermeter(self) -> Awaitable[Dict]:
         """Wait for Powermeter Status endpoint."""
+
         return await self._async_fetch_api_endpoint(
             self.powermeter_api_endpoint
         )
 
     def fetch_powermeter(self) -> Dict:
         """Fetch Powermeter endpoint."""
+
         return self._fetch_api_endpoint(
             self.powermeter_api_endpoint
         )
 
     async def async_fetch_inverter(self) -> Awaitable[Dict]:
         """Wait for Fetch Inverter endpoint."""
+
         return await self._async_fetch_api_endpoint(
             self.inverter_api_endpoint
         )
 
     def fetch_inverter(self) -> Dict:
         """Fetch Inverter endpoint."""
+
         return self._fetch_api_endpoint(
             self.inverter_api_endpoint
         )
@@ -448,22 +449,26 @@ class Sonnen:
     @property
     def url(self) -> str:
         """Device url."""
+
         return self._url
 
     @property
     def api_token(self) -> Dict:
         """API token to authenticate with batterie."""
+
         return self.auth_token
 
     @property
     def hostname(self) -> Dict:
         """Hostname:port of the batterie."""
+
         return self._hostname
 
     @property
 
     def configurations(self) -> Dict:
         """latest Configurations fetched from batterie."""
+
         return self._configurations
 
     @property
@@ -471,7 +476,8 @@ class Sonnen:
         """Last time configurations fetched (token validated) from batterie.
             Timezone must be provided for hass sensor.
         """
-        return self._last_configurations.astimezone() if self._last_configurations is not None else None
+
+        return self._last_configurations
 
     # @last_configurations.setter
     # def last_configurations(self, last_configurations: datetime.datetime = None):
@@ -483,19 +489,16 @@ class Sonnen:
         """Last time emulated method sync fetched from batterie.
             Timezone must be provided for hass sensor.
         """
-        return self._last_get_updated.astimezone() if self._last_get_updated is not None else None
+
+        return self._last_get_updated
 
     @property
     def last_updated(self) -> Optional[datetime.datetime]:
         """Last time data successfully fetched from batterie.
             Timezone must be provided for hass sensor.
         """
-        return self._last_updated.astimezone() if self._last_updated is not None else None
 
-    # @last_updated.setter
-    # def last_updated(self, last_updated: datetime.datetime = None):
-    #     """Last time data fetched from batterie."""
-    #     self._last_updated = last_updated
+        return self._last_updated
 
     @property
     @get_item(float)
@@ -504,6 +507,7 @@ class Sonnen:
             Returns:
                 kilo watt hours
         """
+
         return round(self._powermeter_data[1][POWERMETER_KWH_IMPORTED], 2)
 
     @property
@@ -513,6 +517,7 @@ class Sonnen:
             Returns:
                 kilo watt hours
         """
+
         return round(self._powermeter_data[0][POWERMETER_KWH_IMPORTED], 2)
 
     @property
@@ -522,6 +527,7 @@ class Sonnen:
             Returns:
                 watts
         """
+
         return round(self._powermeter_data[0][POWERMETER_WATTS_TOTAL], 2)
 
     @property
@@ -531,6 +537,7 @@ class Sonnen:
             Returns:
                 Amps
         """
+
         return  round(self._powermeter_data[0][POWERMETER_AMPERE_L1], 2)
 
     @property
@@ -540,6 +547,7 @@ class Sonnen:
             Returns:
                 Volts
         """
+
         return  round(self._powermeter_data[0][POWERMETER_VOLT_L1], 1)
 
     @property
@@ -559,6 +567,7 @@ class Sonnen:
             Power Factor = Real Power / Apparent Power
         """
         apparent_power = self.production_total_w + self.production_reactive_power
+
         return round(self.production_total_w / apparent_power, 1) if apparent_power > 0 else 0
 
     @property
@@ -568,6 +577,7 @@ class Sonnen:
             Returns:
                 watts
         """
+
         return  round(self._powermeter_data[1][POWERMETER_WATTS_TOTAL], 2)
 
     @property
@@ -577,6 +587,7 @@ class Sonnen:
             Returns:
                 Amps
         """
+
         return  round(self._powermeter_data[1][POWERMETER_AMPERE_L1], 2)
 
     @property
@@ -586,6 +597,7 @@ class Sonnen:
             Returns:
                 Volts
         """
+
         return  round(self._powermeter_data[1][POWERMETER_VOLT_L1], 1)
 
     @property
@@ -602,6 +614,7 @@ class Sonnen:
             Returns:
                 VAR
         """
+
         return round(self._powermeter_data[1][POWERMETER_REACTIVE_POWER], 2)
 
     @property
@@ -612,6 +625,7 @@ class Sonnen:
             Power Factor = Real Power / Apparent Power
         """
         apparent_power = self.consumption_total_w + self.consumption_reactive_power
+
         return round(self.consumption_total_w / apparent_power, 1) if apparent_power > 0 else 0
 
     @property
@@ -621,6 +635,7 @@ class Sonnen:
             Returns:
                 Consumption in Watt
         """
+
         return self._latest_details_data[STATUS_CONSUMPTION_W]
 
     @property
@@ -639,6 +654,7 @@ class Sonnen:
             Returns:
                 Integer Percent
         """
+
         return self._latest_details_data[DETAIL_USOC]
 
     @property
@@ -648,6 +664,7 @@ class Sonnen:
             Returns:
                 Integer Percent
         """
+
         return self._latest_details_data[DETAIL_RSOC]
 
     @property
@@ -657,6 +674,7 @@ class Sonnen:
             Returns:
                 state
         """
+
         return self._latest_details_data[IC_STATUS][DETAIL_STATE_BMS]
 
     @property
@@ -666,6 +684,7 @@ class Sonnen:
             Returns:
                 state
         """
+
         return self._latest_details_data[IC_STATUS][DETAIL_STATE_INVERTER]
 
     @property
@@ -677,6 +696,7 @@ class Sonnen:
             Returns:
                 seconds as integer
         """
+
         if self._last_fully_charged is None:
             return self._latest_details_data[IC_STATUS][DETAIL_SECONDS_SINCE_FULLCHARGE] if self._latest_details_data is not None else None
         else:
@@ -691,6 +711,7 @@ class Sonnen:
            Returns:
                timedelta since last_time_full
         """
+
         return datetime.timedelta(seconds=self.seconds_since_full)
 
     @property
@@ -719,56 +740,54 @@ class Sonnen:
     @property
     @get_item(float)
     def capacity_to_reserve(self) -> float:
-        """Capacity to reserve.
-            Below reserve capacity to reserve charge (how much to charge).
+        """Capacity to reserve by charging.
+            Usable Capacity is below Reserve Capacity (how much to charge).
 
             Returns:
-                Wh or None when not below backup reserve
+                Wh or None when above backup reserve
         """
 
-        until_reserve = self.u_soc - self.status_backup_buffer
-        return round(self.full_charge_capacity_wh * abs(until_reserve) / 100, 1) if until_reserve < 0 else None
+        to_reserve = self.u_soc - self.status_backup_buffer
+        return round(self.full_charge_capacity_wh * abs(to_reserve) / 100, 1) if to_reserve <= 0 else None
 
     @property
     @get_item(float)
     def capacity_until_reserve(self) -> float:
-        """Capacity until backup reserve is reached (battery state goes standby).
+        """Capacity until backup reserve is reached discharging (battery state goes standby).
             Capacity above Backup Reserve Charge (BRC) is how much to discharge until standby.
-            Standby state is reached when u_soc == status_backup_buffer.
+            Standby state is reached by discharge when u_soc == status_backup_buffer.
             until_reserve = USoc - BRC
             Returns:
                 Wh or None when below backup reserve
         """
 
         until_reserve = self.u_soc - self.status_backup_buffer
-        return round(self.full_charge_capacity_wh * until_reserve / 100, 1) if until_reserve >= 0 else None
+        return round(self.full_charge_capacity_wh * abs(until_reserve) / 100, 1) if until_reserve >= 0 else None
 
     @property
     def backup_reserve_at(self) -> Optional[datetime.datetime]:
         """Time battery charged/discharged to backup reserve.
             Timezone must be provided for hass sensor.
+            Time is truncated to full seconds.
             Returns:
                 Datetime with timezone charged/discharged to reserve or None when not charging/discharging
         """
 
-        seconds = self.seconds_until_reserve
+        seconds = self.seconds_to_reserve
         if seconds is None:
             return None
 
-#        if seconds > 0:
-#        return (datetime.datetime.now().astimezone() + datetime.timedelta(seconds=seconds)) # if self.discharging else None
-        return (self._last_updated.astimezone() + datetime.timedelta(seconds=seconds)) # if self.discharging else None
-        # if seconds < 0:
-        #     return (datetime.datetime.now().astimezone() - datetime.timedelta(seconds=abs(seconds))) if self.discharging else None
+        return (self._last_updated.replace(microsecond=0) + datetime.timedelta(seconds=seconds))
 
     @property
-    def time_to_reserve(self) -> datetime.timedelta:
+    def time_to_reserve(self) -> Optional[datetime.timedelta]:
         """Calculates time until backup reserve charge.
+            Deltatime from seconds_to_reserve.
            Returns:
-               timedelta until_reserve
+               timedelta to_reserve
         """
 
-        seconds = self.seconds_until_reserve
+        seconds = self.seconds_to_reserve
         if seconds is None:
             return None
 
@@ -784,11 +803,10 @@ class Sonnen:
 
         buffer_percent = self.status_backup_buffer / 100
         return round(self.full_charge_capacity_wh * buffer_percent, 1)
-#        return round(self.battery_full_charge_capacity_wh * buffer_percent, 1)
 
     @property
     @get_item(int)
-    def seconds_until_reserve(self) -> Union[int, None]:
+    def seconds_to_reserve(self) -> Optional[int]:
         """Time until battery capacity is backup reserve capacity (BRC).
             Pessimistic calculation uses the greater of recent average or instant consumption now.
             There is no equvalent average production when charging.
@@ -804,20 +822,19 @@ class Sonnen:
                 Time in seconds or None
         """
 
-        until_reserve = self.u_soc - self.status_backup_buffer
+        to_reserve = self.u_soc - self.status_backup_buffer
 
-        if until_reserve > 0:
+        if to_reserve == 0:
+            return 0
+        elif to_reserve > 0:
             if self.discharging:
                 consumption = self.consumption_average if self.discharging < self.consumption_average else self.discharging
-                return int(self.full_charge_capacity_wh * until_reserve / consumption * 36) # optimised: until_reserve / 100 * 3600
+                return int(self.full_charge_capacity_wh * to_reserve / consumption * 36) # optimised: to_reserve / 100 * 3600
             else:
-                return None
-#            return int((self.capacity_until_reserve / self.discharging) * 3600) if self.discharging else None
-        elif until_reserve == 0:
-            return 0
-        elif until_reserve < 0:
+                return None # both at_reserve & fully_charged
+        elif to_reserve < 0:
             if self.inverter_pac_total < 0 or self.inverter_pac_microgrid > 0:
-                return int(self.full_charge_capacity_wh * abs(until_reserve) / self.charging * 36) if self.charging else None
+                return int(self.full_charge_capacity_wh * abs(to_reserve) / self.charging * 36) if self.charging else None
             else:
                 return None
 
@@ -1128,7 +1145,7 @@ class Sonnen:
 
         if self._battery_status is not None:
             self.dod_limit = (self.battery_remaining_capacity - self.battery_usable_remaining_capacity) / self.battery_full_charge_capacity
-    #    return 100 - (round(self.dod_limit, 2) * 100)
+
         return round(self.dod_limit, 2) * 100
 
     @property
@@ -1175,7 +1192,7 @@ class Sonnen:
 
     @property
     @get_item(int)
-    def seconds_until_fully_charged(self) -> Union[int, None]:
+    def seconds_until_fully_charged(self) -> Optional[int]:
         """Time remaining until fully charged.
             Returns:
                 Time in seconds - None when not charging, zero when fully charged
@@ -1201,7 +1218,7 @@ class Sonnen:
 
     @property
     @get_item(int)
-    def seconds_until_fully_discharged(self) -> Union[int, None]:
+    def seconds_until_fully_discharged(self) -> Optional[int]:
         """Time remaining until fully discharged.
             Pessimistic calculation uses the greater of recent average or instant consumption now.
             Returns:
@@ -1237,23 +1254,24 @@ class Sonnen:
     def fully_charged_at(self) -> Optional[datetime.datetime]:
         """ Calculate time until fully charged.
             Timezone must be provided for hass sensor.
+            Time is truncated to full seconds.
             Returns:
                 Datetime with timezone or None when not charging
         """
 
-#        return (datetime.datetime.now().astimezone() + datetime.timedelta(seconds=self.seconds_until_fully_charged)) if self.charging else None
-        return (self._last_updated.astimezone() + datetime.timedelta(seconds=self.seconds_until_fully_charged)) if self.charging else None
+        return (self._last_updated.replace(microsecond=0) + datetime.timedelta(seconds=self.seconds_until_fully_charged)) if self.charging else None
 
     @property
     def fully_discharged_at(self) -> Optional[datetime.datetime]:
         """Future time battery is fully discharged.
             Timezone must be provided for hass sensor.
+            Time is truncated to full seconds.
             Returns:
                 Datetime discharged or None when not discharging
         """
 
 #        return (datetime.datetime.now().astimezone() + datetime.timedelta(seconds=self.seconds_until_fully_discharged)) if self.discharging else None
-        return (self._last_updated.astimezone() + datetime.timedelta(seconds=self.seconds_until_fully_discharged)) if self.discharging else None
+        return (self._last_updated.replace(microsecond=0) + datetime.timedelta(seconds=self.seconds_until_fully_discharged)) if self.discharging else None
 
     @property
     @get_item(int)
@@ -1264,6 +1282,46 @@ class Sonnen:
         """
 
         return self._configurations[CONFIGURATION_EM_OPERATINGMODE]
+
+    @property
+    @get_item(bool)
+    def configuration_em_reenable_microgrid(self) -> bool:
+        """Reenable Microgrid - Black Start feature
+            Returns:
+                Bool
+        """
+
+        return self._configurations[CONFIGURATION_EM_RE_ENABLE_MICROGRID] == "1"
+
+    @property
+    def configuration_blackstart_time1(self) -> str:
+        """Microgrid - Black Start 1st attempt time
+            eg. "08:00"
+            Returns:
+                string format "hh:mm"
+        """
+        time1 = self._configurations[CONFIGURATION_EM_USER_INPUT_TIME_ONE]
+        return time1 if time1 != "0" else None
+
+    @property
+    def configuration_blackstart_time2(self) -> str:
+        """Microgrid - Black Start 2nd attempt time
+            eg. "09:00"
+            Returns:
+                string format "hh:mm"
+        """
+        time2 = self._configurations[CONFIGURATION_EM_USER_INPUT_TIME_TWO]
+        return time2 if time2 != "0" else None
+
+    @property
+    def configuration_blackstart_time3(self) -> str:
+        """Microgrid - Black Start 3rd attempt time
+            eg. "10:00"
+            Returns:
+                string format "hh:mm"
+        """
+        time3 = self._configurations[CONFIGURATION_EM_USER_INPUT_TIME_THREE]
+        return time3 if time3 != "0" else None
 
     @property
     def configuration_em_operatingmode_name(self) -> str:
@@ -1529,7 +1587,7 @@ class Sonnen:
 
         """ current_state index of: ["standby", "charging", "discharging", "discharging reserve", "charged", "discharged"] """
 #        if self.status_battery_charging:
-        if self.inverter_pac_total < 0 or self.inverter_pac_microgrid > 0:
+        if self.inverter_pac_total < 0 or self.inverter_pac_microgrid < 0:
             battery_status = "charging"
 #        elif self.status_battery_discharging:
         elif self.inverter_pac_total > 0 or self.inverter_pac_microgrid > 0:
@@ -1597,34 +1655,73 @@ class Sonnen:
     @property
     def led_state(self) -> str:
         """Text of current LED state.
+            If param has been saved by self.led_xlate_state, reset it now.
             System-Status:
-                "Eclipse Led":{
-                    "Blinking Red":false,
-                    "Brightness":100,
-                    "Pulsing Green":false,
-                    "Pulsing Orange":false,
-                    "Pulsing White":true,
-                    "Solid Red":false
+                "Eclipse Led":
+                {
+                "Blinking Green":false,
+                "Blinking Red":false,
+                "Brightness":100,
+                "Eclipse Status":"0x01 - ONGRID_READY",
+                "Pulsing Green":false,
+                "Pulsing Orange":false,
+                "Pulsing White":true,
+                "Solid Red":false
                 }
             Returns:
                 String
         """
 
-        return self.led_xlate_state()
+        if self.leds is not None:
+            self.leds = None
 
+        leds = self.ic_eclipse_led
 
-    def led_xlate_state(self, leds:dict = None) -> str:
-        """Text of LED state.
+        return self.led_xlate_state(leds)
+
+    @property
+    def led_status(self) -> str:
+        """Eclipse_Status text from LED state.
             Returns:
                 String
         """
 
-        if leds is None:
+        if self.leds is None:
+            leds = self.ic_eclipse_led
+        else:
+            leds = self.leds
+
+        try:
+            (Blinking_Green, Blinking_Red, Brightness, Eclipse_Status, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
+        except ValueError:
+            (Blinking_Red, Brightness, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values() # earlier format
+            Eclipse_Status = self.led_xlate_state_text(leds)
+
+        return Eclipse_Status
+
+
+    def led_xlate_state(self, leds:dict = None) -> str:
+        """Text of LED state.
+            When leds param is supplied it is used for following
+                calls to led_status & led_state_text
+            Returns:
+                String
+        """
+
+        if leds is not None:
+            self.leds = leds
+        else:
             leds = self.ic_eclipse_led
 
-        (Blinking_Red, Brightness, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
+        try:
+            (Blinking_Green, Blinking_Red, Brightness, Eclipse_Status, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
+        except ValueError:
+            (Blinking_Red, Brightness, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values() # earlier format
+            Blinking_Green = False
 
-        if Blinking_Red is True:
+        if Blinking_Green is True:
+            return f"Blinking Green: {Brightness}%"
+        elif Blinking_Red is True:
             return f"Blinking Red {Brightness}%"
         elif Pulsing_Green is True:
             return f"Pulsing Green {Brightness}%"
@@ -1648,24 +1745,39 @@ class Sonnen:
 
     def led_xlate_state_text(self, leds:dict = None) -> str:
         """Text meaning of LED state.
+            Used param saved by led_xlate_state when present
             Returns:
                 String
         """
-        if leds is None:
+
+        if leds is not None:
+            self.leds = None
+        elif self.leds is None:
             leds = self.ic_eclipse_led
+        else:
+            leds = self.leds
 
-        (Blinking_Red, Brightness, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
+        try:
+            (Blinking_Green, Blinking_Red, Brightness, Eclipse_Status, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
+        except ValueError:
+            (Blinking_Red, Brightness, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values() # earlier pre 1.18 format
+            Eclipse_Status = None
+            Blinking_Green = False
 
-        if Blinking_Red is True:
-            return "Error - call installer!"
+        Eclipse_Status_display = f" [{Eclipse_Status}]" if Eclipse_Status is not None else ""
+
+        if Blinking_Green is True:
+            return f"Blinking Green:{Eclipse_Status_display}" # undocumented
+        elif Blinking_Red is True:
+            return "Error - call installer!" #{Eclipse_Status_display}"
         elif Pulsing_Green is True:
-            return "Off Grid."
+            return "Off Grid." #{Eclipse_Status_display}"
         elif Pulsing_Orange is True:
-            return  "No Internet connection!"
+            return "No Internet connection!" #{Eclipse_Status_display}"
         elif Pulsing_White is True:
-            return "Normal Operation."
+            return "Normal Operation." #{Eclipse_Status_display}"
         elif Solid_Red is True:
-            return "Critical Error - call installer!"
+            return "Critical Error - call installer!" #{Eclipse_Status_display}"
         else:
             return "Off Grid."
 

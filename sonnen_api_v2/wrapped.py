@@ -8,26 +8,31 @@ from typing import Dict
 import datetime
 import aiohttp
 import asyncio
-#from sonnen_api_v2 import BatterieError
-#from sonnen_api_v2.batterie_response import BatteryResponse
 
-from .const import BATTERY_UNUSABLE_RESERVE, RATE_LIMIT
+from .const import RATE_LIMIT
 
 def set_request_connect_timeouts(self, request_timeouts: tuple[int, int]):
+    """set request_timeouts tuple and return them.
+    """
+
     self.request_timeouts = request_timeouts
     self.client_timeouts = aiohttp.ClientTimeout(connect=request_timeouts[0], sock_read=request_timeouts[1])
     return self.request_timeouts
 
 def get_request_connect_timeouts(self) -> tuple[int, int]:
+    """return request_timeouts tuple.
+    """
+
     return self.request_timeouts
 
 def get_update(self) -> bool:
     """Update battery details Asyncronously from a sequential caller using async methods.
-
+        Sync/Async methods named to be compatible with existing HASS integration usage.
     Returns:
         True when all updates successful or
-        called again within rate limit interval
+        called again within rate limit interval.
     """
+
     async def _aync_update(self) -> bool:
         now = datetime.datetime.now()
         if self._last_get_updated is not None:
@@ -35,41 +40,27 @@ def get_update(self) -> bool:
             if diff.total_seconds() < RATE_LIMIT:
                 return True
 
-        self._configurations = None
-        self._latest_details_data = None
-        self._status_data = None
-        self._battery_status = None
-        self._powermeter_data = None
-        self._inverter_data = None
-
         self._configurations = await self.async_fetch_configurations()
         success = (self._configurations is not None)
-    #    print (f'config: {self._configurations}')
         if success:
             _aug_configurations(self)
             self._status_data = await self.async_fetch_status()
             success = (self._status_data is not None)
-    #    print (f'status: {self._status_data}')
         if success:
             self._latest_details_data = await self.async_fetch_latest_details()
             success = (self._latest_details_data is not None)
-    #    print (f'lastest: {self._latest_details_data}')
         if success:
             self._battery_status = await self.async_fetch_battery_status()
             success = (self._battery_status is not None)
-    #    print (f'batterystats: {self._battery_status}')
         if success:
             _aug_battery(self)
             self._powermeter_data = await self.async_fetch_powermeter()
             success = (self._powermeter_data is not None)
-    #    print (f'powerm: {self._powermeter_data}')
         if success:
             self._inverter_data = await self.async_fetch_inverter()
             success = (self._inverter_data is not None)
 
-    #    print (f'invertr: {self._inverter_data}')
-        self._last_get_updated = now if success else None
-    #    print (f'succ: {success}')
+        self._last_get_updated = self._last_configurations if success else None
         return success
 
     event_loop = asyncio.new_event_loop()
@@ -84,25 +75,21 @@ def get_update(self) -> bool:
 def sync_get_update(self) -> bool:
     """Update all battery data from a sequential caller using sync methods
         with extended data needed for ha component.
-
+        Sync/Async methods named to be compatible with existing HASS integration usage.
         Returns:
         True when all updates successful or
         called again within rate limit interval
     """
-    now = datetime.datetime.now()
+
+#    print ('sync_get_update')
+    now = datetime.datetime.now().astimezone()
     if self._last_get_updated is not None:
         diff = now - self._last_get_updated
         if diff.total_seconds() < RATE_LIMIT:
+            print(f'cache_get configs: {self._configurations}')
             return True
 
-    self._configurations = None
-    self._latest_details_data = None
-    self._status_data = None
-    self._battery_status = None
-    self._powermeter_data = None
-    self._inverter_data = None
-
-    self.sync_get_configurations()
+    self._configurations = self.sync_get_configurations()
     success = (self._configurations is not None)
     if success:
         self.sync_get_status()
@@ -114,14 +101,13 @@ def sync_get_update(self) -> bool:
         self.sync_get_battery()
         success = (self._battery_status is not None)
     if success:
-        dod_limit = self.battery_dod_limit
         self.sync_get_powermeter()
         success = (self._powermeter_data is not None)
     if success:
         self.sync_get_inverter()
         success = (self._inverter_data is not None)
 
-    self._last_get_updated = now if success else None
+    self._last_get_updated = self._last_configurations if success else None
     return success
 
 def get_configurations(self)-> Dict:
@@ -131,8 +117,8 @@ def get_configurations(self)-> Dict:
         Returns:
             json response
     """
+
     async def _get_configurations(self):
-        self._configurations = None
         self._configurations = await self.async_fetch_configurations()
 
     event_loop = asyncio.new_event_loop()
@@ -151,13 +137,14 @@ def sync_get_configurations(self)-> Dict:
         Returns:
             json response
     """
-    now = datetime.datetime.now()
-    if self._last_configurations is not None:
-        diff = now - self._last_configurations
+
+#    print ('sync_get_configurations')
+    now = datetime.datetime.now().astimezone()
+    if self._last_get_updated is not None:
+        diff = now - self._last_get_updated
         if diff.total_seconds() < RATE_LIMIT:
             return self._configurations
 
-    self._configurations = None
     self._configurations = self.fetch_configurations()
     return _aug_configurations(self)
 
@@ -178,6 +165,7 @@ def get_status(self) -> Dict:
         Returns:
             json response
     """
+
     async def _get_status(self):
         self._status_data = await self.async_fetch_status()
 
@@ -196,7 +184,8 @@ def sync_get_status(self) -> Dict:
         Returns:
             json response
     """
-    now = datetime.datetime.now()
+
+    now = datetime.datetime.now().astimezone()
     if self._last_get_updated is not None:
         diff = now - self._last_get_updated
         if diff.total_seconds() < RATE_LIMIT:
@@ -211,8 +200,8 @@ def get_latest_data(self) -> Dict:
         Returns:
             json response
     """
+
     async def _get_latest_data(self):
-        self._latest_details_data = None
         self._latest_details_data = await self.async_fetch_latest_details()
 
     event_loop = asyncio.new_event_loop()
@@ -229,13 +218,13 @@ def sync_get_latest_data(self) -> Dict:
         Returns:
             json response
     """
-    now = datetime.datetime.now()
+
+    now = datetime.datetime.now().astimezone()
     if self._last_get_updated is not None:
         diff = now - self._last_get_updated
         if diff.total_seconds() < RATE_LIMIT:
             return self._latest_details_data
 
-    self._latest_details_data = None
     self._latest_details_data = self.fetch_latest_details()
     return self._latest_details_data
 
@@ -246,8 +235,8 @@ def get_battery(self) -> Dict:
         Returns:
             json response
     """
+
     async def _get_battery(self):
-        self._battery_status = None
         self._battery_status = await self.async_fetch_battery_status()
         if self._configurations is None:
             self._configurations = await self.async_fetch_configurations()
@@ -271,13 +260,13 @@ def sync_get_battery(self) -> Dict:
         Returns:
             json response
     """
-    now = datetime.datetime.now()
+
+    now = datetime.datetime.now().astimezone()
     if self._last_get_updated is not None:
         diff = now - self._last_get_updated
         if diff.total_seconds() < RATE_LIMIT:
             return self._battery_status
 
-    self._battery_status = None
     self._battery_status = self.fetch_battery_status()
     if self._battery_status is None:
         return None
@@ -293,8 +282,6 @@ def _aug_battery(self) -> Dict:
         Returns:
             json response
     """
-
-    dod_limit = self.battery_dod_limit
 
     if self._configurations is None:
         self._battery_status['total_installed_capacity'] = ceil(self.battery_full_charge_capacity_wh)
@@ -313,8 +300,8 @@ def get_powermeter(self) -> Dict:
         Returns:
             json response
     """
+
     async def _get_powermeter(self):
-        self._powermeter_data = None
         self._powermeter_data = await self.async_fetch_powermeter()
 
     event_loop = asyncio.new_event_loop()
@@ -332,13 +319,13 @@ def sync_get_powermeter(self) -> Dict:
         Returns:
             json response
     """
-    now = datetime.datetime.now()
+
+    now = datetime.datetime.now().astimezone()
     if self._last_get_updated is not None:
         diff = now - self._last_get_updated
         if diff.total_seconds() < RATE_LIMIT:
             return self._powermeter_data
 
-    self._powermeter_data = None
     self._powermeter_data = self.fetch_powermeter()
     return self._powermeter_data
 
@@ -348,8 +335,8 @@ def get_inverter(self) -> Dict:
         Returns:
             json response
     """
+
     async def _get_inverter(self):
-        self._inverter_data = None
         self._inverter_data = await self.async_fetch_inverter()
 
     event_loop = asyncio.new_event_loop()
@@ -367,12 +354,12 @@ def sync_get_inverter(self) -> Dict:
         Returns:
             json response
     """
-    now = datetime.datetime.now()
+
+    now = datetime.datetime.now().astimezone()
     if self._last_get_updated is not None:
         diff = now - self._last_get_updated
         if diff.total_seconds() < RATE_LIMIT:
             return self._inverter_data
 
-    self._inverter_data = None
     self._inverter_data = self.fetch_inverter()
     return self._inverter_data

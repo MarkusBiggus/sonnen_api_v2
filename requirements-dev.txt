@@ -1,16 +1,13 @@
 #must be compatible versions with home assistant core
-aiohttp~=3.11.16,<4.0.0
-aiohttp-fast-zlib~=0.2.3,<4.0.0
-attrs~=25.1.0
+aiohttp~=3.12.15,<4.0.0
+aiohttp-fast-zlib~=0.3
 isal~=1.7
-propcache~=0.3.0
-requests~=2.32.3
-urllib3>=1.26.20,<2.0.0
-yarl~=1.18.3
-#setuptools==78.1.1
+requests~=2.32
+urllib3>=2.5.0
 
 #for tests
 asyncmock>=0.4.2
+aioresponses
 freezegun~=1.5.2
 load_dotenv>=0.1.0
 pytest==8.4.1

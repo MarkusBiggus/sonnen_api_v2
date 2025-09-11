@@ -13,9 +13,7 @@ When grid power is out, there is a possibility Internet may also be out either d
 has been out long enough to deplete ISP equipment emergency power.
 
 Without Internet access, Home Assistant server requires only the local home network to continue functioning by using the Sonnen batterie backup reserve charge.  \
-It is recommended to have an independant (small) UPS running off Sonnen batterie power for the LAN & Home Assistant server. There is a momentary power drop
-when Sonnen batterie switch to microGrid mode when grid power drops. A small UPS will prevent Home Assistant server from rebooting at the very moment
-it needs to alert you to the batterie going into microGrid mode.
+It is recommended to have an independant (small) UPS running off Sonnen batterie power for the LAN & Home Assistant server. There is a momentary power drop when grid power drops as Sonnen batterie switches to microGrid mode. A small UPS will prevent Home Assistant server from rebooting at the very moment it needs to alert you to the batterie status changed to "OffGrid".
 
 
 Read more about [SonnenBackup integration](https://github.com/MarkusBiggus/SonnenBackup/readme.md)
@@ -70,7 +68,7 @@ There are three ways to update from the Batterie:
     see battery_charging_sync & test_common_results_sync
 
 
-3. Async caller uses sync update from coroutine passed to asyncio.run_in_executor (ha emulation)
+3. Async caller uses sync update from coroutine passed to asyncio.run_in_executor (hass emulation)
 
         async def _async_update_data(self):
             result = await asyncio.async_add_executor_job(

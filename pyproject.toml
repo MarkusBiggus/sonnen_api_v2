@@ -34,10 +34,16 @@ classifiers=[
 
 dynamic = ["version"]
 
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["sonnen_api_v2"]
+
 [tool.setuptools.dynamic]
 version = {attr = "sonnen_api_v2.__version__"}
 
-[tool.setuptools.packages.find]
-where = ["sonnen_api_v2"]  # list of folders that contain the packages (["."] by default)
-exclude = ["tests"]
-namespaces = false  # to disable scanning PEP 420 namespaces (true by default)
+#[tool.setuptools.packages.find]
+#where = ["sonnen_api_v2"]  # list of folders that contain the packages (["."] by default)
+#exclude = ["tests"]
+#namespaces = false  # to disable scanning PEP 420 namespaces (true by default)

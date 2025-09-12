@@ -72,7 +72,7 @@ class Sonnen:
         self._last_updated:datetime.datetime = None #rate limiters
         self._last_get_updated:datetime.datetime = None
         self._last_configurations:datetime.datetime = None
-        self._last_fully_charged:datetime.datetime = None
+        self._last_fully_charged:datetime.datetime = None # cache 1st time full
         self.dod_limit = BATTERY_UNUSABLE_RESERVE # default depth of discharge limit until battery status
         self.leds = None # remember param when supplied
 
@@ -200,8 +200,8 @@ class Sonnen:
             success = (self._latest_details_data is not None)
         if success:
             if self.seconds_since_full == 0 and self._last_fully_charged is None:
-                self._last_fully_charged = self.system_status_timestamp
-            elif self._last_fully_charged is not None and self.seconds_since_full != 0:
+                self._last_fully_charged = self.system_status_timestamp # cache 1st time full
+            elif self.seconds_since_full != 0 and self._last_fully_charged is not None:
                 self._last_fully_charged = None
             self._battery_status = await self.async_fetch_battery_status()
             success = (self._battery_status is not None)
@@ -258,8 +258,8 @@ class Sonnen:
             success = (self._latest_details_data is not None)
         if success:
             if self.seconds_since_full == 0 and self._last_fully_charged is None:
-                self._last_fully_charged = self.system_status_timestamp
-            elif self._last_fully_charged is not None and self.seconds_since_full != 0:
+                self._last_fully_charged = self.system_status_timestamp # cache 1st time full
+            elif self.seconds_since_full != 0 and self._last_fully_charged is not None:
                 self._last_fully_charged = None
             self._battery_status = self.fetch_battery_status()
             success = (self._battery_status is not None)
@@ -705,10 +705,10 @@ class Sonnen:
     @property
     def time_since_full(self) -> datetime.timedelta:
         """Calculates time since full charge.
-           Cache the first time seconds_since_full is zero until is it not zero.
-           All last_time_full related calculations must be done in the context of
-           the device timestamp for consistency.
-           Returns:
+            Cache the first time seconds_since_full is zero until is it not zero.
+            All last_time_full related calculations must be done in the context of
+            the device timestamp for consistency.
+            Returns:
                timedelta since last_time_full
         """
 
@@ -718,7 +718,7 @@ class Sonnen:
     def last_time_full(self) -> Optional[datetime.datetime]:
         """Calculates last time at full charge when _last_fully_charged is not cached.
             Check _latest_details_data for edge condition before first update completes.
-           Returns:
+            Returns:
                DateTime with timezone or None
         """
 
@@ -762,7 +762,7 @@ class Sonnen:
         """
 
         until_reserve = self.u_soc - self.status_backup_buffer
-        return round(self.full_charge_capacity_wh * abs(until_reserve) / 100, 1) if until_reserve >= 0 else None
+        return round(self.full_charge_capacity_wh * until_reserve / 100, 1) if until_reserve >= 0 else None
 
     @property
     def backup_reserve_at(self) -> Optional[datetime.datetime]:
@@ -774,10 +774,8 @@ class Sonnen:
         """
 
         seconds = self.seconds_to_reserve
-        if seconds is None:
-            return None
 
-        return (self._last_updated.replace(microsecond=0) + datetime.timedelta(seconds=seconds))
+        return (self.system_status_timestamp + datetime.timedelta(seconds=seconds)) if seconds is not None else None
 
     @property
     def time_to_reserve(self) -> Optional[datetime.timedelta]:
@@ -788,10 +786,8 @@ class Sonnen:
         """
 
         seconds = self.seconds_to_reserve
-        if seconds is None:
-            return None
 
-        return datetime.timedelta(seconds=seconds)
+        return datetime.timedelta(seconds=seconds) if seconds is not None else None
 
     @property
     @get_item(float)
@@ -807,7 +803,7 @@ class Sonnen:
     @property
     @get_item(int)
     def seconds_to_reserve(self) -> Optional[int]:
-        """Time until battery capacity is backup reserve capacity (BRC).
+        """Seconds until battery reaches backup reserve capacity (BRC).
             Pessimistic calculation uses the greater of recent average or instant consumption now.
             There is no equvalent average production when charging.
             Reserve reached when USoC == BRC.
@@ -853,7 +849,7 @@ class Sonnen:
             Negative is charging
             Positive is discharging
             Returns:
-                Inverter load in watt
+                Inverter load in watts
         """
         return self._latest_details_data[DETAIL_PAC_TOTAL_W]
 
@@ -862,7 +858,7 @@ class Sonnen:
     def charging(self) -> int:
         """Actual battery charging value is negative.
             Returns:
-                Charging value in watt
+                Charging value in watts
         """
         return abs(self.pac_total) if self.pac_total < 0 else 0
 
@@ -871,7 +867,7 @@ class Sonnen:
     def discharging(self) -> int:
         """Actual battery discharging value.
             Returns:
-                Discharging value in watt
+                Discharging value in watts
         """
         return self.pac_total if self.pac_total > 0 else 0
 
@@ -1192,7 +1188,7 @@ class Sonnen:
 
     @property
     @get_item(int)
-    def seconds_until_fully_charged(self) -> Optional[int]:
+    def seconds_to_fully_charged(self) -> Optional[int]:
         """Time remaining until fully charged.
             Returns:
                 Time in seconds - None when not charging, zero when fully charged
@@ -1210,7 +1206,7 @@ class Sonnen:
                timedelta until fully_charged
         """
 
-        seconds = self.seconds_until_fully_charged
+        seconds = self.seconds_to_fully_charged
         if seconds is None:
             return None
 
@@ -1238,7 +1234,7 @@ class Sonnen:
         return seconds if remaining_capacity != 0 else 0
 
     @property
-    def time_to_fully_discharged(self) -> datetime.timedelta:
+    def time_until_fully_discharged(self) -> datetime.timedelta:
         """Calculates interval until fully_discharged.
            Returns:
                timedelta until fully_discharged
@@ -1250,14 +1246,14 @@ class Sonnen:
 
     @property
     def fully_charged_at(self) -> Optional[datetime.datetime]:
-        """Calculate time until fully charged.
+        """Calculate time to fully charged.
             Timezone must be provided for hass sensor.
             Time is truncated to full seconds.
             Returns:
                 Datetime fully charged or None when not charging
         """
 
-        return (self._last_updated.replace(microsecond=0) + datetime.timedelta(seconds=self.seconds_until_fully_charged)) if self.charging else None
+        return (self.system_status_timestamp + datetime.timedelta(seconds=self.seconds_to_fully_charged)) if self.charging else None
 
     @property
     def fully_discharged_at(self) -> Optional[datetime.datetime]:
@@ -1268,8 +1264,7 @@ class Sonnen:
                 Datetime fully discharged or None when not discharging
         """
 
-#        return (datetime.datetime.now().astimezone() + datetime.timedelta(seconds=self.seconds_until_fully_discharged)) if self.discharging else None
-        return (self._last_updated.replace(microsecond=0) + datetime.timedelta(seconds=self.seconds_until_fully_discharged)) if self.discharging else None
+        return (self.system_status_timestamp + datetime.timedelta(seconds=self.seconds_until_fully_discharged)) if self.discharging else None
 
     @property
     @get_item(int)
@@ -1388,9 +1383,9 @@ class Sonnen:
     @property
     @get_item(int)
     def consumption_average(self) -> int:
-        """Average consumption in watt.
+        """Average consumption in watts.
            Returns:
-               average consumption in watt
+               Integer Watts
         """
 
         return self._status_data[STATUS_CONSUMPTION_AVG]
@@ -1410,10 +1405,10 @@ class Sonnen:
             Can be used to check device time is correct.
             Timezone must be provided for hass sensor.
             Returns:
-                datetime with timezone
+                datetime with timezone truncated to whole seconds
         """
 
-        return  datetime.datetime.fromisoformat(self._status_data[STATUS_TIMESTAMP]).astimezone()
+        return  datetime.datetime.fromisoformat(self._status_data[STATUS_TIMESTAMP]).astimezone().replace(microsecond=0)
 
     @property
     @get_item(float)
@@ -1430,7 +1425,7 @@ class Sonnen:
     def status_rsoc(self) -> int:
         """Relative state of charge.
             Returns:
-                percent
+                Integer Percent
         """
 
         return self._status_data[STATUS_RSOC]
@@ -1440,7 +1435,7 @@ class Sonnen:
     def status_usoc(self) -> int:
         """Usable state of charge.
             Returns:
-                percent
+                Integer Percent
         """
 
         return self._status_data[STATUS_USOC]

@@ -783,7 +783,7 @@ class Sonnen:
     def time_to_reserve(self) -> Optional[datetime.timedelta]:
         """Calculates time until backup reserve charge.
             Deltatime from seconds_to_reserve.
-           Returns:
+            Returns:
                timedelta to_reserve
         """
 
@@ -1245,18 +1245,16 @@ class Sonnen:
         """
 
         seconds = self.seconds_until_fully_discharged
-        if seconds is None:
-            return None
 
-        return datetime.timedelta(seconds=seconds)
+        return datetime.timedelta(seconds=seconds) if seconds is not None else None
 
     @property
     def fully_charged_at(self) -> Optional[datetime.datetime]:
-        """ Calculate time until fully charged.
+        """Calculate time until fully charged.
             Timezone must be provided for hass sensor.
             Time is truncated to full seconds.
             Returns:
-                Datetime with timezone or None when not charging
+                Datetime fully charged or None when not charging
         """
 
         return (self._last_updated.replace(microsecond=0) + datetime.timedelta(seconds=self.seconds_until_fully_charged)) if self.charging else None
@@ -1267,7 +1265,7 @@ class Sonnen:
             Timezone must be provided for hass sensor.
             Time is truncated to full seconds.
             Returns:
-                Datetime discharged or None when not discharging
+                Datetime fully discharged or None when not discharging
         """
 
 #        return (datetime.datetime.now().astimezone() + datetime.timedelta(seconds=self.seconds_until_fully_discharged)) if self.discharging else None

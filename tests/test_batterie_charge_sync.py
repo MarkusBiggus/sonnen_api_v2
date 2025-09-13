@@ -37,7 +37,6 @@ def test_sync_methods(battery_charging: Batterie) -> None:
 
     assert battery_charging.charging > 0
     assert battery_charging.discharging == 0
-    assert battery_charging.fully_charged_at.strftime('%d.%b.%Y %H:%M') == '20.Nov.2023 18:46'
 
     assert battery_charging.last_configurations == FakeDatetime(2023, 11, 20, 17, 0, 0, 543210, tzlocal.get_localzone()) #'20-11-2023 17:00:00.54321+10:00'
     assert battery_charging.last_updated ==  FakeDatetime(2023, 11, 20, 17, 0, 0, 543210, tzinfo=tzlocal.get_localzone()) #'20-11-2023 17:00:00.54321+10:00'

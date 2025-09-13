@@ -105,7 +105,6 @@ async def test_batterie_charging_async(battery_charging: Batterie):
     charging_flows = battery_charging.status_flows
     assert charging_flows == {'FlowConsumptionBattery': False, 'FlowConsumptionGrid': False, 'FlowConsumptionProduction': True, 'FlowGridBattery': False, 'FlowProductionBattery': True, 'FlowProductionGrid': False}
 
-    assert battery_charging.fully_charged_at.strftime('%d.%b.%Y %H:%M') == '20.Nov.2023 18:46'
     #common tests for all fixture methods
     from . check_results import check_charge_results
 

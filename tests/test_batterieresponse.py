@@ -68,7 +68,7 @@ async def test_batterieresponse_works(battery_charging: Batterie) -> None:
         sensor_values={}
 )
 
-    response = await _batterie.refresh_response()
+    response:BatterieResponse = await _batterie.refresh_response()
 
     #print(f'response: {response}')
 
@@ -117,8 +117,7 @@ async def test_batterieresponse_bad_sensor(battery_charging: Batterie) -> None:
     assert isinstance(response, BatterieResponse) is True
     assert _batterie.available is True
 
-    sensor_value = _batterie.get_sensor_value('configuration_de_software')
-    assert sensor_value == '1.14.5'
+    assert _batterie.get_sensor_value('configuration_de_software') == '1.14.5'
     assert response.version == '0.5.15'
     assert response.package_build == '48'
 

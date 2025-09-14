@@ -12,6 +12,7 @@ def check_charge_results(battery_charging: Batterie):
     assert battery_charging.system_status == 'OnGrid'
     assert battery_charging.consumption_average == 486
     assert battery_charging.consumption == 1578
+    assert battery_charging.production == 2972
     assert battery_charging.kwh_consumed == 816.5
     assert battery_charging.kwh_produced == 3969.80
     assert battery_charging.installed_modules == 4
@@ -21,7 +22,6 @@ def check_charge_results(battery_charging: Batterie):
     assert battery_charging.charging == 1394
     assert battery_charging.grid_in == 0
     assert battery_charging.grid_out >= 0
-    assert battery_charging.production == 2972
     assert battery_charging.u_soc == 81
     assert battery_charging.r_soc == 88
     assert battery_charging.status_rsoc == 88

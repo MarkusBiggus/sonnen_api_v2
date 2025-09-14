@@ -18,7 +18,7 @@ dependencies = [
 #    "aiohttp>=3.11.16,<4.0.0",
     "aiohttp-fast-zlib~=0.3",
     "isal~=1.7",
-    "requests==2.32.4",
+    "requests>=2.32.4",
     "tzlocal>=5.2",
 #    "urllib3>=1.26.20,<2.0.0",
     "urllib3>=2.5.0",
@@ -37,14 +37,14 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 test = [
+  "aioresponses>=0.7.8",
   "asyncmock>=0.4.2",
   "freezegun>=1.5.2",
-  "load_dotenv>=0.1.0",  
-  "aioresponses==0.7.8",
-  "coverage==7.10.6",
+  "load_dotenv>=0.1.0",
+  "coverage>=7.10.6",
+  "pytest",
   "pytest-asyncio",
   "pytest-cov",
-  "pytest==8.4.2",
 ]
 
 [tool.setuptools]

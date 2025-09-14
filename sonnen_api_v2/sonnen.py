@@ -73,7 +73,7 @@ class Sonnen:
         self._last_get_updated:datetime.datetime = None
         self._last_configurations:datetime.datetime = None
         self._last_fully_charged:datetime.datetime = None # cache 1st time full
-        self.dod_limit = BATTERY_UNUSABLE_RESERVE # default depth of discharge limit until battery status
+        self.dod_limit = BATTERY_UNUSABLE_RESERVE # default depth of discharge limit until battery status known
         self.leds = None # remember param when supplied
 
         logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')

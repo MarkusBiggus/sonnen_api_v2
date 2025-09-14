@@ -10,6 +10,11 @@ from .const import DEFAULT_PORT
 
 __version__ = '0.5.15' # HA 2025.8
 
+# A build is each time dev work has passed its tests
+# and could be a release candidate.
+# Unrelated to version increases.
+__build__ = '48'
+
 __all__ = (
     "Batterie"
     "BatterieError",
@@ -28,13 +33,8 @@ class BatterieResponse(
         [
             "version",
             "last_updated",
-#            "configurations",
+            "package_build",
             "sensor_values"
-#            "status",
-#            "latestdata",
-#            "battery",
-#            "powermeter",
-#            "inverter"
         ],
     )
 ):
@@ -89,6 +89,7 @@ class BatterieBackup:
         return BatterieResponse(
             version = self._battery.configuration_de_software,
             last_updated = self._battery.last_updated,
+            package_build = __build__,
             sensor_values = {},
         )
 

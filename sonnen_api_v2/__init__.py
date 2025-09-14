@@ -69,7 +69,7 @@ class BatterieBackup:
         return self._battery.url
 
     @property
-    def response(self) -> str:
+    def response(self) -> BatterieResponse:
         """Return last response generated"""
 
         return self._response

@@ -54,7 +54,7 @@ class BatterieBackup:
 
         self._battery = Batterie(auth_token, ip_address, port)
         self._attr_available:bool = False # not availble until token validated
-        self._response:BatterieResponse = None
+#        self._response:BatterieResponse = None
 
     @property
     def available(self) -> bool:
@@ -69,10 +69,22 @@ class BatterieBackup:
         return self._battery.url
 
     @property
-    def response(self) -> BatterieResponse:
-        """Return last response generated"""
+    def package_version(self) -> str:
+        """Package version"""
 
-        return self._response
+        return __version__
+
+    @property
+    def package_build(self) -> str:
+        """Package build"""
+
+        return __build__
+
+    # @property
+    # def response(self) -> BatterieResponse:
+    #     """Return last response generated"""
+
+    #     return self._response
 
     def get_sensor_value(self, sensor_name:str) -> Any:
         """Get sensor value by name from battery property.
@@ -80,9 +92,12 @@ class BatterieBackup:
         """
 
         try:
-            sensor_value =  getattr(self._battery, sensor_name)
-        except AttributeError as error:
-            raise BatterieSensorError(f"BatterieBackup: Device has no sensor called '{sensor_name}'. Update sonnen_api_v2 package.") from error
+            sensor_value = getattr(self._battery, sensor_name)
+        except AttributeError:
+            try:
+                sensor_value = getattr(self, sensor_name)
+            except AttributeError as error:
+                raise BatterieSensorError(f"BatterieBackup: Device has no sensor called '{sensor_name}'. Update sonnen_api_v2 package.") from error
 
         return sensor_value
 

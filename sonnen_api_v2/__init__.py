@@ -54,21 +54,31 @@ class BatterieBackup:
 
         self._battery = Batterie(auth_token, ip_address, port)
         self._attr_available:bool = False # not availble until token validated
+        self._response:BatterieResponse = None
 
     @property
     def available(self) -> bool:
         """Device availability."""
+
         return self._attr_available
 
     @property
     def url(self) -> str:
         """Device url."""
+
         return self._battery.url
+
+    @property
+    def response(self) -> str:
+        """Return last response generated"""
+
+        return self._response
 
     def get_sensor_value(self, sensor_name:str) -> Any:
         """Get sensor value by name from battery property.
             refresh_response must have been called at least once before any sensor value is retrieved.
         """
+
         try:
             sensor_value =  getattr(self._battery, sensor_name)
         except AttributeError as error:
@@ -86,12 +96,13 @@ class BatterieBackup:
             _LOGGER.error(f'BatterieBackup: Error updating batterie data! from: {self._battery.hostname}')
             raise BatterieError(f'BatterieBackup: Error updating batterie data! from: {self._battery.hostname}')
 
-        return BatterieResponse(
+        self._response = BatterieResponse(
             version = __version__,
             last_updated = self._battery.last_updated,
             package_build = __build__,
             sensor_values = {},
         )
+        return self._response
 
     async def validate_token(self) -> Awaitable[BatterieResponse]:
         """Query the real time API."""
@@ -103,9 +114,28 @@ class BatterieBackup:
             _LOGGER.error(f'BatterieBackup: Error validating API token! ({self._battery.api_token})')
             raise BatterieAuthError(f'BatterieBackup: Error validating API token! ({self._battery.api_token})')
 
-        return BatterieResponse(
+        self._response = BatterieResponse(
             version = __version__,
             last_updated = self._battery.last_configurations,
             package_build = __build__,
             sensor_values = {},
         )
+        return self._response
+
+    def validate_token_sync(self) -> BatterieResponse:
+        """Query the real time API."""
+
+        success = self._battery.sync_validate_token()
+
+        self._attr_available = success
+        if success is not True:
+            _LOGGER.error(f'BatterieBackup: Error validating API token! ({self._battery.api_token})')
+            raise BatterieAuthError(f'BatterieBackup: Error validating API token! ({self._battery.api_token})')
+
+        self._response = BatterieResponse(
+            version = __version__,
+            last_updated = self._battery.last_configurations,
+            package_build = __build__,
+            sensor_values = {},
+        )
+        return self._response

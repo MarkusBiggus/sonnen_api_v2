@@ -152,6 +152,10 @@ async def __mock_async_update(self):
     """Mock update failed."""
     return False
 
+def __mock_sync_update(self):
+    """Mock update failed."""
+    return False
+
 @pytest.mark.asyncio
 @pytest.mark.usefixtures("battery_charging")
 @patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_auth200)
@@ -212,3 +216,39 @@ async def test_batterie_ConnectionError(battery_charging: Batterie) -> None:
     ):
 #        with pytest.raises(BatterieError, match='Connection timeout to endpoint '):
         await _batterie.refresh_response()
+
+@pytest.mark.usefixtures("battery_charging")
+@patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_AuthError_401)
+@freeze_time("20-11-2023 17:00:00.543210")
+def test_batterieresponse_sync_BatterieAuthError(battery_charging: Batterie) -> None:
+    """BackupBatterie sync Response using mock data"""
+
+    _batterie = BatterieBackup('fakeToken', 'fakeHost')
+
+#    with pytest.raises(BatterieAuthError, match='Auth error fetching endpoint "http://fakeHost:80/api/v2/configurations" status: 401'):
+    with pytest.raises(BatterieAuthError, match='Invalid token "fakeToken" status: 401'):
+        success = _batterie.validate_token_sync()
+        assert success is False
+
+# @pytest.mark.usefixtures("battery_charging")
+# @patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_auth200)
+# #@patch.object(Batterie, 'sync_update', __mock_sync_update)
+# @freeze_time("20-11-2023 17:00:00.543210")
+# def test_batterieresponse_sync_BatterieHTTPError(battery_charging: Batterie) -> None:
+#     """BackupBatterie sync Response using mock data"""
+
+#     _batterie = BatterieBackup('fakeToken', 'fakeHost')
+
+#     response  = _batterie.validate_token_sync()
+#     assert isinstance(response, BatterieResponse) is True
+
+#     with patch(
+#         "urllib3.HTTPConnectionPool.urlopen",
+#         new_callable=__battery_HTTPError_301,
+#     ):
+#         success = _batterie._battery.sync_update()
+#         assert success is False
+
+    # with pytest.raises(BatterieHTTPError, match='Auth error fetching endpoint "http://fakeHost:80/api/v2/configurations" status: 401'):
+    #     success = _batterie._battery.sync_update()
+    #     assert success is False

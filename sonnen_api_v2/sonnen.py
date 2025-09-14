@@ -179,7 +179,7 @@ class Sonnen:
 
     async def async_update(self) -> Awaitable[bool]:
         """Update all battery data from an async caller.
-        Returns:
+            Returns:
             True when all updates successful or
             called again within rate limit interval.
         """
@@ -280,6 +280,7 @@ class Sonnen:
         try:
             async with aiohttp.ClientSession(headers=self.header, timeout=self.client_timeouts) as session:
                 response = await self._async_fetch(session, url)
+                return response
 
         except aiohttp.ClientConnectorDNSError as error:
             self._log_error(f'Battery: {self.ip_address} badIP? accessing: "{url}"  error: {error}')
@@ -290,7 +291,6 @@ class Sonnen:
             self._log_error(f'Coroutine fetch "{url}"  fail: {error}')
             raise BatterieError(f'Coroutine fetch "{url}"  fail: {error}') from error
 
-        return response
 
     async def _async_fetch(self, session: aiohttp.ClientSession, url: str) -> Awaitable[Dict]: #Awaitable[aiohttp.ClientResponse]:
         """Fetch API endpoint with aiohttp client."""
@@ -320,8 +320,6 @@ class Sonnen:
             self._log_error(f'Failed Fetching endpoint "{url}"  error: {error}')
             raise BatterieError(f'Failed Fetching endpoint "{url}"  error: {error}') from error
 
-        return None
-
     # sync for use with run_in_executor in existing event loop
     def _fetch_api_endpoint(self, url: str) -> Dict:
         """Fetch API requestor."""
@@ -337,12 +335,13 @@ class Sonnen:
         except Exception as error:
             self._log_error(f'Failed Sync fetch "{url}"  error: {error}')
             raise BatterieError(f'Failed Sync fetch "{url}"  error: {error}') from error
+
         if response.status_code > 299:
-            self._log_error(f'Error fetching endpoint "{url}" status: {response.status}')
+            self._log_error(f'Error fetching endpoint "{url}" status: {response.status_code}')
             if response.status_code in [401, 403]:
-                raise BatterieAuthError(f'Auth error fetching endpoint "{url}" status: {response.status}')
+                raise BatterieAuthError(f'Auth error fetching endpoint "{url}" status: {response.status_code}')
             else:
-                raise BatterieHTTPError(f'HTTP error fetching endpoint "{url}" status: {response.status}')
+                raise BatterieHTTPError(f'HTTP error fetching endpoint "{url}" status: {response.status_code}')
 
         return response.json()
 

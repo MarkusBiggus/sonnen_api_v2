@@ -52,7 +52,7 @@ if LOGGER_NAME is not None:
 @pytest.mark.asyncio
 #@pytest.mark.usefixtures("battery_charging")
 @patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_auth200)
-@freeze_time("20-11-2023 17:00:00")
+@freeze_time("20-11-2023 17:00:00.543210")
 async def test_batterieresponse_works(battery_charging: Batterie) -> None:
     """BackupBatterie Response using mock data"""
 
@@ -62,10 +62,11 @@ async def test_batterieresponse_works(battery_charging: Batterie) -> None:
 
     assert isinstance(response, BatterieResponse) is True
     assert response == BatterieResponse(
-        version='1.14.5',
-        last_updated=datetime.datetime(2023, 11, 20, 17, 0, tzinfo=tzlocal.get_localzone()),
+        version='0.5.15',
+        last_updated=datetime.datetime(2023, 11, 20, 17, 0, 0, 543210, tzinfo=tzlocal.get_localzone()),
+        package_build='48',
         sensor_values={}
-    )
+)
 
     response = await _batterie.refresh_response()
 
@@ -73,14 +74,15 @@ async def test_batterieresponse_works(battery_charging: Batterie) -> None:
 
     assert isinstance(response, BatterieResponse) is True
     assert response == BatterieResponse(
-        version='1.14.5',
-        last_updated=datetime.datetime(2023, 11, 20, 17, 0, tzinfo=tzlocal.get_localzone()),
+        version='0.5.15',
+        last_updated=datetime.datetime(2023, 11, 20, 17, 0, 0, 543210, tzinfo=tzlocal.get_localzone()),
+        package_build='48',
         sensor_values={}
         )
 
-    sensor_value = _batterie.get_sensor_value('configuration_de_software')
-    assert sensor_value == '1.14.5'
-
+    assert response.version == '0.5.15'
+    assert response.package_build == '48'
+    assert _batterie.get_sensor_value('configuration_de_software') == '1.14.5'
     assert _batterie.get_sensor_value('led_state') == 'Pulsing White 100%'
     assert _batterie.get_sensor_value('led_state_text') == 'Normal Operation.'
     assert _batterie.get_sensor_value('inverter_uac') == 233.55
@@ -117,7 +119,8 @@ async def test_batterieresponse_bad_sensor(battery_charging: Batterie) -> None:
 
     sensor_value = _batterie.get_sensor_value('configuration_de_software')
     assert sensor_value == '1.14.5'
-    assert sensor_value == response.version
+    assert response.version == '0.5.15'
+    assert response.package_build == '48'
 
     response:BatterieResponse = await _batterie.refresh_response()
 
@@ -154,7 +157,7 @@ async def __mock_async_update(self):
 @pytest.mark.usefixtures("battery_charging")
 @patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_auth200)
 @patch.object(Batterie, 'async_update', __mock_async_update)
-@freeze_time("20-11-2023 17:00:00")
+@freeze_time("20-11-2023 17:00:00.543210")
 async def test_batterieresponse_BatterieError(battery_charging: Batterie) -> None:
     """BackupBatterie Response using mock data"""
 
@@ -164,9 +167,10 @@ async def test_batterieresponse_BatterieError(battery_charging: Batterie) -> Non
 
     assert isinstance(response, BatterieResponse) is True
     assert response == BatterieResponse(
-        version='1.14.5',
-        last_updated=datetime.datetime(2023, 11, 20, 17, 0, tzinfo=tzlocal.get_localzone()),
-        sensor_values={}
+        version='0.5.15',
+        last_updated=datetime.datetime(2023, 11, 20, 17, 0, 0, 543210, tzinfo=tzlocal.get_localzone()),
+        sensor_values={},
+        package_build = '48'
     )
 
     with pytest.raises(BatterieError, match='BatterieBackup: Error updating batterie data!'):

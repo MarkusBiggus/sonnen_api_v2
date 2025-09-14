@@ -108,7 +108,9 @@ class Sonnen:
         aiohttp_fast_zlib.enable()
 
     def _log_error(self, msg):
-        """Log message when error logger is present"""
+        """Log message when error logger is present
+        """
+
         if self.logger:
             self.logger.error(msg)
         else:
@@ -176,7 +178,6 @@ class Sonnen:
         return await event_loop.run_in_executor(None, self.sync_validate_token)
 
     async def async_update(self) -> Awaitable[bool]:
-
         """Update all battery data from an async caller.
         Returns:
             True when all updates successful or
@@ -240,7 +241,6 @@ class Sonnen:
             called again within rate limit interval
         """
 
-#        print ('sync_update')
         now = datetime.datetime.now().astimezone()
         if self._last_updated is not None:
             diff = now - self._last_updated

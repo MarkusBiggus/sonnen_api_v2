@@ -87,7 +87,7 @@ class BatterieBackup:
             raise BatterieError(f'BatterieBackup: Error updating batterie data! from: {self._battery.hostname}')
 
         return BatterieResponse(
-            version = self._battery.configuration_de_software,
+            version = __version__,
             last_updated = self._battery.last_updated,
             package_build = __build__,
             sensor_values = {},
@@ -104,7 +104,8 @@ class BatterieBackup:
             raise BatterieAuthError(f'BatterieBackup: Error validating API token! ({self._battery.api_token})')
 
         return BatterieResponse(
-            version = self._battery.configuration_de_software,
+            version = __version__,
             last_updated = self._battery.last_configurations,
+            package_build = __build__,
             sensor_values = {},
         )

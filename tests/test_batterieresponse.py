@@ -242,6 +242,11 @@ def test_batterieresponse_sync_BatterieAuthError(battery_charging: Batterie) -> 
 #     response  = _batterie.validate_token_sync()
 #     assert isinstance(response, BatterieResponse) is True
 
+    # with patch(
+    #     "custom_components.sonnenbackup.config_flow._validate_api",
+    #     return_value=True,
+    # ):
+
 #     with patch(
 #         "urllib3.HTTPConnectionPool.urlopen",
 #         new_callable=__battery_HTTPError_301,

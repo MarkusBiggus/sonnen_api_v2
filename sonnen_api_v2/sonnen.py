@@ -1252,6 +1252,9 @@ class Sonnen:
                 Datetime fully charged or None when not charging
         """
 
+        if self.battery_activity_state == 'charged':
+            return self.last_time_full
+
         return (self.system_status_timestamp + datetime.timedelta(seconds=self.seconds_to_fully_charged)) if self.charging else None
 
     @property

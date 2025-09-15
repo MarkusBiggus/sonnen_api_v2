@@ -13,7 +13,7 @@ __version__ = '0.5.15' # HA 2025.8
 # A build is each time dev work has passed its tests
 # and could be a release candidate.
 # Unrelated to version increases.
-__build__ = '48'
+__build__ = '49'
 
 __all__ = (
     "Batterie"

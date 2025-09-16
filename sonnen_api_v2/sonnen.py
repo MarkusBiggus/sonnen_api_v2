@@ -1493,26 +1493,6 @@ class Sonnen:
         return self._status_data[STATUS_BACKUPBUFFER]
 
     @property
-    @get_item(bool)
-    def status_battery_charging(self) -> bool:
-        """BatteryCharging
-            Returns:
-                true when charging
-        """
-
-        return self._status_data[STATUS_BATTERY_CHARGING]
-
-    @property
-    @get_item(bool)
-    def status_battery_discharging(self) -> bool:
-        """BatteryDischarging
-            Returns:
-                true when discharging
-        """
-
-        return self._status_data[STATUS_BATTERY_DISCHARGING]
-
-    @property
     @get_item(dict)
     def status_flows(self) -> dict:
         """Status flows: production -> grid , battery
@@ -1569,9 +1549,29 @@ class Sonnen:
         return self._status_data[STATUS_DISCHARGE_NOT_ALLOWED]
 
     @property
+    @get_item(bool)
+    def status_battery_charging(self) -> bool:
+        """BatteryCharging
+            Returns:
+                true when charging
+        """
+
+        return self._status_data[STATUS_BATTERY_CHARGING]
+
+    @property
+    @get_item(bool)
+    def status_battery_discharging(self) -> bool:
+        """BatteryDischarging
+            Returns:
+                true when discharging
+        """
+
+        return self._status_data[STATUS_BATTERY_DISCHARGING]
+
+    @property
     def battery_activity_state(self) -> str:
         """Battery current state of activity.
-            Battery status for Charging & Discharging are unreliable
+            Battery status for Charging & Discharging are unreliable ???
             as reported by status API. Look at PAC instead.
             Returns:
                 String
@@ -1581,11 +1581,11 @@ class Sonnen:
             return "unavailable"
 
         """ current_state index of: ["standby", "charging", "discharging", "discharging reserve", "charged", "discharged"] """
-#        if self.status_battery_charging:
-        if self.inverter_pac_total < 0 or self.inverter_pac_microgrid < 0:
+        if self.status_battery_charging:
+#        if self.inverter_pac_total < 0 or self.inverter_pac_microgrid < 0:
             battery_status = "charging"
-#        elif self.status_battery_discharging:
-        elif self.inverter_pac_total > 0 or self.inverter_pac_microgrid > 0:
+        elif self.status_battery_discharging:
+#        elif self.inverter_pac_total > 0 or self.inverter_pac_microgrid > 0:
             if self.u_soc < self.status_backup_buffer:
                 battery_status = "discharging reserve"
             else:

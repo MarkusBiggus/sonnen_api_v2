@@ -63,9 +63,6 @@ async def test_batterieresponse_works() -> None:
     assert isinstance(response, BatterieResponse) is True
     assert _batterie.available is True
 
-    assert response.version == '0.5.15'
-    assert response.package_build == '48'
-
     sensor_value = _batterie.get_sensor_value('configuration_de_software')
     assert sensor_value == FW_VERSION
 

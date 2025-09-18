@@ -63,11 +63,8 @@ async def test_batterieresponse_works() -> None:
     assert isinstance(response, BatterieResponse) is True
     assert _batterie.available is True
 
-    assert response.version == FW_VERSION
-
     sensor_value = _batterie.get_sensor_value('configuration_de_software')
     assert sensor_value == FW_VERSION
-    assert sensor_value == response.version
 
     response:BatterieResponse = await _batterie.refresh_response()
 
@@ -76,7 +73,7 @@ async def test_batterieresponse_works() -> None:
     assert isinstance(response, BatterieResponse) is True
     assert _batterie.available is True
 
-    assert response.version == _batterie.get_sensor_value('configuration_de_software')
+    assert FW_VERSION == _batterie.get_sensor_value('configuration_de_software')
     assert OPERATING_MODE == _batterie.get_sensor_value('configuration_em_operatingmode')
     last_time_full = _batterie.get_sensor_value('last_time_full')
 #    time_since_full = _batterie.get_sensor_value('time_since_full')

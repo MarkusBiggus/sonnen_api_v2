@@ -10,6 +10,11 @@ from .const import DEFAULT_PORT
 
 __version__ = '0.5.15' # HA 2025.8
 
+# A build is each time dev work has passed its tests
+# and could be a release candidate.
+# Unrelated to version increases.
+__build__ = '50'
+
 __all__ = (
     "Batterie"
     "BatterieError",
@@ -28,13 +33,8 @@ class BatterieResponse(
         [
             "version",
             "last_updated",
-#            "configurations",
+            "package_build",
             "sensor_values"
-#            "status",
-#            "latestdata",
-#            "battery",
-#            "powermeter",
-#            "inverter"
         ],
     )
 ):
@@ -58,21 +58,45 @@ class BatterieBackup:
     @property
     def available(self) -> bool:
         """Device availability."""
+
         return self._attr_available
 
     @property
     def url(self) -> str:
         """Device url."""
+
         return self._battery.url
 
+    @property
+    def package_version(self) -> str:
+        """Package version"""
+
+        return __version__
+
+    @property
+    def package_build(self) -> str:
+        """Package build"""
+
+        return __build__
+
     def get_sensor_value(self, sensor_name:str) -> Any:
-        """Get sensor value by name from battery property.
+        """Get sensor value by name from battery property or class property.
             refresh_response must have been called at least once before any sensor value is retrieved.
         """
+
         try:
-            sensor_value =  getattr(self._battery, sensor_name)
-        except AttributeError as error:
-            raise BatterieSensorError(f"BatterieBackup: Device has no sensor called '{sensor_name}'. Update sonnen_api_v2 package.") from error
+            sensor_value = getattr(self._battery, sensor_name)
+        except AttributeError:
+            try:
+                sensor_value = getattr(self, sensor_name)
+            except AttributeError as error:
+                raise BatterieSensorError(f"BatterieBackup: Device has no sensor called '{sensor_name}'. Update sonnen_api_v2 package.") from error
+            except Exception as error:
+                _LOGGER.error(f'Error getting sensor {sensor_name} from class: {repr(error)}')
+                raise BatterieError(f'Error getting sensor {sensor_name} from class: {repr(error)}') from error
+        except Exception as error:
+            _LOGGER.error(f'Error getting sensor {sensor_name} from battery: {repr(error)}')
+            raise BatterieError(f'Error getting sensor {sensor_name} from battery: {repr(error)}') from error
 
         return sensor_value
 
@@ -86,11 +110,13 @@ class BatterieBackup:
             _LOGGER.error(f'BatterieBackup: Error updating batterie data! from: {self._battery.hostname}')
             raise BatterieError(f'BatterieBackup: Error updating batterie data! from: {self._battery.hostname}')
 
-        return BatterieResponse(
-            version = self._battery.configuration_de_software,
+        self._response = BatterieResponse(
+            version = __version__,
             last_updated = self._battery.last_updated,
+            package_build = __build__,
             sensor_values = {},
         )
+        return self._response
 
     async def validate_token(self) -> Awaitable[BatterieResponse]:
         """Query the real time API."""
@@ -102,8 +128,28 @@ class BatterieBackup:
             _LOGGER.error(f'BatterieBackup: Error validating API token! ({self._battery.api_token})')
             raise BatterieAuthError(f'BatterieBackup: Error validating API token! ({self._battery.api_token})')
 
-        return BatterieResponse(
-            version = self._battery.configuration_de_software,
+        self._response = BatterieResponse(
+            version = __version__,
             last_updated = self._battery.last_configurations,
+            package_build = __build__,
             sensor_values = {},
         )
+        return self._response
+
+    def validate_token_sync(self) -> BatterieResponse:
+        """Query the real time API."""
+
+        success = self._battery.sync_validate_token()
+
+        self._attr_available = success
+        if success is not True:
+            _LOGGER.error(f'BatterieBackup: Error validating API token! ({self._battery.api_token})')
+            raise BatterieAuthError(f'BatterieBackup: Error validating API token! ({self._battery.api_token})')
+
+        self._response = BatterieResponse(
+            version = __version__,
+            last_updated = self._battery.last_configurations,
+            package_build = __build__,
+            sensor_values = {},
+        )
+        return self._response

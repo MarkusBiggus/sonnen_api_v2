@@ -81,6 +81,8 @@ INVERTER_PAC_MICROGRID = 'pac_microgrid' #OffGrid
 INVERTER_UAC = 'uac'
 INVERTER_UBAT = 'ubat'
 
+# BMS use is not part of charging power
+BATTERY_BMS_USE_W = -23
 
 # default timeout (seconds)
 TIMEOUT = 20

@@ -844,7 +844,7 @@ class Sonnen:
     @property
     @get_item(int)
     def pac_total(self) -> int:
-        """Latest details Battery inverter load.
+        """Latest details Battery inverter load for both OnGrid and OffGrid modes.
             Negative is charging
             Positive is discharging
             Returns:
@@ -856,10 +856,11 @@ class Sonnen:
     @get_item(int)
     def charging(self) -> int:
         """Actual battery charging value is negative.
+            Don't count BMS use as charging.
             Returns:
                 Charging value in watts
         """
-        return abs(self.pac_total) if self.pac_total < 0 else 0
+        return abs(self.pac_total - BATTERY_BMS_USE_W) if self.pac_total < BATTERY_BMS_USE_W else 0
 
     @property
     @get_item(int)
@@ -1573,6 +1574,7 @@ class Sonnen:
         """Battery current state of activity.
             Battery status for Charging & Discharging are unreliable ???
             as reported by status API. Look at PAC instead.
+            Check charging is more than BMS idle use.
             Returns:
                 String
         """
@@ -1581,8 +1583,10 @@ class Sonnen:
             return "unavailable"
 
         """ current_state index of: ["standby", "charging", "discharging", "discharging reserve", "charged", "discharged"] """
-        if self.status_battery_charging:
-#        if self.inverter_pac_total < 0 or self.inverter_pac_microgrid < 0:
+        if (self.status_battery_charging
+            and (self.inverter_pac_total < BATTERY_BMS_USE_W
+                 or self.inverter_pac_microgrid < BATTERY_BMS_USE_W)
+            ):
             battery_status = "charging"
         elif self.status_battery_discharging:
 #        elif self.inverter_pac_total > 0 or self.inverter_pac_microgrid > 0:
@@ -1595,7 +1599,7 @@ class Sonnen:
         elif self.u_soc < 2:
             battery_status = "discharged"
         else:
-            battery_status = "standby" # standby @ reserve
+            battery_status = "standby" # standby @ reserve or production == consumption
 
         return battery_status
 

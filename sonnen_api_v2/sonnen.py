@@ -1572,9 +1572,10 @@ class Sonnen:
     @property
     def battery_activity_state(self) -> str:
         """Battery current state of activity.
-            Battery status for Charging & Discharging are unreliable ???
-            as reported by status API. Look at PAC instead.
-            Check charging is more than BMS idle use.
+            Battery status for Charging & Discharging are unreliable - sometimes neither are true
+                when pac_total is not zero as reported by status API.
+            Look at PAC instead.
+            Check charging is more than BMS idle use (observed).
             Returns:
                 String
         """
@@ -1583,17 +1584,23 @@ class Sonnen:
             return "unavailable"
 
         """ current_state index of: ["standby", "charging", "discharging", "discharging reserve", "charged", "discharged"] """
-        if (self.status_battery_charging
-            and (self.inverter_pac_total < BATTERY_BMS_USE_W
-                 or self.inverter_pac_microgrid < BATTERY_BMS_USE_W)
-            ):
+        # if (self.status_battery_charging
+        #     and (self.inverter_pac_total < BATTERY_BMS_USE_W
+        #          or self.inverter_pac_microgrid < BATTERY_BMS_USE_W)
+        #     ):
+        if (self.pac_total < BATTERY_BMS_USE_W
+            or self.status_battery_charging):
             battery_status = "charging"
-        elif self.status_battery_discharging:
-#        elif self.inverter_pac_total > 0 or self.inverter_pac_microgrid > 0:
-            if self.u_soc < self.status_backup_buffer:
-                battery_status = "discharging reserve"
-            else:
+        # elif (self.status_battery_discharging
+        #       and (self.inverter_pac_total > BATTERY_BMS_USE_W
+        #            or self.inverter_pac_microgrid > BATTERY_BMS_USE_W)
+        #     ):
+        elif (self.pac_total > 0
+              or self.status_battery_discharging):
+            if self.u_soc > self.status_backup_buffer:
                 battery_status = "discharging"
+            else:
+                battery_status = "discharging reserve"
         elif self.r_soc > 98: # look at usable capacity over long term?
             battery_status = "charged"
         elif self.u_soc < 2:

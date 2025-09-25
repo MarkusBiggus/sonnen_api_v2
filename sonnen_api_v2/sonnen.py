@@ -845,6 +845,8 @@ class Sonnen:
     @get_item(int)
     def pac_total(self) -> int:
         """Latest details Battery inverter load for both OnGrid and OffGrid modes.
+            When fully charged DETAIL_PAC_TOTAL_W shows BATTERY_BMS_USE_W as if charging.
+            Reduce pac_total by BATTERY_BMS_USE_W when calculating charging time.
             Negative is charging
             Positive is discharging
             Returns:

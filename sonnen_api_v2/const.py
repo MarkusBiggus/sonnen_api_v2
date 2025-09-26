@@ -82,8 +82,8 @@ INVERTER_UAC = 'uac'
 INVERTER_UBAT = 'ubat'
 
 # BMS use is not part of charging power
-# varies 22W-24W
-BATTERY_BMS_USE_W = -24
+# varies 22W-25W inc. cooling fan
+BATTERY_BMS_USE_W = -25
 
 # default timeout (seconds)
 TIMEOUT = 20

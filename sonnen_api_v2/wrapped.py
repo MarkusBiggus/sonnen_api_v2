@@ -50,11 +50,11 @@ def get_update(self) -> bool:
             self._latest_details_data = await self.async_fetch_latest_details()
             success = (self._latest_details_data is not None)
         if success:
-            self._adjust_current_details()
             self._battery_status = await self.async_fetch_battery_status()
             success = (self._battery_status is not None)
         if success:
             _aug_battery(self)
+            self._adjust_current_details()
             self._powermeter_data = await self.async_fetch_powermeter()
             success = (self._powermeter_data is not None)
         if success:
@@ -102,6 +102,7 @@ def sync_get_update(self) -> bool:
         self.sync_get_battery()
         success = (self._battery_status is not None)
     if success:
+        self._adjust_current_details()
         self.sync_get_powermeter()
         success = (self._powermeter_data is not None)
     if success:

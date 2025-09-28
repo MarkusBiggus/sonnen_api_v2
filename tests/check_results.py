@@ -19,7 +19,7 @@ def check_charge_results(battery_charging: Batterie):
     assert battery_charging.discharging == 0
     assert battery_charging.inverter_pac_microgrid == 0
     assert battery_charging.pac_total <= 0
-    assert battery_charging.charging == 1371
+    assert battery_charging.charging == 1372
     assert battery_charging.grid_in == 0
     assert battery_charging.grid_out >= 0
     assert battery_charging.u_soc == 81
@@ -36,7 +36,7 @@ def check_charge_results(battery_charging: Batterie):
     assert battery_charging.usable_remaining_capacity_wh == 16351.5
     assert battery_charging.used_capacity_wh == 3835.6
     assert battery_charging.battery_average_current == 0.035
-    assert battery_charging.seconds_to_fully_charged == 6519
+    assert battery_charging.seconds_to_fully_charged == 6514
     assert battery_charging.fully_charged_at.strftime('%d.%b.%Y %H:%M') == '20.Nov.2023 18:49'
     assert battery_charging.using_reserve is False
     assert battery_charging.seconds_to_reserve is None

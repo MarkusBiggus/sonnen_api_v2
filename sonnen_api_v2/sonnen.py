@@ -217,14 +217,24 @@ class Sonnen:
 
     def _adjust_current_details(self):
         '''Capture BMS use to discount charging value, guess cooling fan use.
+            Fan use makes battery look like it's charging when it isn't.
            Cache last time full with 1st time the last time was 0 seconds
         '''
-        if self.pac_total < BATTERY_BMS_MAX_W:
-            self.BMS_USE_W = BATTERY_BMS_MAX_W if self.battery_min_cell_temp > 27 else BATTERY_BMS_MIN_W
+        if self.pac_total < BATTERY_BMS_MAX32_W:
+            if self.battery_min_cell_temp > 29:
+                self.BMS_USE_W = BATTERY_BMS_MAX32_W
+            elif self.battery_min_cell_temp > 27:
+                self.BMS_USE_W = BATTERY_BMS_MAX28_W
+            elif self.battery_min_cell_temp > 25:
+                self.BMS_USE_W = BATTERY_BMS_MAX_W
+            else:
+                self.BMS_USE_W = BATTERY_BMS_MIN_W
+#            self.BMS_USE_W = BATTERY_BMS_MAX32_W if self.battery_min_cell_temp > 29 else BATTERY_BMS_MIN_W
         elif self.pac_total < 0:
             self.BMS_USE_W = self.pac_total # pac is only BMS use
         else:
             self.BMS_USE_W = BATTERY_BMS_MIN_W # discharging
+
         # cache 1st time fully charged
         if self.seconds_since_full == 0 and self._last_fully_charged is None:
             self._last_fully_charged = self.system_status_timestamp # cache 1st time full

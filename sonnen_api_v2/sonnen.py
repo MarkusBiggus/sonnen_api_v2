@@ -884,7 +884,7 @@ class Sonnen:
             Returns:
                 Charging value in watts
         """
-        return abs(self.pac_total - self.BMS_USE_W) if self.pac_total < BATTERY_BMS_MAX_W else 0
+        return abs(self.pac_total - self.BMS_USE_W) if self.pac_total < self.BMS_USE_W else 0
 
     @property
     @get_item(int)

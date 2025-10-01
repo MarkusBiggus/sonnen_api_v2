@@ -221,8 +221,10 @@ class Sonnen:
            Cache last time full with 1st time the last time was 0 seconds
         '''
         if self.pac_total < BATTERY_BMS_MAX32_W:
-            if self.battery_min_cell_temp > 29:
+            if self.battery_min_cell_temp > 30:
                 self.BMS_USE_W = BATTERY_BMS_MAX32_W
+            if self.battery_min_cell_temp > 29:
+                self.BMS_USE_W = BATTERY_BMS_MAX30_W
             elif self.battery_min_cell_temp > 27:
                 self.BMS_USE_W = BATTERY_BMS_MAX28_W
             elif self.battery_min_cell_temp > 25:
@@ -1612,7 +1614,9 @@ class Sonnen:
         #     and (self.inverter_pac_total < BATTERY_BMS_MAX_W
         #          or self.inverter_pac_microgrid < BATTERY_BMS_MAX_W)
         #     ):
-        if (self.pac_total < BATTERY_BMS_MAX_W
+        if self.r_soc == 100: # look at usable capacity over long term?
+            battery_status = "charged"
+        elif (self.pac_total < self.BMS_USE_W
             or self.status_battery_charging):
             battery_status = "charging"
         # elif (self.status_battery_discharging
@@ -1625,8 +1629,6 @@ class Sonnen:
                 battery_status = "discharging"
             else:
                 battery_status = "discharging reserve"
-        elif self.r_soc > 98: # look at usable capacity over long term?
-            battery_status = "charged"
         elif self.u_soc < 2:
             battery_status = "discharged"
         else:

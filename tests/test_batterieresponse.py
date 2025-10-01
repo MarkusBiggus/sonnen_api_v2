@@ -76,7 +76,7 @@ async def test_batterieresponse_works(battery_charging: Batterie) -> None:
     assert response == BatterieResponse(
         version='0.5.15',
         last_updated=datetime.datetime(2023, 11, 20, 17, 0, 0, 543210, tzinfo=tzlocal.get_localzone()),
-        package_build='55',
+        package_build='56',
         sensor_values={}
         )
 

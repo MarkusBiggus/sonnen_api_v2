@@ -1625,10 +1625,10 @@ class Sonnen:
         #     ):
         elif (self.pac_total > 0
               or self.status_battery_discharging):
-            if self.u_soc > self.status_backup_buffer:
-                battery_status = "discharging"
-            else:
+            if self.u_soc < self.status_backup_buffer:
                 battery_status = "discharging reserve"
+            else:
+                battery_status = "discharging"
         elif self.u_soc < 2:
             battery_status = "discharged"
         else:

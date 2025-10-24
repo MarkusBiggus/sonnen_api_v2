@@ -75,6 +75,7 @@ class Sonnen:
         self._last_fully_charged:datetime.datetime = None # cache 1st time full
         self.dod_limit = BATTERY_UNUSABLE_RESERVE # default depth of discharge limit until battery status known
         self.leds = None # remember param when supplied
+        self.BMS_USE_W = BATTERY_BMS_MIN_W # allowance for BMS & Cooling fan
 
         logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         if logger_name is not None:
@@ -204,9 +205,11 @@ class Sonnen:
                 self._last_fully_charged = self.system_status_timestamp # cache 1st time full
             elif self.seconds_since_full != 0 and self._last_fully_charged is not None:
                 self._last_fully_charged = None
+
             self._battery_status = await self.async_fetch_battery_status()
             success = (self._battery_status is not None)
         if success:
+            self._adjust_current_details()
             self.battery_dod_limit
             self._powermeter_data = await self.async_fetch_powermeter()
             success = (self._powermeter_data is not None)
@@ -216,6 +219,35 @@ class Sonnen:
 
         self._last_updated = now if success else None
         return success
+
+    def _adjust_current_details(self):
+        '''Capture BMS use to discount charging value, guess cooling fan use.
+            Fan use makes battery look like it's charging when it isn't.
+           Cache last time full with 1st time the last time was 0 seconds
+        '''
+        if self.pac_total < BATTERY_BMS_MAX32_W:
+            if self.battery_min_cell_temp > 30:
+                self.BMS_USE_W = BATTERY_BMS_MAX32_W
+            if self.battery_min_cell_temp > 29:
+                self.BMS_USE_W = BATTERY_BMS_MAX30_W
+            elif self.battery_min_cell_temp > 27:
+                self.BMS_USE_W = BATTERY_BMS_MAX28_W
+            elif self.battery_min_cell_temp > 25:
+                self.BMS_USE_W = BATTERY_BMS_MAX_W
+            else:
+                self.BMS_USE_W = BATTERY_BMS_MIN_W
+#            self.BMS_USE_W = BATTERY_BMS_MAX32_W if self.battery_min_cell_temp > 29 else BATTERY_BMS_MIN_W
+        elif self.pac_total < 0:
+            self.BMS_USE_W = self.pac_total # pac is only BMS use
+        else:
+            self.BMS_USE_W = BATTERY_BMS_MIN_W # discharging
+
+        # cache 1st time fully charged
+        if self.seconds_since_full == 0 and self._last_fully_charged is None:
+            self._last_fully_charged = self.system_status_timestamp # cache 1st time full
+        elif self.seconds_since_full != 0 and self._last_fully_charged is not None:
+            self._last_fully_charged = None
+
 
     def update(self) -> bool:
         """Update battery details Asyncronously from a sequential caller using async methods.
@@ -264,6 +296,7 @@ class Sonnen:
             self._battery_status = self.fetch_battery_status()
             success = (self._battery_status is not None)
         if success:
+            self._adjust_current_details()
             self.battery_dod_limit
             self._powermeter_data = self.fetch_powermeter()
             success = (self._powermeter_data is not None)
@@ -844,7 +877,9 @@ class Sonnen:
     @property
     @get_item(int)
     def pac_total(self) -> int:
-        """Latest details Battery inverter load.
+        """Latest details Battery inverter load for both OnGrid and OffGrid modes.
+            When fully charged DETAIL_PAC_TOTAL_W shows BATTERY_BMS_MAX_W as if charging.
+            Reduce pac_total by BATTERY_BMS_MAX_W when calculating charging time.
             Negative is charging
             Positive is discharging
             Returns:
@@ -856,10 +891,11 @@ class Sonnen:
     @get_item(int)
     def charging(self) -> int:
         """Actual battery charging value is negative.
+            Don't count BMS use as charging.
             Returns:
                 Charging value in watts
         """
-        return abs(self.pac_total) if self.pac_total < 0 else 0
+        return abs(self.pac_total - self.BMS_USE_W) if self.pac_total < self.BMS_USE_W else 0
 
     @property
     @get_item(int)
@@ -1571,8 +1607,10 @@ class Sonnen:
     @property
     def battery_activity_state(self) -> str:
         """Battery current state of activity.
-            Battery status for Charging & Discharging are unreliable ???
-            as reported by status API. Look at PAC instead.
+            Battery status for Charging & Discharging are unreliable - sometimes neither are true
+                when pac_total is not zero as reported by status API.
+            Look at PAC instead.
+            Check charging is more than BMS idle use (observed).
             Returns:
                 String
         """
@@ -1581,21 +1619,22 @@ class Sonnen:
             return "unavailable"
 
         """ current_state index of: ["standby", "charging", "discharging", "discharging reserve", "charged", "discharged"] """
-        if self.status_battery_charging:
-#        if self.inverter_pac_total < 0 or self.inverter_pac_microgrid < 0:
+  
+        if self.r_soc == 100: # look at usable capacity over long term?
+            battery_status = "charged"
+        elif (self.pac_total < self.BMS_USE_W
+            or self.status_battery_charging):
             battery_status = "charging"
-        elif self.status_battery_discharging:
-#        elif self.inverter_pac_total > 0 or self.inverter_pac_microgrid > 0:
+        elif (self.pac_total > 0
+              or self.status_battery_discharging):
             if self.u_soc < self.status_backup_buffer:
                 battery_status = "discharging reserve"
             else:
                 battery_status = "discharging"
-        elif self.r_soc > 98: # look at usable capacity over long term?
-            battery_status = "charged"
         elif self.u_soc < 2:
             battery_status = "discharged"
         else:
-            battery_status = "standby" # standby @ reserve
+            battery_status = "standby" # standby @ reserve or production == consumption
 
         return battery_status
 

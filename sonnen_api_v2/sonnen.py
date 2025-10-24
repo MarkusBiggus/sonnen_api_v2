@@ -201,6 +201,11 @@ class Sonnen:
             self._latest_details_data = await self.async_fetch_latest_details()
             success = (self._latest_details_data is not None)
         if success:
+            if self.seconds_since_full == 0 and self._last_fully_charged is None:
+                self._last_fully_charged = self.system_status_timestamp # cache 1st time full
+            elif self.seconds_since_full != 0 and self._last_fully_charged is not None:
+                self._last_fully_charged = None
+
             self._battery_status = await self.async_fetch_battery_status()
             success = (self._battery_status is not None)
         if success:
@@ -284,6 +289,10 @@ class Sonnen:
             self._latest_details_data = self.fetch_latest_details()
             success = (self._latest_details_data is not None)
         if success:
+            if self.seconds_since_full == 0 and self._last_fully_charged is None:
+                self._last_fully_charged = self.system_status_timestamp # cache 1st time full
+            elif self.seconds_since_full != 0 and self._last_fully_charged is not None:
+                self._last_fully_charged = None
             self._battery_status = self.fetch_battery_status()
             success = (self._battery_status is not None)
         if success:
@@ -1610,19 +1619,12 @@ class Sonnen:
             return "unavailable"
 
         """ current_state index of: ["standby", "charging", "discharging", "discharging reserve", "charged", "discharged"] """
-        # if (self.status_battery_charging
-        #     and (self.inverter_pac_total < BATTERY_BMS_MAX_W
-        #          or self.inverter_pac_microgrid < BATTERY_BMS_MAX_W)
-        #     ):
+  
         if self.r_soc == 100: # look at usable capacity over long term?
             battery_status = "charged"
         elif (self.pac_total < self.BMS_USE_W
             or self.status_battery_charging):
             battery_status = "charging"
-        # elif (self.status_battery_discharging
-        #       and (self.inverter_pac_total > BATTERY_BMS_MAX_W
-        #            or self.inverter_pac_microgrid > BATTERY_BMS_MAX_W)
-        #     ):
         elif (self.pac_total > 0
               or self.status_battery_discharging):
             if self.u_soc < self.status_backup_buffer:

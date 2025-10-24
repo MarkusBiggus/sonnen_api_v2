@@ -82,10 +82,10 @@ INVERTER_UAC = 'uac'
 INVERTER_UBAT = 'ubat'
 
 # BMS use is not part of charging power
-# varies 22W-30W inc. cooling fan
-BATTERY_BMS_MAX32_W = -30
-BATTERY_BMS_MAX30_W = -28
-BATTERY_BMS_MAX28_W = -26
+# varies 22W-31W inc. cooling fan
+BATTERY_BMS_MAX32_W = -31
+BATTERY_BMS_MAX30_W = -29
+BATTERY_BMS_MAX28_W = -27
 BATTERY_BMS_MAX_W = -24
 BATTERY_BMS_MIN_W = -22
 

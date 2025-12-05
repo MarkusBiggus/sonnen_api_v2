@@ -18,10 +18,6 @@ import requests
 import urllib3
 from urllib3.util.timeout import Timeout
 
-#from .wrapped import set_request_connect_timeouts, get_request_connect_timeouts
-#from .wrapped import get_update, get_latest_data, get_configurations, get_status, get_powermeter, get_battery, get_inverter
-#from .wrapped import sync_get_update, sync_get_latest_data, sync_get_configurations, sync_get_status, sync_get_powermeter, sync_get_battery, sync_get_inverter
-
 from .const import *   # noqa: F403
 
 def get_item(_type):
@@ -65,6 +61,10 @@ class BatterieSensorError(BatterieError):
 
 class Sonnen:
     """Class for managing Sonnen API V2 data."""
+
+    from .wrapped import set_request_connect_timeouts, get_request_connect_timeouts
+    from .wrapped import get_update, get_latest_data, get_configurations, get_status, get_powermeter, get_battery, get_inverter
+    from .wrapped import sync_get_update, sync_get_latest_data, sync_get_configurations, sync_get_status, sync_get_powermeter, sync_get_battery, sync_get_inverter
 
     def __init__(self, auth_token: str, ip_address: str, ip_port: int = 80, logger_name: str = None) -> None:
         """Cache manager Sonnen API V2 data."""
@@ -201,15 +201,6 @@ class Sonnen:
             self._latest_details_data = await self.async_fetch_latest_details()
             success = (self._latest_details_data is not None)
         if success:
-            # fix API blunder - wrong case colour
-            details_eclipse = json.dumps(self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED])
-            details_eclipse.replace(" blue", " Blue")
-            self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED] = json.loads(details_eclipse)
-            if self.seconds_since_full == 0 and self._last_fully_charged is None:
-                self._last_fully_charged = self.system_status_timestamp # cache 1st time full
-            elif self.seconds_since_full != 0 and self._last_fully_charged is not None:
-                self._last_fully_charged = None
-
             self._battery_status = await self.async_fetch_battery_status()
             success = (self._battery_status is not None)
         if success:
@@ -250,6 +241,10 @@ class Sonnen:
             self._last_fully_charged = self.system_status_timestamp # cache 1st time full
         elif self.seconds_since_full != 0 and self._last_fully_charged is not None:
             self._last_fully_charged = None
+        # fix API blunder - wrong case colour
+        details_eclipse = json.dumps(self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED])
+        details_eclipse.replace(" blue", " Blue")
+        self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED] = json.loads(details_eclipse)
 
 
     def update(self) -> bool:
@@ -292,14 +287,6 @@ class Sonnen:
             self._latest_details_data = self.fetch_latest_details()
             success = (self._latest_details_data is not None)
         if success:
-            # fix API blunder - wrong case colour
-            details_eclipse = json.dumps(self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED])
-            details_eclipse.replace(" blue", " Blue")
-            self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED] = json.loads(details_eclipse)
-            if self.seconds_since_full == 0 and self._last_fully_charged is None:
-                self._last_fully_charged = self.system_status_timestamp # cache 1st time full
-            elif self.seconds_since_full != 0 and self._last_fully_charged is not None:
-                self._last_fully_charged = None
             self._battery_status = self.fetch_battery_status()
             success = (self._battery_status is not None)
         if success:
@@ -1731,12 +1718,16 @@ class Sonnen:
 
         return self.led_xlate_state(leds)
 
-    def led_decode_ic_eclipse (self) -> str:
-        """Decode IC_Eclipse object
+    def led_decode_ic_eclipse (self, leds:dict = None) -> str:
+        """Decode IC_Eclipse object.
             Earlier firmware had fewer elements, add false values for those missing.
+            When leds param is supplied by tests it is used for following
+                calls to led_status & led_state_text
         """
-
-        self.leds = self.ic_eclipse_led
+        if leds is not None:
+            self.leds = leds
+        else:
+            self.leds = self.ic_eclipse_led
 
         if len(self.leds) == 15: # firmware 1.25.6 (December 2025)
             return self.leds
@@ -1758,6 +1749,11 @@ class Sonnen:
             if status not in self.leds:
                 self.leds[status] = False
 
+        if "Eclipse Status" not in self.leds:
+            self.leds["Eclipse Status"] = self.led_xlate_state_text(self.leds)
+        if "Brightness" not in self.leds:
+            self.leds["Brightness"] = "100"
+
         return self.leds
 
     @property
@@ -1767,27 +1763,15 @@ class Sonnen:
                 String
         """
 
-        # if self.leds is None:
-        #     leds = json.loads(self.ic_eclipse_led)
-        # else:
-        #     leds = self.leds
         leds = self.led_decode_ic_eclipse()
 
-        # try:
-        #     (Blinking_Green, Blinking_Red, Blinking_Blue, Blinking_Gradient, Brightness, Eclipse_Status, Pulsing_Green, Pulsing_Orange,  Pulsing_Red, Pulsing_White,  Pulsing_Blue, Rotating_Gradient, Solid_Red, Solid_Blue, Solid_Gradient) = leds.values()
-        # except ValueError:
-        #     try:
-        #         (Blinking_Green, Blinking_Red, Brightness, Eclipse_Status, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
-        #     except ValueError:
-        #         (Blinking_Red, Brightness, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values() # earlier format
-        #         Eclipse_Status = self.led_xlate_state_text(leds)
-
-        return self.led_xlate_state_text(leds)
+        return leds["Eclipse Status"]
+#        return self.led_xlate_state_text(leds)
 
 
     def led_xlate_state(self, leds:dict = None) -> str:
         """Text of LED state.
-            When leds param is supplied it is used for following
+            When leds param is supplied by tests it is used for following
                 calls to led_status & led_state_text
             Returns:
                 String
@@ -1795,40 +1779,25 @@ class Sonnen:
 
         if leds is None:
             leds = self.led_decode_ic_eclipse()
+#        else:
+#            leds = self.led_decode_ic_eclipse(leds)
 
-        # try:
-        #     (Blinking_Green, Blinking_Red, Blinking_Blue, Blinking_Gradient, Brightness, Eclipse_Status, Pulsing_Green, Pulsing_Orange,  Pulsing_Red, Pulsing_White,  Pulsing_Blue, Rotating_Gradient, Solid_Red, Solid_Blue, Solid_Gradient) = leds.values()
-        # except ValueError:
-        #     try:
-        #         Blinking_Blue = False
-        #         Blinking_Gradient = False
-        #         Pulsing_Red = False
-        #         Pulsing_Blue = False
-        #         Rotating_Gradient = False
-        #         Solid_Blue = False
-        #         Solid_Gradient = False
-        #         (Blinking_Green, Blinking_Red, Brightness, Eclipse_Status, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
-        #     except ValueError:
-        #         (Blinking_Red, Brightness, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values() # earlier format
-        #         Blinking_Green = False
         Brightness = leds["Brightness"]
 
         if leds["Pulsing White"] is True:
             return f"Pulsing White {Brightness}%"
         elif leds["Blinking Red"] is True:
-            return "Blinking Red"
-        elif leds["Pulsing Orange"] is True:
-            return f"Pulsing Orange {Brightness}%"
+            return f"Blinking Red {Brightness}%"
         elif leds["Solid Red"] is True:
             return f"Solid Red {Brightness}%"
         elif leds["Blinking Green"] is True:
-            return "Blinking Green"
+            return f"Blinking Green {Brightness}%"
         elif leds["Pulsing Green"] is True:
             return f"Pulsing Green {Brightness}%"
         elif leds["Blinking Blue"] is True:
-            return "Blinking Blue"
+            return f"Blinking Blue {Brightness}%"
         elif leds["Blinking sonnenGradient"] is True:
-            return "Blinking Gradient"
+            return f"Blinking Gradient {Brightness}%"
         elif leds["Pulsing Red"] is True:
             return f"Pulsing Red {Brightness}%"
         elif leds["Pulsing Blue"] is True:
@@ -1839,6 +1808,8 @@ class Sonnen:
             return f"Solid Gradient {Brightness}%"
         elif leds["Rotating sonnenGradient"] is True:
             return f"Rotating Gradient {Brightness}%"
+        elif leds["Pulsing Orange"] is True:
+            return f"Pulsing Orange {Brightness}%"
         else:
             return "Off"
 
@@ -1851,8 +1822,10 @@ class Sonnen:
 
         if self.leds is None:
             leds = self.led_decode_ic_eclipse()
+        else:
+            leds = self.leds
 
-        return self.led_xlate_state_text()
+        return self.led_xlate_state_text(leds)
 
     def led_xlate_state_text(self, leds:dict = None) -> str:
         """Text meaning of LED state.

@@ -174,7 +174,7 @@ async def test_batterieresponse_BatterieError(battery_charging: Batterie) -> Non
         version='0.5.15',
         last_updated=datetime.datetime(2023, 11, 20, 17, 0, 0, 543210, tzinfo=tzlocal.get_localzone()),
         sensor_values={},
-        package_build='57'
+        package_build='58'
     )
 
     with pytest.raises(BatterieError, match='BatterieBackup: Error updating batterie data!'):

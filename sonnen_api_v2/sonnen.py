@@ -201,6 +201,10 @@ class Sonnen:
             self._latest_details_data = await self.async_fetch_latest_details()
             success = (self._latest_details_data is not None)
         if success:
+            # fix API blunder - wrong case colour
+            details_eclipse = json.dumps(self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED])
+            details_eclipse.replace(" blue", " Blue")
+            self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED] = json.loads(details_eclipse)
             if self.seconds_since_full == 0 and self._last_fully_charged is None:
                 self._last_fully_charged = self.system_status_timestamp # cache 1st time full
             elif self.seconds_since_full != 0 and self._last_fully_charged is not None:
@@ -210,7 +214,6 @@ class Sonnen:
             success = (self._battery_status is not None)
         if success:
             self._adjust_current_details()
-            self.battery_dod_limit
             self._powermeter_data = await self.async_fetch_powermeter()
             success = (self._powermeter_data is not None)
         if success:
@@ -289,6 +292,10 @@ class Sonnen:
             self._latest_details_data = self.fetch_latest_details()
             success = (self._latest_details_data is not None)
         if success:
+            # fix API blunder - wrong case colour
+            details_eclipse = json.dumps(self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED])
+            details_eclipse.replace(" blue", " Blue")
+            self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED] = json.loads(details_eclipse)
             if self.seconds_since_full == 0 and self._last_fully_charged is None:
                 self._last_fully_charged = self.system_status_timestamp # cache 1st time full
             elif self.seconds_since_full != 0 and self._last_fully_charged is not None:
@@ -297,7 +304,6 @@ class Sonnen:
             success = (self._battery_status is not None)
         if success:
             self._adjust_current_details()
-            self.battery_dod_limit
             self._powermeter_data = self.fetch_powermeter()
             success = (self._powermeter_data is not None)
         if success:
@@ -411,6 +417,7 @@ class Sonnen:
     async def async_fetch_latest_details(self) -> Awaitable[Dict]:
         """Wait for Fetch Latest_Details endpoint."""
 
+        self.leds = None
         return await self._async_fetch_api_endpoint(
                 self.latest_details_api_endpoint
         )
@@ -418,6 +425,7 @@ class Sonnen:
     def fetch_latest_details(self) -> Dict:
         """Fetch Latest_Details endpoint."""
 
+        self.leds = None
         return self._fetch_api_endpoint(
                 self.latest_details_api_endpoint
         )
@@ -1684,14 +1692,13 @@ class Sonnen:
     def ic_eclipse_led(self) -> dict:
         """System-Status:
                 "Eclipse Led":{...}
-            lowercase blue is returned normalised to match all other values.
+                lowercase blue is returned normalised to match all other values.
             Returns:
                 Dict
         """
         # print(f"eclipse: {self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED]}")
         # print(f"ic_status: {self._latest_details_data[IC_STATUS]}")
-
-        return self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED].replace(" blue", " Blue")
+        return self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED]
 
     @property
     def led_state(self) -> str:
@@ -1720,21 +1727,16 @@ class Sonnen:
                 String
         """
 
-        if self.leds is not None:
-            self.leds = None
-
-        leds = json.loads(self.ic_eclipse_led)
+        leds = self.led_decode_ic_eclipse()
 
         return self.led_xlate_state(leds)
 
-    def led_decode_ic_eclipse (self, leds:dict = None) -> str:
+    def led_decode_ic_eclipse (self) -> str:
         """Decode IC_Eclipse object
             Earlier firmware had fewer elements, add false values for those missing.
         """
-        if leds is not None:
-            self.leds = json.loads(leds)
-        else:
-            self.leds = json.loads(self.ic_eclipse_led)
+
+        self.leds = self.ic_eclipse_led
 
         if len(self.leds) == 15: # firmware 1.25.6 (December 2025)
             return self.leds
@@ -1780,7 +1782,7 @@ class Sonnen:
         #         (Blinking_Red, Brightness, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values() # earlier format
         #         Eclipse_Status = self.led_xlate_state_text(leds)
 
-        return self.led_xlate_state_text()
+        return self.led_xlate_state_text(leds)
 
 
     def led_xlate_state(self, leds:dict = None) -> str:
@@ -1791,11 +1793,8 @@ class Sonnen:
                 String
         """
 
-        # if leds is not None:
-        #     self.leds = leds
-        # else:
-        #     leds = self.leds
-        leds = self.led_decode_ic_eclipse()
+        if leds is None:
+            leds = self.led_decode_ic_eclipse()
 
         # try:
         #     (Blinking_Green, Blinking_Red, Blinking_Blue, Blinking_Gradient, Brightness, Eclipse_Status, Pulsing_Green, Pulsing_Orange,  Pulsing_Red, Pulsing_White,  Pulsing_Blue, Rotating_Gradient, Solid_Red, Solid_Blue, Solid_Gradient) = leds.values()
@@ -1850,23 +1849,21 @@ class Sonnen:
                 String
         """
 
+        if self.leds is None:
+            leds = self.led_decode_ic_eclipse()
+
         return self.led_xlate_state_text()
 
-    def led_xlate_state_text(self) -> str:
+    def led_xlate_state_text(self, leds:dict = None) -> str:
         """Text meaning of LED state.
             Used param saved by led_xlate_state when present
             Returns:
                 String
         """
 
-        # if leds is not None:
-        #     self.leds = None
-        # elif self.leds is None:
-        #     leds = json.loads(self.ic_eclipse_led)
-        #     self.leds = leds
-        # else:
-        #     leds = self.leds
-        leds = self.led_decode_ic_eclipse()
+        if leds is None:
+            leds = self.leds
+
 
         # try:
         #     (Blinking_Green, Blinking_Red, Brightness, Eclipse_Status, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()

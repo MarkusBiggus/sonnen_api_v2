@@ -98,6 +98,6 @@ RATE_LIMIT = 3 #seconds
 DEFAULT_PORT = 80
 DEFAULT_PORT = 80
 
-# Manufacturer reserve 8%
+# Manufacturer reserve
 
 BATTERY_BLACKSTART_RESERVE = .07

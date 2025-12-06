@@ -832,7 +832,9 @@ class Sonnen:
     @get_item(int)
     def seconds_to_reserve(self) -> Optional[int]:
         """Seconds until battery reaches backup reserve capacity (BRC).
-            Pessimistic calculation uses the greater of recent average or instant consumption now.
+            Optimistic calculation uses the battery production now or
+                recent average when production is greater than average.
+                (production maybe a spike, average will increase if not)
             There is no equvalent average production when charging.
             Reserve reached when USoC == BRC.
             Above reserve:
@@ -851,8 +853,8 @@ class Sonnen:
         if to_reserve == 0:
             return 0
         if to_reserve > 0:
-            if self.discharging:
-                consumption = self.consumption_average if self.discharging < self.consumption_average else self.discharging
+            if self.status_battery_discharging:
+                consumption = self.discharging if self.discharging < self.consumption_average else self.consumption_average
                 return int(self.full_charge_capacity_wh * to_reserve / consumption * 36) # optimised: to_reserve / 100 * 3600
             else:
                 return None # both at_reserve & fully_charged
@@ -1616,7 +1618,7 @@ class Sonnen:
         if self.configurations is None:
             return "unavailable"
 
-        """ current_state index of: ["standby", "charging", "discharging", "discharging reserve", "charged", "discharged"] """
+        #""" current_state index of: ["standby", "charging", "discharging", "discharging reserve", "charged", "discharged"] """
 
         if self.r_soc == 100: # look at usable capacity over long term?
             battery_status = "charged"

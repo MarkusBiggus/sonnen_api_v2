@@ -54,6 +54,7 @@ class BatterieBackup:
 
         self._battery = Batterie(auth_token, ip_address, port)
         self._attr_available:bool = False # not availble until token validated
+        self._response:BatterieResponse = None
 
     @property
     def available(self) -> bool:
@@ -92,10 +93,10 @@ class BatterieBackup:
             except AttributeError as error:
                 raise BatterieSensorError(f"BatterieBackup: Device has no sensor called '{sensor_name}'. Update sonnen_api_v2 package.") from error
             except Exception as error:
-                _LOGGER.error(f'Error getting sensor {sensor_name} from class: {repr(error)}')
+                _LOGGER.error("Error getting sensor %s from class: %s", sensor_name, repr(error))
                 raise BatterieError(f'Error getting sensor {sensor_name} from class: {repr(error)}') from error
         except Exception as error:
-            _LOGGER.error(f'Error getting sensor {sensor_name} from battery: {repr(error)}')
+            _LOGGER.error("Error getting sensor %s from class: %s", sensor_name, repr(error))
             raise BatterieError(f'Error getting sensor {sensor_name} from battery: {repr(error)}') from error
 
         return sensor_value
@@ -107,7 +108,7 @@ class BatterieBackup:
 
         self._attr_available = success
         if success is False:
-            _LOGGER.error(f'BatterieBackup: Error updating batterie data! from: {self._battery.hostname}')
+            _LOGGER.error("BatterieBackup: Error updating batterie data! from: %s", self._battery.hostname)
             raise BatterieError(f'BatterieBackup: Error updating batterie data! from: {self._battery.hostname}')
 
         self._response = BatterieResponse(
@@ -125,7 +126,7 @@ class BatterieBackup:
 
         self._attr_available = success
         if success is not True:
-            _LOGGER.error(f'BatterieBackup: Error validating API token! ({self._battery.api_token})')
+            _LOGGER.error("BatterieBackup: Error validating API token! (%s)", self._battery.api_token)
             raise BatterieAuthError(f'BatterieBackup: Error validating API token! ({self._battery.api_token})')
 
         self._response = BatterieResponse(
@@ -143,7 +144,7 @@ class BatterieBackup:
 
         self._attr_available = success
         if success is not True:
-            _LOGGER.error(f'BatterieBackup: Error validating API token! ({self._battery.api_token})')
+            _LOGGER.error("BatterieBackup: Error validating API token! (%s)", self._battery.api_token)
             raise BatterieAuthError(f'BatterieBackup: Error validating API token! ({self._battery.api_token})')
 
         self._response = BatterieResponse(

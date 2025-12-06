@@ -73,4 +73,5 @@ def test_sync_methods(battery_discharging: Batterie) -> None:
 
     from .check_results import check_discharge_results
 
+
     check_discharge_results(battery_discharging)

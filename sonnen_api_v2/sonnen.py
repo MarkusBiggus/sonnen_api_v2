@@ -73,7 +73,7 @@ class Sonnen:
         self._last_get_updated:datetime.datetime = None
         self._last_configurations:datetime.datetime = None
         self._last_fully_charged:datetime.datetime = None # cache 1st time full
-        self.dod_limit = BATTERY_UNUSABLE_RESERVE # default depth of discharge limit until battery status known
+        self.dod_limit = BATTERY_BLACKSTART_RESERVE
         self.leds = None # remember param when supplied
         self.BMS_USE_W = BATTERY_BMS_MIN_W # allowance for BMS & Cooling fan
 
@@ -217,7 +217,8 @@ class Sonnen:
     def _adjust_current_details(self):
         '''Capture BMS use to discount charging value, guess cooling fan use.
             Fan use makes battery look like it's charging when it isn't.
-           Cache last time full with 1st time the last time was 0 seconds
+           Cache last time full with 1st time the last time was 0 seconds.
+           Fix a case issue with API data, new blue color wrong case.
         '''
         if self.pac_total < BATTERY_BMS_MAX32_W:
             if self.battery_min_cell_temp > 30:
@@ -234,7 +235,7 @@ class Sonnen:
         elif self.pac_total < 0:
             self.BMS_USE_W = self.pac_total # pac is only BMS use
         else:
-            self.BMS_USE_W = BATTERY_BMS_MIN_W # discharging
+            self.BMS_USE_W = BATTERY_BMS_MIN_W # discharging @ normal temp
 
         # cache 1st time fully charged
         if self.seconds_since_full == 0 and self._last_fully_charged is None:
@@ -1101,7 +1102,7 @@ class Sonnen:
     @get_item(float)
     def battery_remaining_capacity(self) -> float:
         """Remaining capacity.
-            Appears to NOT include BATTERY_UNUSABLE_RESERVE.
+            Appears to NOT include BATTERY_BLACKSTART_RESERVE.
             Returns:
                 Remaining capacity in Ah
         """
@@ -1164,7 +1165,7 @@ class Sonnen:
     @get_item(int)
     def battery_dod_limit(self) -> int:
         """Depth Of Discharge limit as a percentage of full charge remaining.
-            When battery status has not been fetched, return estimate BATTERY_UNUSABLE_RESERVE
+            When battery status has not been fetched, return estimate BATTERY_BLACKSTART_RESERVE
             Returns:
                 percent of full charge remaining
         """
@@ -1720,7 +1721,6 @@ class Sonnen:
 
     def led_decode_ic_eclipse (self, leds:dict = None) -> str:
         """Decode IC_Eclipse object.
-            Earlier firmware had fewer elements, add false values for those missing.
             When leds param is supplied by tests it is used for following
                 calls to led_status & led_state_text
         """
@@ -1754,7 +1754,32 @@ class Sonnen:
         if "Brightness" not in self.leds:
             self.leds["Brightness"] = "100"
 
+        self.leds = self.led_encode_ic_eclipse(self.leds)
         return self.leds
+
+    def led_encode_ic_eclipse (self, leds:dict = None) -> str:
+        """Encode IC_Eclipse object missing attributes for backwards comptibility
+            Earlier firmware had fewer elements, add false values for those missing.
+        """
+        for status in ["Blinking Green",
+                     "Blinking Blue",
+                     "Blinking sonnenGradient",
+                     "Pulsing Green",
+                     "Pulsing Red",
+                     "Pulsing Blue",
+                     "Solid Blue",
+                     "Solid sonnenGradient",
+                     "Rotating sonnenGradient"
+                    ]:
+            if status not in leds:
+                leds[status] = False
+
+        if "Brightness" not in leds:
+            leds["Brightness"] = "100"
+        if "Eclipse Status" not in leds:
+            leds["Eclipse Status"] = self.led_xlate_state_text(leds)
+
+        return leds
 
     @property
     def led_status(self) -> str:
@@ -1779,8 +1804,8 @@ class Sonnen:
 
         if leds is None:
             leds = self.led_decode_ic_eclipse()
-#        else:
-#            leds = self.led_decode_ic_eclipse(leds)
+        else:
+            self.leds = self.led_encode_ic_eclipse(leds)
 
         Brightness = leds["Brightness"]
 
@@ -1827,25 +1852,14 @@ class Sonnen:
 
         return self.led_xlate_state_text(leds)
 
-    def led_xlate_state_text(self, leds:dict = None) -> str:
+    def led_xlate_state_text(self, leds:dict) -> str:
         """Text meaning of LED state.
-            Used param saved by led_xlate_state when present
+            Uses param saved by led_xlate_state when present
             Returns:
                 String
         """
 
-        if leds is None:
-            leds = self.leds
-
-
-        # try:
-        #     (Blinking_Green, Blinking_Red, Brightness, Eclipse_Status, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values()
-        # except ValueError:
-        #     (Blinking_Red, Brightness, Pulsing_Green, Pulsing_Orange, Pulsing_White, Solid_Red) = leds.values() # earlier pre 1.18 format
-        #     Eclipse_Status = None
-        #     Blinking_Green = False
-
-        Eclipse_Status_display = f' [{leds["Eclipse Status"]}]' if "Eclipse Status" in leds else "undocumented status"
+        EclipseStatus_Display = f' [{leds["Eclipse Status"]}]' if "Eclipse Status" in leds else "undocumented status"
 
         if leds["Pulsing White"] is True:
             return "Normal Operation."
@@ -1856,25 +1870,25 @@ class Sonnen:
         elif leds["Solid Red"] is True:
             return "Critical Error - call installer!"
         elif leds["Blinking Green"] is True:
-            return f"Blinking Green: {Eclipse_Status_display}" # undocumented
+            return f"Blinking Green: {EclipseStatus_Display}" # undocumented
         elif leds["Pulsing Green"] is True:
             return "Off Grid."
         elif leds["Blinking Blue"] is True:
-            return f"Blinking Blue: {Eclipse_Status_display}" # undocumented
+            return f"Blinking Blue: {EclipseStatus_Display}" # undocumented
         elif leds["Blinking sonnenGradient"] is True:
-            return f"Blinking Gradient: {Eclipse_Status_display}"
+            return f"Blinking Gradient: {EclipseStatus_Display}"
         elif leds["Pulsing Red"] is True:
-            return f"Pulsing Red: {Eclipse_Status_display}"
+            return f"Pulsing Red: {EclipseStatus_Display}"
         elif leds["Pulsing Blue"] is True:
-            return f"Pulsing Blue: {Eclipse_Status_display}"
+            return f"Pulsing Blue: {EclipseStatus_Display}"
         elif leds["Pulsing Blue"] is True:
-            return f"Pulsing Blue: {Eclipse_Status_display}"
+            return f"Pulsing Blue: {EclipseStatus_Display}"
         elif leds["Solid Blue"] is True:
-            return f"Solid Blue: {Eclipse_Status_display}"
+            return f"Solid Blue: {EclipseStatus_Display}"
         elif leds["Solid sonnenGradient"] is True:
-            return f"Solid Gradient: {Eclipse_Status_display}"
+            return f"Solid Gradient: {EclipseStatus_Display}"
         elif leds["Rotating sonnenGradient"] is True:
-            return f"Rotating Gradient:: {Eclipse_Status_display}"
+            return f"Rotating Gradient:: {EclipseStatus_Display}"
         else:
             return "Off Grid."
 

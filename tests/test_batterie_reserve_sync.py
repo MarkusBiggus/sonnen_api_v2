@@ -31,7 +31,7 @@ def test_sync_methods(battery_discharging_reserve: Batterie) -> None:
     assert battery_discharging_reserve.led_state == "Pulsing Green 100%"
     assert battery_discharging_reserve.led_state_text == "Off Grid."
     assert battery_discharging_reserve.led_status == "Off Grid."
-    
+
     # sync wrapped methods used by ha component
     status_data = battery_discharging_reserve.sync_get_status()
     latest_data = battery_discharging_reserve.sync_get_latest_data()
@@ -71,5 +71,7 @@ def test_sync_methods(battery_discharging_reserve: Batterie) -> None:
     assert battery_discharging_reserve.battery_usoc == 11.0
 
     from .check_results import check_reserve_results
+
+    print(f'dod limit: {round((battery_discharging_reserve.battery_remaining_capacity_wh - battery_discharging_reserve.usable_remaining_capacity_wh)/ battery_discharging_reserve.battery_full_charge_capacity_wh, 2)}')
 
     check_reserve_results(battery_discharging_reserve)

@@ -72,6 +72,6 @@ def test_sync_methods(battery_discharging_reserve: Batterie) -> None:
 
     from .check_results import check_reserve_results
 
-    print(f'dod limit: {round((battery_discharging_reserve.battery_remaining_capacity_wh - battery_discharging_reserve.usable_remaining_capacity_wh)/ battery_discharging_reserve.battery_full_charge_capacity_wh, 2)}')
+    print(f'dod limit: {round((battery_discharging_reserve.battery_remaining_capacity_wh - battery_discharging_reserve.usable_remaining_capacity_wh)/ battery_discharging_reserve.battery_full_charge_capacity_wh, 2)}%')
 
     check_reserve_results(battery_discharging_reserve)

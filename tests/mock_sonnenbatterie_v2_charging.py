@@ -71,20 +71,27 @@ def __mock_latest_charging(*args)-> json:
                 'No Setpoint received by HC': False,
                 'Odd number of battery modules': False,
                 'One single module detected and module voltage is out of range': False,
-                'Only one single module detected': False, # pyright: ignore[false]
+                'Only one single module detected': False, # pyright: ignore[False]
                 'Shutdown Timer started': False,
                 'System Validation failed': False,
                 'Voltage Monitor Changed': False # type: ignore
             },
             "Eclipse Led": {
-                "Blinking Green": False,
-                "Blinking Red": False,
-                "Brightness":100,
-                "Eclipse Status":"0x01 - ONGRID_READY",
-                "Pulsing Green": False,
-                "Pulsing Orange": False,
-                "Pulsing White": True,
-                "Solid Red": False
+                    "Blinking Green":False,
+                    "Blinking Red":False,
+                    "Blinking blue":False,
+                    "Blinking sonnenGradient":False,
+                    "Brightness":100,
+                    "Eclipse Status":"0x01 - ONGRID_READY",
+                    "Pulsing Green":False,
+                    "Pulsing Orange":False,
+                    "Pulsing Red":False,
+                    "Pulsing White":True,
+                    "Pulsing blue":False,
+                    "Rotating sonnenGradient":False,
+                    "Solid Red":False,
+                    "Solid blue":False,
+                    "Solid sonnenGradient":False
             },
             'MISC Status Bits': {
                 'Discharge not allowed': False,

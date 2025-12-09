@@ -140,4 +140,4 @@ dmypy.json
 .pyre/
 
 #ignore files parked in folder
-*-x.py
+*-x.*

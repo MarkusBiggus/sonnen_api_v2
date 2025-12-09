@@ -1,6 +1,11 @@
 """pytest tests/test_batterie_charge_sync.py -s -v -x
-3. Sync update called from sync method
+    3. Sync update called from sync method
+
+    Fixture for charging tests has extra attributes in 'Eclipse Led'
+    to test extra attributes in firmware 1.25.6 update decemeber 2025.
+    This has been refactored to prevent crashes with such firmware updates in the past.
 """
+
 import datetime
 import logging
 import pytest

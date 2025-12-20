@@ -267,7 +267,7 @@ class Sonnen:
 
     def _adjust_current_details(self):
         """Capture BMS use to discount charging value, guess cooling fan use.
-         Fan use makes battery look like it's charging when it isn't.
+        Fan use makes battery look like it's charging when it isn't.
         Cache last time full with 1st time the last time was 0 seconds.
         Fix a case issue with API data, new blue color wrong case.
         """
@@ -282,7 +282,6 @@ class Sonnen:
                 self.BMS_USE_W = BATTERY_BMS_MAX_W
             else:
                 self.BMS_USE_W = BATTERY_BMS_MIN_W
-        #            self.BMS_USE_W = BATTERY_BMS_MAX32_W if self.battery_min_cell_temp > 29 else BATTERY_BMS_MIN_W
         elif self.pac_total < 0:
             self.BMS_USE_W = self.pac_total  # pac is only BMS use
         else:

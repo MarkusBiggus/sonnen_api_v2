@@ -171,11 +171,11 @@ class Sonnen:
                 timeout=timeouts,
             )
 
-        except urllib3.exceptions.NewConnectionError:
+        except urllib3.exceptions.NewConnectionError as error:
             self._log_error(f'Invalid IP address "{self.configurations_api_endpoint}"')
             raise BatterieAuthError(
                 f'Invalid IP address "{self.configurations_api_endpoint}"'
-            )
+            ) from error
         except Exception as error:
             self._log_error(
                 f'Sync fetch "{self.configurations_api_endpoint}" fail: {repr(error)}'
@@ -1898,34 +1898,15 @@ class Sonnen:
 
         if len(self.leds) > 15:  # firmware update added more?
             self._log_error(
-                f"Extra IC_Eclipse Status attributes! expected 15, got {len(self.leds)}"
+                f"Extra IC_Eclipse Status attributes! expected 15, got {len(self.leds)} : {self.leds}"
             )
             return self.leds
-
-        for status in [
-            "Blinking Green",
-            "Blinking Blue",
-            "Blinking sonnenGradient",
-            "Pulsing Green",
-            "Pulsing Red",
-            "Pulsing Blue",
-            "Solid Blue",
-            "Solid sonnenGradient",
-            "Rotating sonnenGradient",
-        ]:
-            if status not in self.leds:
-                self.leds[status] = False
-
-        if "Eclipse Status" not in self.leds:
-            self.leds["Eclipse Status"] = self.led_xlate_state_text(self.leds)
-        if "Brightness" not in self.leds:
-            self.leds["Brightness"] = "100"
 
         self.leds = self.led_encode_ic_eclipse(self.leds)
         return self.leds
 
     def led_encode_ic_eclipse(self, leds: dict = None) -> str:
-        """Encode IC_Eclipse object missing attributes for backwards comptibility
+        """Encode IC_Eclipse object missing attributes for backwards compatibility
         Earlier firmware had fewer elements, add false values for those missing.
         """
         for status in [

@@ -301,12 +301,12 @@ class Sonnen:
         self._log_error(
             f"IC_Eclipse Status attributes: {details_eclipse}"
         )
-        details_eclipse.replace(" blue", " Blue")
+
         self._log_error(
-            f"IC_Eclipse Status updated: {details_eclipse}"
+            f"IC_Eclipse Status updated: {details_eclipse.replace(" blue", " Blue")}"
         )
         self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED] = json.loads(
-            details_eclipse
+            details_eclipse.replace(" blue", " Blue")
         )
 
     def update(self) -> bool:

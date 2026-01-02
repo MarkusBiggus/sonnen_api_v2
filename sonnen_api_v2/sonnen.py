@@ -298,7 +298,13 @@ class Sonnen:
         details_eclipse = json.dumps(
             self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED]
         )
+        self._log_error(
+            f"IC_Eclipse Status attributes: {details_eclipse}"
+        )
         details_eclipse.replace(" blue", " Blue")
+        self._log_error(
+            f"IC_Eclipse Status updated: {details_eclipse}"
+        )
         self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED] = json.loads(
             details_eclipse
         )

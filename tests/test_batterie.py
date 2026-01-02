@@ -33,12 +33,20 @@ def test_sync_methods(battery_charging: Batterie) -> None:
     # parameter is saved for subsequent calls for text
     led_state = battery_charging.led_xlate_state(
         {
+            "Blinking Green":False,
             "Blinking Red":False,
+            "Blinking Blue":False,
+            "Blinking sonnenGradient":False,
             "Brightness":'100',
             "Pulsing Green":False,
             "Pulsing Orange":True,
+            "Pulsing Red":False,
             "Pulsing White":False,
-            "Solid Red": False
+            "Pulsing Blue":False,
+            "Rotating sonnenGradient":False,
+            "Solid Red": False,
+            "Solid Blue":False,
+            "Solid sonnenGradient":False
         }
     )
     assert led_state == "Pulsing Orange 100%"
@@ -46,12 +54,21 @@ def test_sync_methods(battery_charging: Batterie) -> None:
 
     led_state = battery_charging.led_xlate_state(
         {
+            "Blinking Green":False,
             "Blinking Red":False,
+            "Blinking Blue":False,
+            "Blinking sonnenGradient":False,
             "Brightness":'100',
+            "Eclipse Status":"0x01 - ONGRID_READY",
             "Pulsing Green":True,
             "Pulsing Orange":False,
+            "Pulsing Red":False,
             "Pulsing White":False,
-            "Solid Red":False
+            "Pulsing Blue":False,
+            "Rotating sonnenGradient":False,
+            "Solid Red":False,
+            "Solid Blue":False,
+            "Solid sonnenGradient":False
         }
     )
     assert led_state == "Pulsing Green 100%"
@@ -59,12 +76,20 @@ def test_sync_methods(battery_charging: Batterie) -> None:
 
     led_state = battery_charging.led_xlate_state(
         {
+            "Blinking Green":False,
             "Blinking Red":False,
+            "Blinking Blue":False,
+            "Blinking sonnenGradient":False,
             "Brightness":'100',
             "Pulsing Green":False,
             "Pulsing Orange":False,
+            "Pulsing Red":False,
             "Pulsing White":False,
-            "Solid Red":True
+            "Pulsing Blue":False,
+            "Rotating sonnenGradient":False,
+            "Solid Red":True,
+            "Solid Blue":False,
+            "Solid sonnenGradient":False
         }
     )
     assert led_state == "Solid Red 100%"
@@ -72,12 +97,20 @@ def test_sync_methods(battery_charging: Batterie) -> None:
 
     led_state = battery_charging.led_xlate_state(
         {
+            "Blinking Green":False,
             "Blinking Red":True,
+            "Blinking Blue":False,
+            "Blinking sonnenGradient":False,
             "Brightness":'100',
             "Pulsing Green":False,
             "Pulsing Orange":False,
+            "Pulsing Red":False,
             "Pulsing White":False,
-            "Solid Red":False
+            "Pulsing Blue":False,
+            "Rotating sonnenGradient":False,
+            "Solid Red":False,
+            "Solid Blue":False,
+            "Solid sonnenGradient":False
         }
     )
     assert led_state == "Blinking Red 100%"

@@ -62,9 +62,9 @@ async def test_batterieresponse_works(battery_charging: Batterie) -> None:
 
     assert isinstance(response, BatterieResponse) is True
     assert response == BatterieResponse(
-        version='0.5.15',
+        version='0.5.16',
         last_updated=datetime.datetime(2023, 11, 20, 17, 0, 0, 543210, tzinfo=tzlocal.get_localzone()),
-        package_build='59',
+        package_build='60',
         sensor_values={}
 )
 
@@ -74,15 +74,15 @@ async def test_batterieresponse_works(battery_charging: Batterie) -> None:
 
     assert isinstance(response, BatterieResponse) is True
     assert response == BatterieResponse(
-        version='0.5.15',
+        version='0.5.16',
         last_updated=datetime.datetime(2023, 11, 20, 17, 0, 0, 543210, tzinfo=tzlocal.get_localzone()),
-        package_build='59',
+        package_build='60',
         sensor_values={}
         )
 
-    assert response.version == '0.5.15'
+    assert response.version == '0.5.16'
     assert _batterie.get_sensor_value('package_version') == response.version
-    assert response.package_build == '59'
+    assert response.package_build == '60'
     assert _batterie.get_sensor_value('package_build') == response.package_build
 
     assert _batterie.get_sensor_value('configuration_de_software') == '1.14.5'
@@ -171,10 +171,10 @@ async def test_batterieresponse_BatterieError(battery_charging: Batterie) -> Non
 
     assert isinstance(response, BatterieResponse) is True
     assert response == BatterieResponse(
-        version='0.5.15',
+        version='0.5.16',
         last_updated=datetime.datetime(2023, 11, 20, 17, 0, 0, 543210, tzinfo=tzlocal.get_localzone()),
         sensor_values={},
-        package_build='59'
+        package_build='60'
     )
 
     with pytest.raises(BatterieError, match='BatterieBackup: Error updating batterie data!'):

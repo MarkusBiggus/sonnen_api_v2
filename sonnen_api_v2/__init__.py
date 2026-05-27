@@ -53,7 +53,7 @@ class BatterieBackup:
 
         self._battery = Batterie(auth_token, ip_address, port)
         self._attr_available:bool = False # not availble until token validated
-        self._response:BatterieResponse = None
+        self._response:BatterieResponse | None = None
 
     @property
     def available(self) -> bool:

@@ -239,7 +239,7 @@ class Sonnen:
         return await event_loop.run_in_executor(None, self.sync_validate_token)
 
 
-    async def async_update(self) -> Awaitable[bool] | bool:
+    async def async_update(self) ->  bool:
         """Update all battery data from an async caller.
         Returns:
         True when all updates successful or

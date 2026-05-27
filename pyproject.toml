@@ -53,3 +53,10 @@ include = ["sonnen_api_v2"]
 
 [tool.setuptools.dynamic]
 version = {attr = "sonnen_api_v2.__version__"}
+
+[tool.pylint.'MESSAGES CONTROL']
+disable = [
+    "C0103", # snake case
+    "C0301", # line length
+    "W0102", # dangerous default
+]

@@ -20,6 +20,16 @@ from urllib3.util.timeout import Timeout
 
 from .const import *  # noqa: F403
 
+class AwaitableThing:
+    """Used to return a given Thing as Awaitable"""
+
+    def __init__(self, thing):
+        self.thing = thing
+
+    def __await__(self):
+        # Yield the thing wrapped in a coroutine/iterator
+        yield
+        return self.thing
 
 def get_item(_type):
     """Decorator factory for getting data from the api dictionary and casting
@@ -98,14 +108,14 @@ class Sonnen:
         auth_token: str,
         ip_address: str,
         ip_port: int = 80,
-        logger_name: str = None,
+        logger_name: str = '',
     ) -> None:
         """Cache manager Sonnen API V2 data."""
 
-        self._last_updated: datetime.datetime = None  # rate limiters
-        self._last_get_updated: datetime.datetime = None
-        self._last_configurations: datetime.datetime = None
-        self._last_fully_charged: datetime.datetime = None  # cache 1st time full
+        self._last_updated: datetime.datetime | None = None  # rate limiters
+        self._last_get_updated: datetime.datetime | None = None
+        self._last_configurations: datetime.datetime | None = None
+        self._last_fully_charged: datetime.datetime | None = None  # cache 1st time full
         self.dod_limit = BATTERY_BLACKSTART_RESERVE
         self.leds = None  # remember param when supplied
         self.BMS_USE_W = BATTERY_BMS_MIN_W  # allowance for BMS & Cooling fan
@@ -113,7 +123,7 @@ class Sonnen:
         logging.basicConfig(
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
-        if logger_name is not None:
+        if not logger_name:
             self.logger = logging.getLogger(logger_name)
         else:
             self.logger = logging.getLogger(__package__)
@@ -134,12 +144,12 @@ class Sonnen:
         self.inverter_api_endpoint = f"{self._url}/api/v2/inverter"
 
         # api data
-        self._configurations: Dict = None
-        self._status_data: Dict = None
-        self._latest_details_data: Dict = None
-        self._battery_status: Dict = None
-        self._powermeter_data: Dict = None
-        self._inverter_data: Dict = None
+        self._configurations: Dict | None = None
+        self._status_data: Dict | None = None
+        self._latest_details_data: Dict | None = None
+        self._battery_status: Dict | None = None
+        self._powermeter_data: Dict | None = None
+        self._inverter_data: Dict | None = None
         # isal is preferred over zlib_ng if it is available
         aiohttp_fast_zlib.enable()
 
@@ -190,12 +200,12 @@ class Sonnen:
             raise BatterieAuthError(
                 f'Invalid token "{self.auth_token}" status: {response.status}'
             )
-        elif response.status > 299:
+        if response.status > 299:
             raise BatterieHTTPError(
                 f'HTTP Error fetching endpoint "{self.configurations_api_endpoint}" status: {response.status}'
             )
 
-        self._configurations = json.loads(response._body)
+        self._configurations = response.json() # json.loads(response._body)
         self._last_configurations = datetime.datetime.now().astimezone()
         return True
 
@@ -220,16 +230,16 @@ class Sonnen:
 
         return False
 
-    async def async_validate_token(self) -> Awaitable[bool]:
+    async def async_validate_token(self) -> bool: # Awaitable[bool]:
         """Check valid IP address & token can make connection.
         Called from HASS component event loop.
         """
 
         event_loop = asyncio.get_running_loop()
-
         return await event_loop.run_in_executor(None, self.sync_validate_token)
 
-    async def async_update(self) -> Awaitable[bool]:
+
+    async def async_update(self) -> Awaitable[bool] | bool:
         """Update all battery data from an async caller.
         Returns:
         True when all updates successful or
@@ -295,6 +305,7 @@ class Sonnen:
         elif self.seconds_since_full != 0 and self._last_fully_charged is not None:
             self._last_fully_charged = None
         # fix API blunder - wrong case colour
+        assert self._latest_details_data is not None
         details_eclipse = json.dumps(
             self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED]
         )
@@ -354,6 +365,7 @@ class Sonnen:
 
         self._last_updated = now if success else None
         return success
+
 
     async def _async_fetch_api_endpoint(self, url: str) -> Awaitable[Dict]:
         """Fetch API coroutine."""
@@ -467,7 +479,9 @@ class Sonnen:
         if self._last_configurations is not None:
             diff = now - self._last_configurations
             if diff.total_seconds() < RATE_LIMIT:
-                return self._configurations
+                assert self._configurations is not None
+#                return self._configurations
+                return AwaitableThing(self._configurations)
 
         self._last_configurations = None
         self._configurations = None
@@ -480,6 +494,7 @@ class Sonnen:
         if self._last_configurations is not None:
             diff = now - self._last_configurations
             if diff.total_seconds() < RATE_LIMIT:
+                assert self._configurations is not None
                 return self._configurations
 
         self._last_configurations = None
@@ -545,19 +560,19 @@ class Sonnen:
         return self._url
 
     @property
-    def api_token(self) -> Dict:
+    def api_token(self) -> str:
         """API token to authenticate with batterie."""
 
         return self.auth_token
 
     @property
-    def hostname(self) -> Dict:
+    def hostname(self) -> str:
         """Hostname:port of the batterie."""
 
         return self._hostname
 
     @property
-    def configurations(self) -> Dict:
+    def configurations(self) -> Dict | None:
         """latest Configurations fetched from batterie."""
 
         return self._configurations
@@ -598,7 +613,7 @@ class Sonnen:
         Returns:
             kilo watt hours
         """
-
+        assert self._powermeter_data is not None
         return round(self._powermeter_data[1][POWERMETER_KWH_IMPORTED], 2)
 
     @property
@@ -609,6 +624,7 @@ class Sonnen:
             kilo watt hours
         """
 
+        assert self._powermeter_data is not None
         return round(self._powermeter_data[0][POWERMETER_KWH_IMPORTED], 2)
 
     @property
@@ -619,6 +635,7 @@ class Sonnen:
             watts
         """
 
+        assert self._powermeter_data is not None
         return round(self._powermeter_data[0][POWERMETER_WATTS_TOTAL], 2)
 
     @property
@@ -629,6 +646,7 @@ class Sonnen:
             Amps
         """
 
+        assert self._powermeter_data is not None
         return round(self._powermeter_data[0][POWERMETER_AMPERE_L1], 2)
 
     @property
@@ -639,6 +657,7 @@ class Sonnen:
             Volts
         """
 
+        assert self._powermeter_data is not None
         return round(self._powermeter_data[0][POWERMETER_VOLT_L1], 1)
 
     @property
@@ -648,6 +667,7 @@ class Sonnen:
         Returns:
             reactance?
         """
+        assert self._powermeter_data is not None
         return round(self._powermeter_data[0][POWERMETER_REACTIVE_POWER], 2)
 
     @property
@@ -673,6 +693,7 @@ class Sonnen:
             watts
         """
 
+        assert self._powermeter_data is not None
         return round(self._powermeter_data[1][POWERMETER_WATTS_TOTAL], 2)
 
     @property
@@ -683,6 +704,7 @@ class Sonnen:
             Amps
         """
 
+        assert self._powermeter_data is not None
         return round(self._powermeter_data[1][POWERMETER_AMPERE_L1], 2)
 
     @property
@@ -693,12 +715,15 @@ class Sonnen:
             Volts
         """
 
+        assert self._powermeter_data is not None
         return round(self._powermeter_data[1][POWERMETER_VOLT_L1], 1)
 
     @property
     @get_item(float)
     def consumption_reactive_power(self) -> float:
         """Powermeter production VAR total."""
+
+        assert self._powermeter_data is not None
         return round(self._powermeter_data[1][POWERMETER_REACTIVE_POWER], 2)
 
     @property
@@ -709,6 +734,7 @@ class Sonnen:
             VAR
         """
 
+        assert self._powermeter_data is not None
         return round(self._powermeter_data[1][POWERMETER_REACTIVE_POWER], 2)
 
     @property
@@ -734,6 +760,7 @@ class Sonnen:
             Consumption in Watt
         """
 
+        assert self._latest_details_data is not None
         return self._latest_details_data[STATUS_CONSUMPTION_W]
 
     @property
@@ -743,6 +770,7 @@ class Sonnen:
         Returns:
             PV production in Watts
         """
+        assert self._latest_details_data is not None
         return self._latest_details_data[STATUS_PRODUCTION_W]
 
     @property
@@ -753,6 +781,7 @@ class Sonnen:
             Integer Percent
         """
 
+        assert self._latest_details_data is not None
         return self._latest_details_data[DETAIL_USOC]
 
     @property
@@ -763,6 +792,7 @@ class Sonnen:
             Integer Percent
         """
 
+        assert self._latest_details_data is not None
         return self._latest_details_data[DETAIL_RSOC]
 
     @property
@@ -773,6 +803,7 @@ class Sonnen:
             state
         """
 
+        assert self._latest_details_data is not None
         return self._latest_details_data[IC_STATUS][DETAIL_STATE_BMS]
 
     @property
@@ -783,11 +814,12 @@ class Sonnen:
                 state
         """
 
+        assert self._latest_details_data is not None
         return self._latest_details_data[IC_STATUS][DETAIL_STATE_INVERTER]
 
     @property
     @get_item(int)
-    def seconds_since_full(self) -> int:
+    def seconds_since_full(self) -> int | None:
         """Latest details seconds since full charge.
         This value is zero each time whilst battery is fully charged.
         Calculate seconds since _last_fully_charged when it is cached.
@@ -796,18 +828,17 @@ class Sonnen:
         """
 
         if self._last_fully_charged is None:
-            return (
-                self._latest_details_data[IC_STATUS][DETAIL_SECONDS_SINCE_FULLCHARGE]
-                if self._latest_details_data is not None
-                else None
-            )
-        else:
-            return (
-                self.system_status_timestamp - self._last_fully_charged
-            ).total_seconds()
+            if self._latest_details_data is None:
+                return None
+            assert self._latest_details_data is not None
+            return self._latest_details_data[IC_STATUS][DETAIL_SECONDS_SINCE_FULLCHARGE]
+
+        return int((
+            self.system_status_timestamp - self._last_fully_charged
+            ).total_seconds())
 
     @property
-    def time_since_full(self) -> datetime.timedelta:
+    def time_since_full(self) -> datetime.timedelta | None:
         """Calculates time since full charge.
         Cache the first time seconds_since_full is zero until is it not zero.
         All last_time_full related calculations must be done in the context of
@@ -816,7 +847,12 @@ class Sonnen:
            timedelta since last_time_full
         """
 
-        return datetime.timedelta(seconds=self.seconds_since_full)
+        time_since_full = self.seconds_since_full
+        if time_since_full is None:
+            return None
+
+        assert time_since_full is not None
+        return datetime.timedelta(seconds=time_since_full)
 
     @property
     def last_time_full(self) -> Optional[datetime.datetime]:
@@ -826,11 +862,14 @@ class Sonnen:
            DateTime with timezone or None
         """
 
+        delta_since_full = self.time_since_full
+        if delta_since_full is None:
+            return None
+
+        assert delta_since_full is not None
         if self._last_fully_charged is None:
             return (
-                self.system_status_timestamp - self.time_since_full
-                if self._latest_details_data is not None
-                else None
+                self.system_status_timestamp - delta_since_full
             )
         else:
             return self._last_fully_charged
@@ -847,7 +886,7 @@ class Sonnen:
 
     @property
     @get_item(float)
-    def capacity_to_reserve(self) -> float:
+    def capacity_to_reserve(self) -> float | None:
         """Capacity to reserve by charging.
         Usable Capacity is below Reserve Capacity (how much to charge).
 
@@ -855,6 +894,10 @@ class Sonnen:
             Wh or None when above backup reserve
         """
 
+        if self.full_charge_capacity_wh is None:
+            return None
+
+        assert self.full_charge_capacity_wh is not None
         to_reserve = self.u_soc - self.status_backup_buffer
         return (
             round(self.full_charge_capacity_wh * abs(to_reserve) / 100, 1)
@@ -873,11 +916,15 @@ class Sonnen:
             Wh or None when below backup reserve
         """
 
+        if self.full_charge_capacity_wh is None:
+            return 0
+
+        assert self.full_charge_capacity_wh is not None
         until_reserve = self.u_soc - self.status_backup_buffer
         return (
             round(self.full_charge_capacity_wh * until_reserve / 100, 1)
             if until_reserve >= 0
-            else None
+            else 0
         )
 
     @property
@@ -890,11 +937,12 @@ class Sonnen:
         """
 
         seconds = self.seconds_to_reserve
+        if seconds is None:
+            return None
 
+        assert seconds is not None
         return (
-            (self.system_status_timestamp + datetime.timedelta(seconds=seconds))
-            if seconds is not None
-            else None
+            self.system_status_timestamp + datetime.timedelta(seconds=seconds)
         )
 
     @property
@@ -906,8 +954,12 @@ class Sonnen:
         """
 
         seconds = self.seconds_to_reserve
+        if seconds is None:
+            return None
 
-        return datetime.timedelta(seconds=seconds) if seconds is not None else None
+        assert seconds is not None
+
+        return datetime.timedelta(seconds=seconds)
 
     @property
     @get_item(float)
@@ -972,11 +1024,16 @@ class Sonnen:
         return None
 
     @property
-    def state_core_control_module(self) -> str:
+    def state_core_control_module(self) -> str | None:
         """State of control module: config, ongrid, offgrid, critical error, ...
         Returns:
             String
         """
+
+        if self._latest_details_data is None:
+            return None
+
+        assert self._latest_details_data is not None
         return self._latest_details_data[IC_STATUS][DETAIL_STATE_CORECONTROL_MODULE]
 
     @property
@@ -990,6 +1047,11 @@ class Sonnen:
         Returns:
             Inverter load in watts
         """
+
+        if self._latest_details_data is None:
+            return 0
+
+        assert self._latest_details_data is not None
         return self._latest_details_data[DETAIL_PAC_TOTAL_W]
 
     @property
@@ -1016,12 +1078,17 @@ class Sonnen:
         return self.pac_total if self.pac_total > 0 else 0
 
     @property
-    def validation_timestamp(self) -> datetime.datetime:
+    def validation_timestamp(self) -> datetime.datetime | None:
         """Latest details Timestamp: "Wed Sep 18 12:26:06 2024"
         Timezone must be provided for hass sensor.
         Returns:
             datetime with timezone
         """
+
+        if self._latest_details_data is None:
+            return None
+
+        assert self._latest_details_data is not None
         return datetime.datetime.strptime(
             self._latest_details_data[IC_STATUS]["timestamp"], "%a %b %d %H:%M:%S %Y"
         ).astimezone()
@@ -1033,11 +1100,16 @@ class Sonnen:
         Returns:
             Capacity in Wh
         """
+
+        if self._latest_details_data is None:
+            return 0
+
+        assert self._latest_details_data is not None
         return round(self._latest_details_data[DETAIL_FULL_CHARGE_CAPACITY], 2)
 
     @property
     @get_item(float)
-    def used_capacity_wh(self) -> float:
+    def used_capacity_wh(self) -> float | None:
         """Used capacity from usable Full charge.
         Returns:
             Capacity in Wh
@@ -1048,7 +1120,7 @@ class Sonnen:
 
     @property
     @get_item(float)
-    def remaining_capacity_wh(self) -> float:
+    def remaining_capacity_wh(self) -> float | None:
         """Remaining capacity calculated from rsoc of full_charge.
         Returns:
             Wh
@@ -1073,6 +1145,11 @@ class Sonnen:
         Returns:
             Int count
         """
+
+        if self._battery_status is None:
+            return 0
+
+        assert self._battery_status is not None
         return self._battery_status[BATTERY_CYCLE_COUNT]
 
     @property
@@ -1082,6 +1159,11 @@ class Sonnen:
         Returns:
             Maximum cell temperature in ºC
         """
+
+        if self._battery_status is None:
+            return 0
+
+        assert self._battery_status is not None
         return self._battery_status[BATTERY_MAX_CELL_TEMP]
 
     @property
@@ -1091,6 +1173,11 @@ class Sonnen:
         Returns:
             Minimum cell temperature in ºC
         """
+
+        if self._battery_status is None:
+            return 0
+
+        assert self._battery_status is not None
         return self._battery_status[BATTERY_MIN_CELL_TEMP]
 
     @property
@@ -1100,6 +1187,11 @@ class Sonnen:
         Returns:
             Minimum cell voltage in Volt
         """
+
+        if self._battery_status is None:
+            return 0
+
+        assert self._battery_status is not None
         return self._battery_status[BATTERY_MIN_CELL_VOLTAGE]
 
     @property
@@ -1109,6 +1201,11 @@ class Sonnen:
         Returns:
             Maximum cell voltage in Volt
         """
+
+        if self._battery_status is None:
+            return 0
+
+        assert self._battery_status is not None
         return self._battery_status[BATTERY_MAX_CELL_VOLTAGE]
 
     @property
@@ -1118,6 +1215,11 @@ class Sonnen:
         Returns:
             Maximum module DC current in Ampere
         """
+
+        if self._battery_status is None:
+            return 0
+
+        assert self._battery_status is not None
         return self._battery_status[BATTERY_MAX_MODULE_CURRENT]
 
     @property
@@ -1127,6 +1229,11 @@ class Sonnen:
         Returns:
             Maximum module DC voltage in Volt
         """
+
+        if self._battery_status is None:
+            return 0
+
+        assert self._battery_status is not None
         return self._battery_status[BATTERY_MAX_MODULE_VOLTAGE]
 
     @property
@@ -1136,6 +1243,11 @@ class Sonnen:
         Returns:
             Maximum module DC temperature in ºC
         """
+
+        if self._battery_status is None:
+            return 0
+
+        assert self._battery_status is not None
         return self._battery_status[BATTERY_MAX_MODULE_TEMP]
 
     @property
@@ -1145,6 +1257,11 @@ class Sonnen:
         Returns:
             Minimum module DC current in Ampere
         """
+
+        if self._battery_status is None:
+            return 0
+
+        assert self._battery_status is not None
         return self._battery_status[BATTERY_MIN_MODULE_CURRENT]
 
     @property
@@ -1154,6 +1271,11 @@ class Sonnen:
         Returns:
             Minimum module DC voltage in Volt
         """
+
+        if self._battery_status is None:
+            return 0
+
+        assert self._battery_status is not None
         return self._battery_status[BATTERY_MIN_MODULE_VOLTAGE]
 
     @property
@@ -1163,6 +1285,11 @@ class Sonnen:
         Returns:
             Minimum module DC temperature in ºC
         """
+
+        if self._battery_status is None:
+            return 0
+
+        assert self._battery_status is not None
         return self._battery_status[BATTERY_MIN_MODULE_TEMP]
 
     @property
@@ -1172,6 +1299,11 @@ class Sonnen:
         Returns:
             Fullcharge capacity in Ah
         """
+
+        if self._battery_status is None:
+            return 0
+
+        assert self._battery_status is not None
         return self._battery_status[BATTERY_FULL_CHARGE_CAPACITY_AH]
 
     @property
@@ -1181,6 +1313,11 @@ class Sonnen:
         Returns:
             Fullcharge capacity in Wh
         """
+
+        if self._battery_status is None:
+            return 0
+
+        assert self._battery_status is not None
         return round(self._battery_status[BATTERY_FULL_CHARGE_CAPACITY_WH], 2)
 
     @property
@@ -1224,6 +1361,10 @@ class Sonnen:
             Remaining capacity in Ah
         """
 
+        if self._battery_status is None:
+            return 0
+
+        assert self._battery_status is not None
         return self._battery_status[BATTERY_REMAINING_CAPACITY]
 
     @property
@@ -1262,6 +1403,10 @@ class Sonnen:
             Usable Remaining capacity in Ah
         """
 
+        if self._battery_status is None:
+            return 0
+
+        assert self._battery_status is not None
         return self._battery_status[BATTERY_USABLE_REMAINING_CAPACITY]
 
     @property
@@ -1304,7 +1449,7 @@ class Sonnen:
                 self.battery_remaining_capacity - self.battery_usable_remaining_capacity
             ) / self.battery_full_charge_capacity
 
-        return round(self.dod_limit, 2) * 100
+        return int(round(self.dod_limit, 2) * 100)
 
     @property
     @get_item(float)
@@ -1316,6 +1461,10 @@ class Sonnen:
             Voltage in Volt
         """
 
+        if self._battery_status is None:
+            return 0
+
+        assert self._battery_status is not None
         return self._battery_status[BATTERY_NOMINAL_MODULE_VOLTAGE]
 
     @property
@@ -1326,6 +1475,11 @@ class Sonnen:
         Returns:
             Voltage in Volt
         """
+
+        if self._battery_status is None:
+            return 0
+
+        assert self._battery_status is not None
         return self._battery_status[BATTERY_SYSTEM_VOLTAGE]
 
     @property
@@ -1336,6 +1490,10 @@ class Sonnen:
             System current in Ampere
         """
 
+        if self._battery_status is None:
+            return 0
+
+        assert self._battery_status is not None
         return self._battery_status[BATTERY_SYSTEM_CURRENT]
 
     @property
@@ -1346,6 +1504,10 @@ class Sonnen:
             Average current in Ampere
         """
 
+        if self._battery_status is None:
+            return 0
+
+        assert self._battery_status is not None
         return round(self._battery_status[BATTERY_AVERAGE_CURRENT], 3)
 
     @property
@@ -1366,7 +1528,7 @@ class Sonnen:
         return seconds if remaining_charge != 0 else 0
 
     @property
-    def time_to_fully_charged(self) -> datetime.timedelta:
+    def time_to_fully_charged(self) -> Optional[datetime.timedelta]:
         """Calculates interval until fully_charged.
         Returns:
             timedelta until fully_charged
@@ -1406,7 +1568,7 @@ class Sonnen:
         return seconds if remaining_capacity != 0 else 0
 
     @property
-    def time_until_fully_discharged(self) -> datetime.timedelta:
+    def time_until_fully_discharged(self) -> Optional[datetime.timedelta]:
         """Calculates interval until fully_discharged.
         Returns:
             timedelta until fully_discharged
@@ -1428,10 +1590,14 @@ class Sonnen:
         if self.battery_activity_state == "charged":
             return self.last_time_full
 
+        seconds_to_fully_charged = self.seconds_to_fully_charged
+        if seconds_to_fully_charged is None:
+            return None
+
         return (
             (
                 self.system_status_timestamp
-                + datetime.timedelta(seconds=self.seconds_to_fully_charged)
+                + datetime.timedelta(seconds=seconds_to_fully_charged)
             )
             if self.charging
             else None
@@ -1446,10 +1612,14 @@ class Sonnen:
             Datetime fully discharged or None when not discharging
         """
 
+        seconds_until_fully_discharged = self.seconds_until_fully_discharged
+        if seconds_until_fully_discharged is None:
+            return None
+
         return (
             (
                 self.system_status_timestamp
-                + datetime.timedelta(seconds=self.seconds_until_fully_discharged)
+                + datetime.timedelta(seconds=seconds_until_fully_discharged)
             )
             if self.discharging
             else None
@@ -1463,6 +1633,7 @@ class Sonnen:
             Integer code
         """
 
+        assert self._configurations is not None
         return self._configurations[CONFIGURATION_EM_OPERATINGMODE]
 
     @property
@@ -1473,6 +1644,7 @@ class Sonnen:
             Bool
         """
 
+        assert self._configurations is not None
         return self._configurations[CONFIGURATION_EM_RE_ENABLE_MICROGRID] == "1"
 
     @property
@@ -1482,8 +1654,10 @@ class Sonnen:
         Returns:
             string format "hh:mm"
         """
+
+        assert self._configurations is not None
         time1 = self._configurations[CONFIGURATION_EM_USER_INPUT_TIME_ONE]
-        return time1 if time1 != "0" else None
+        return time1 if time1 != "0" else ""
 
     @property
     def configuration_blackstart_time2(self) -> str:
@@ -1492,8 +1666,10 @@ class Sonnen:
         Returns:
             string format "hh:mm"
         """
+
+        assert self._configurations is not None
         time2 = self._configurations[CONFIGURATION_EM_USER_INPUT_TIME_TWO]
-        return time2 if time2 != "0" else None
+        return time2 if time2 != "0" else ""
 
     @property
     def configuration_blackstart_time3(self) -> str:
@@ -1502,8 +1678,10 @@ class Sonnen:
         Returns:
             string format "hh:mm"
         """
+
+        assert self._configurations is not None
         time3 = self._configurations[CONFIGURATION_EM_USER_INPUT_TIME_THREE]
-        return time3 if time3 != "0" else None
+        return time3 if time3 != "0" else ""
 
     @property
     def configuration_em_operatingmode_name(self) -> str:
@@ -1518,6 +1696,8 @@ class Sonnen:
             "6": "Battery-Module-Extension (30%)",
             "10": "Time-Of-Use",
         }
+
+        assert self._configurations is not None
         return _EM_OPERATINGMODE[self._configurations[CONFIGURATION_EM_OPERATINGMODE]]
 
     @property
@@ -1527,6 +1707,7 @@ class Sonnen:
             String
         """
 
+        assert self._configurations is not None
         return self._configurations[CONFIGURATION_DE_SOFTWARE]
 
     @property
@@ -1537,6 +1718,7 @@ class Sonnen:
             Integer Percent
         """
 
+        assert self._configurations is not None
         return self._configurations[CONFIGURATION_MODULECAPACITY]
 
     @property
@@ -1547,6 +1729,7 @@ class Sonnen:
             Number of modules
         """
 
+        assert self._configurations is not None
         return self._configurations[CONFIGURATION_BATTERYMODULES]
 
     @property
@@ -1567,6 +1750,7 @@ class Sonnen:
             Integer Percent
         """
 
+        assert self._configurations is not None
         return self._configurations[CONFIGURATION_EM_USOC]
 
     @property
@@ -1577,6 +1761,7 @@ class Sonnen:
             Integer Watts
         """
 
+        assert self._status_data is not None
         return self._status_data[STATUS_CONSUMPTION_AVG]
 
     @property
@@ -1586,6 +1771,7 @@ class Sonnen:
             String
         """
 
+        assert self._status_data is not None
         return self._status_data[STATUS_SYSTEMSTATUS]
 
     @property
@@ -1597,6 +1783,8 @@ class Sonnen:
             datetime with timezone truncated to whole seconds
         """
 
+
+        assert self._status_data is not None
         return (
             datetime.datetime.fromisoformat(self._status_data[STATUS_TIMESTAMP])
             .astimezone()
@@ -1611,6 +1799,7 @@ class Sonnen:
            Hz
         """
 
+        assert self._status_data is not None
         return round(self._status_data[STATUS_FREQUENCY], 1)
 
     @property
@@ -1621,6 +1810,7 @@ class Sonnen:
             Integer Percent
         """
 
+        assert self._status_data is not None
         return self._status_data[STATUS_RSOC]
 
     @property
@@ -1631,6 +1821,7 @@ class Sonnen:
             Integer Percent
         """
 
+        assert self._status_data is not None
         return self._status_data[STATUS_USOC]
 
     # @property
@@ -1652,6 +1843,7 @@ class Sonnen:
             FeedIn watts, -ve is import (actually float with zero decimal part)
         """
 
+        assert self._status_data is not None
         return self._status_data[STATUS_GRIDFEEDIN_W]
 
     @property
@@ -1681,6 +1873,8 @@ class Sonnen:
         Returns:
             Percent of usable capacity
         """
+
+        assert self._status_data is not None
         return self._status_data[STATUS_BACKUPBUFFER]
 
     @property
@@ -1691,6 +1885,7 @@ class Sonnen:
             dict of name:bool
         """
 
+        assert self._status_data is not None
         flows = {
             "FlowConsumptionBattery": self._status_data[
                 STATUS_FLOW_CONSUMPTION_BATTERY
@@ -1712,7 +1907,10 @@ class Sonnen:
         Returns:
             FeedIn watts
         """
+        if self._status_data is None:
+            return 0
 
+        assert self._status_data is not None
         return self._status_data[STATUS_GRIDFEEDIN_W]
 
     @property
@@ -1723,7 +1921,7 @@ class Sonnen:
             Import watts when -ve
         """
 
-        return abs(self.status_grid_feedin) if self.status_grid_feedin < 0 else 0
+        return abs(int(self.status_grid_feedin)) if self.status_grid_feedin < 0 else 0
 
     @property
     @get_item(int)
@@ -1732,7 +1930,7 @@ class Sonnen:
         Returns:
             Export watts when +ve
         """
-        return self.status_grid_feedin if self.status_grid_feedin > 0 else 0
+        return int(self.status_grid_feedin) if self.status_grid_feedin > 0 else 0
 
     @property
     @get_item(bool)
@@ -1741,6 +1939,8 @@ class Sonnen:
         Returns:
             Bool
         """
+
+        assert self._status_data is not None
         return self._status_data[STATUS_DISCHARGE_NOT_ALLOWED]
 
     @property
@@ -1751,6 +1951,7 @@ class Sonnen:
             true when charging
         """
 
+        assert self._status_data is not None
         return self._status_data[STATUS_BATTERY_CHARGING]
 
     @property
@@ -1761,6 +1962,7 @@ class Sonnen:
             true when discharging
         """
 
+        assert self._status_data is not None
         return self._status_data[STATUS_BATTERY_DISCHARGING]
 
     @property
@@ -1810,6 +2012,8 @@ class Sonnen:
         Returns:
             Watts
         """
+
+        assert self._inverter_data is not None
         return self._inverter_data[INVERTER_PAC_TOTAL]
 
     @property
@@ -1819,6 +2023,8 @@ class Sonnen:
         Returns:
             Watts
         """
+
+        assert self._inverter_data is not None
         return self._inverter_data[INVERTER_PAC_MICROGRID]
 
     @property
@@ -1828,6 +2034,8 @@ class Sonnen:
         Returns:
             Volts
         """
+
+        assert self._inverter_data is not None
         return self._inverter_data[INVERTER_UAC]
 
     @property
@@ -1837,6 +2045,8 @@ class Sonnen:
         Returns:
             Volts
         """
+
+        assert self._inverter_data is not None
         return self._inverter_data[INVERTER_UBAT]
 
     @property
@@ -1849,6 +2059,8 @@ class Sonnen:
         """
         # print(f"eclipse: {self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED]}")
         # print(f"ic_status: {self._latest_details_data[IC_STATUS]}")
+
+        assert self._latest_details_data is not None
         return self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED]
 
     @property
@@ -1882,12 +2094,12 @@ class Sonnen:
 
         return self.led_xlate_state(leds)
 
-    def led_decode_ic_eclipse(self, leds: dict = None) -> str:
+    def led_decode_ic_eclipse(self, leds: dict = {}) -> dict:
         """Decode IC_Eclipse object.
         When leds param is supplied by tests it is used for following
             calls to led_status & led_state_text
         """
-        if leds is not None:
+        if not leds:
             self.leds = leds
         else:
             self.leds = self.ic_eclipse_led
@@ -1904,7 +2116,7 @@ class Sonnen:
         self.leds = self.led_encode_ic_eclipse(self.leds)
         return self.leds
 
-    def led_encode_ic_eclipse(self, leds: dict = None) -> str:
+    def led_encode_ic_eclipse(self, leds: dict = {}) -> dict:
         """Encode IC_Eclipse object missing attributes for backwards compatibility
         Earlier firmware had fewer elements, add false values for those missing.
         """
@@ -1942,7 +2154,7 @@ class Sonnen:
 
     #        return self.led_xlate_state_text(leds)
 
-    def led_xlate_state(self, leds: dict = None) -> str:
+    def led_xlate_state(self, leds: dict = {}) -> str:
         """Text of LED state.
         When leds param is supplied by tests it is used for following
             calls to led_status & led_state_text
@@ -1950,7 +2162,7 @@ class Sonnen:
             String
         """
 
-        if leds is None:
+        if not leds:
             leds = self.led_decode_ic_eclipse()
         else:
             self.leds = self.led_encode_ic_eclipse(leds)
@@ -2053,6 +2265,7 @@ class Sonnen:
             Bool
         """
 
+        assert self._latest_details_data is not None
         return self._latest_details_data[IC_STATUS][DC_SHUTDOWN_REASON][
             DC_MINIMUM_RSOC_REACHED
         ]
@@ -2065,6 +2278,7 @@ class Sonnen:
             Dict
         """
 
+        assert self._latest_details_data is not None
         return self._latest_details_data[IC_STATUS][DC_SHUTDOWN_REASON]
 
     @property
@@ -2075,6 +2289,7 @@ class Sonnen:
             Dict
         """
 
+        assert self._latest_details_data is not None
         return self._latest_details_data[IC_STATUS][MICROGRID_STATUS]
 
     @property
@@ -2085,6 +2300,7 @@ class Sonnen:
             Bool
         """
 
+        assert self._latest_details_data is not None
         return self._latest_details_data[IC_STATUS][MICROGRID_STATUS][MG_ENABLED]
 
     @property
@@ -2095,6 +2311,7 @@ class Sonnen:
             Bool
         """
 
+        assert self._latest_details_data is not None
         return self._latest_details_data[IC_STATUS][MICROGRID_STATUS][
             MG_MINIMUM_SYSTEM_SOC
         ]

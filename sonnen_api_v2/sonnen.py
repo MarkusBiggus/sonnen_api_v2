@@ -209,6 +209,7 @@ class Sonnen:
 
         self._configurations = json.loads(response._body)
         self._last_configurations = datetime.datetime.now().astimezone()
+        print(f"sync_validate_token last: {self._last_configurations}")
         return True
 
     def _force_HTTPError(self) -> bool:
@@ -250,14 +251,17 @@ class Sonnen:
 
         now = datetime.datetime.now().astimezone()
         if self._last_updated is not None:
+            print(f"async_update last: {self._last_updated}")
             diff = now - self._last_updated
             if diff.total_seconds() < RATE_LIMIT:
+                print("async_update return cache")
                 return True
 
         self._configurations = await self.async_fetch_configurations()
         success = self._configurations is not None
         if success:
             if self._last_configurations is None:
+                print("async_update configurations now")
                 self._last_configurations = now
             self._status_data = await self.async_fetch_status()
             success = self._status_data is not None
@@ -276,6 +280,7 @@ class Sonnen:
             success = self._inverter_data is not None
 
         self._last_updated = now if success else None
+        print(f"async_update now: {self._last_updated}")
         return success
 
     def _adjust_current_details(self):
@@ -490,6 +495,7 @@ class Sonnen:
                 print("async_fetch_configurations return cache")
                 return AwaitableThing(self._configurations)
 
+        print("async_fetch_configurations now")
         self._last_configurations = None
         self._configurations = None
         return await self._async_fetch_api_endpoint(self.configurations_api_endpoint)
@@ -890,7 +896,7 @@ class Sonnen:
             Bool - true when reserve in use
         """
 
-        return self.u_soc < self.status_backup_buffer
+        return self.u_soc <= self.status_backup_buffer and self.microgrid_enabled
 
     @property
     @get_item(float)
@@ -2002,7 +2008,7 @@ class Sonnen:
         elif (
             self.pac_total > 0 and self.grid_feedin == 0
         ) or self.status_battery_discharging:
-            if self.u_soc < self.status_backup_buffer:
+            if self.using_reserve: # self.u_soc < self.status_backup_buffer:
                 battery_status = "discharging reserve"
             else:
                 battery_status = "discharging"

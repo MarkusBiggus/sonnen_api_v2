@@ -108,6 +108,18 @@ async def test_batterieresponse_works(battery_charging: BatterieBackup) -> None:
     assert _batterie.get_sensor_value('mg_minimum_soc_reached') is False
     assert _batterie.get_sensor_value('dc_minimum_rsoc_reached') is False
 
+    # 2nd call within 3 seconds will use cached data from 1st call
+    response:BatterieResponse = await _batterie.refresh_response()
+
+    #print(f'response: {response}')
+    assert response.version == '0.5.16'
+    assert _batterie.get_sensor_value('package_version') == response.version
+    assert response.package_build == '60'
+    assert _batterie.get_sensor_value('package_build') == response.package_build
+    assert _batterie.get_sensor_value('configuration_de_software') == '1.14.5'
+    assert _batterie.get_sensor_value('status_backup_buffer') == 20
+    assert _batterie.get_sensor_value('microgrid_enabled') is False
+
 
 @pytest.mark.asyncio
 @patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_auth200)

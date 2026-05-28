@@ -7,7 +7,7 @@ from freezegun import freeze_time
 #from asyncmock import AsyncMock
 from aioresponses import aioresponses
 
-from sonnen_api_v2 import Batterie
+from sonnen_api_v2 import Batterie, BatterieBackup
 
 from . mock_sonnenbatterie_v2_charging import __mock_configurations, __mock_powermeter
 from . mock_sonnenbatterie_v2_discharging_offgrid import __mock_status_discharging, __mock_latest_discharging, __mock_battery_discharging, __mock_inverter_discharging
@@ -21,13 +21,13 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 @freeze_time("20-11-2023 17:00:59.54321") # disharging reserve time
 #@pytest.mark.asyncio
 #@aioresponses()
-async def fixture_battery_discharging_offgrid(mocker) -> Batterie:
+async def fixture_battery_discharging_offgrid(mocker):
     if LOGGER_NAME is not None:
         logging.basicConfig(filename=(f'/tests/logs/{LOGGER_NAME}.log'), level=logging.DEBUG)
         logger = logging.getLogger(LOGGER_NAME)
         logger.info('Sonnen mock data battery_discharging_offgrid_async test.')
 
-    battery_discharging_offgrid = Batterie('fakeToken', 'fakeHost')
+    battery_discharging_offgrid = BatterieBackup('fakeToken', 'fakeHost')
     urlHost = battery_discharging_offgrid.url
     url = urlHost + '/api/v2/configurations'
 

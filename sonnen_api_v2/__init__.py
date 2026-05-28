@@ -101,7 +101,7 @@ class BatterieBackup:
 
         return sensor_value
 
-    async def refresh_response(self) -> Awaitable[BatterieResponse]:
+    async def refresh_response(self) -> BatterieResponse: # Awaitable[BatterieResponse]:
         """Query the real time API."""
 
         success = await self._battery.async_update()
@@ -119,7 +119,7 @@ class BatterieBackup:
         )
         return self._response
 
-    async def validate_token(self) -> Awaitable[BatterieResponse]:
+    async def validate_token(self) -> BatterieResponse: # Awaitable[BatterieResponse]:
         """Query the real time API."""
 
         success = await self._battery.async_validate_token()

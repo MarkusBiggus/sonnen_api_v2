@@ -6,7 +6,7 @@ import pytest
 from freezegun import freeze_time
 from asyncmock import AsyncMock
 
-from sonnen_api_v2 import Batterie
+from sonnen_api_v2 import Batterie, BatterieBackup
 
 from . mock_sonnenbatterie_v2_charging import __mock_status_charging, __mock_latest_charging, __mock_configurations, __mock_battery, __mock_powermeter, __mock_inverter
 
@@ -15,8 +15,8 @@ LOGGER_NAME = "sonnenapiv2"
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 @pytest.fixture(name="battery_charging")
-@freeze_time("20-11-2023 17:00:00") # charging time
-async def fixture_battery_charging(mocker) -> Batterie:
+@freeze_time("20-11-2023 17:00:00.543210") # charging time
+async def fixture_battery_charging(mocker) -> BatterieBackup:
     if LOGGER_NAME is not None:
         logging.basicConfig(filename=(f'/tests/logs/{LOGGER_NAME}.log'), level=logging.DEBUG)
         logger = logging.getLogger(LOGGER_NAME)
@@ -29,8 +29,9 @@ async def fixture_battery_charging(mocker) -> Batterie:
     mocker.patch.object(Batterie, "async_fetch_powermeter", AsyncMock(return_value=__mock_powermeter()))
     mocker.patch.object(Batterie, "async_fetch_inverter", AsyncMock(return_value=__mock_inverter()))
 
-    battery_charging = Batterie('fakeToken', 'fakeHost')
-    success = await battery_charging.async_update()
+    battery_charging = BatterieBackup('fakeToken', 'fakeHost')
+#    success = await battery_charging.async_update()
+    success = await battery_charging._battery.async_update()
     assert success is True
 
     return battery_charging

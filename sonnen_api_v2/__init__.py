@@ -52,8 +52,9 @@ class BatterieBackup:
         """Initialize the API client."""
 
         self._battery = Batterie(auth_token, ip_address, port)
-        self._attr_available:bool = False # not availble until token validated
+        self._attr_available:bool = False # not available until token validated
         self._response:BatterieResponse | None = None
+    #    print("BatterieBackup instantiated.")
 
     @property
     def available(self) -> bool:

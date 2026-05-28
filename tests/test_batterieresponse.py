@@ -53,12 +53,13 @@ if LOGGER_NAME is not None:
 #@pytest.mark.usefixtures("battery_charging")
 @patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_auth200)
 @freeze_time("20-11-2023 17:00:00.543210")
-async def test_batterieresponse_works(battery_charging: Batterie) -> None:
+async def test_batterieresponse_works(battery_charging: BatterieBackup) -> None:
     """BackupBatterie Response using mock data"""
 
-    _batterie = BatterieBackup('fakeToken', 'fakeHost')
+#    _batterie = BatterieBackup('fakeToken', 'fakeHost')
 
-    response = await _batterie.validate_token()
+#    response = await _batterie.validate_token()
+    response = await battery_charging.validate_token()
 
     assert isinstance(response, BatterieResponse) is True
     assert response == BatterieResponse(
@@ -67,6 +68,7 @@ async def test_batterieresponse_works(battery_charging: Batterie) -> None:
         package_build='60',
         sensor_values={}
 )
+    _batterie = battery_charging
 
     response:BatterieResponse = await _batterie.refresh_response()
 
@@ -79,7 +81,6 @@ async def test_batterieresponse_works(battery_charging: Batterie) -> None:
         package_build='60',
         sensor_values={}
         )
-
     assert response.version == '0.5.16'
     assert _batterie.get_sensor_value('package_version') == response.version
     assert response.package_build == '60'
@@ -88,6 +89,7 @@ async def test_batterieresponse_works(battery_charging: Batterie) -> None:
     assert _batterie.get_sensor_value('configuration_de_software') == '1.14.5'
     assert _batterie.get_sensor_value('led_state') == 'Pulsing White 100%'
     assert _batterie.get_sensor_value('led_state_text') == 'Normal Operation.'
+    assert _batterie.get_sensor_value('led_status') == '0x01 - ONGRID_READY'
     assert _batterie.get_sensor_value('inverter_uac') == 233.55
     assert _batterie.get_sensor_value('battery_full_charge_capacity_wh') == 20683.49
     assert _batterie.get_sensor_value('full_charge_capacity_wh') == 20187.09

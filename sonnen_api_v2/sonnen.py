@@ -77,9 +77,10 @@ class BatterieHTTPError(BatterieError):
 class BatterieSensorError(BatterieError):
     """Indicates Sensor attribute requested does not exist."""
 
-    pass
+#    pass
 
 
+#Alias: Batterie
 class Sonnen:
     """Class for managing Sonnen API V2 data."""
 
@@ -117,7 +118,7 @@ class Sonnen:
         self._last_configurations: datetime.datetime | None = None
         self._last_fully_charged: datetime.datetime | None = None  # cache 1st time full
         self.dod_limit = BATTERY_BLACKSTART_RESERVE
-        self.leds = None  # remember param when supplied
+        self.leds: Dict = {}  # remember param when supplied (testing only)
         self.BMS_USE_W = BATTERY_BMS_MIN_W  # allowance for BMS & Cooling fan
 
         logging.basicConfig(
@@ -152,6 +153,7 @@ class Sonnen:
         self._inverter_data: Dict | None = None
         # isal is preferred over zlib_ng if it is available
         aiohttp_fast_zlib.enable()
+    #    print("SonnenBatterie instantiated.")
 
     def _log_error(self, msg):
         """Log message when error logger is present"""
@@ -205,7 +207,7 @@ class Sonnen:
                 f'HTTP Error fetching endpoint "{self.configurations_api_endpoint}" status: {response.status}'
             )
 
-        self._configurations = response.json() # json.loads(response._body)
+        self._configurations = json.loads(response._body)
         self._last_configurations = datetime.datetime.now().astimezone()
         return True
 
@@ -255,7 +257,8 @@ class Sonnen:
         self._configurations = await self.async_fetch_configurations()
         success = self._configurations is not None
         if success:
-            self._last_configurations = now
+            if self._last_configurations is None:
+                self._last_configurations = now
             self._status_data = await self.async_fetch_status()
             success = self._status_data is not None
         if success:
@@ -312,6 +315,7 @@ class Sonnen:
         self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED] = json.loads(
             details_eclipse.replace(" blue", " Blue")
         )
+    #    print(f"eclipse fixed: {self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED]}")
 
     def update(self) -> bool:
         """Update battery details Asyncronously from a sequential caller using async methods.
@@ -346,7 +350,8 @@ class Sonnen:
         self._configurations = self.fetch_configurations()
         success = self._configurations is not None
         if success:
-            self._last_configurations = now
+            if self._last_configurations is None:
+                self._last_configurations = now
             self._status_data = self.fetch_status()
             success = self._status_data is not None
         if success:
@@ -477,10 +482,12 @@ class Sonnen:
 
         now = datetime.datetime.now().astimezone()
         if self._last_configurations is not None:
+            print(f"async_fetch_configurations last: {self._last_configurations}")
             diff = now - self._last_configurations
             if diff.total_seconds() < RATE_LIMIT:
                 assert self._configurations is not None
 #                return self._configurations
+                print("async_fetch_configurations return cache")
                 return AwaitableThing(self._configurations)
 
         self._last_configurations = None
@@ -492,6 +499,7 @@ class Sonnen:
 
         now = datetime.datetime.now().astimezone()
         if self._last_configurations is not None:
+            print(f"fetch_configurations last: {self._last_configurations}")
             diff = now - self._last_configurations
             if diff.total_seconds() < RATE_LIMIT:
                 assert self._configurations is not None
@@ -504,13 +512,13 @@ class Sonnen:
     async def async_fetch_latest_details(self) -> Awaitable[Dict]:
         """Wait for Fetch Latest_Details endpoint."""
 
-        self.leds = None
+        self.leds = {}
         return await self._async_fetch_api_endpoint(self.latest_details_api_endpoint)
 
     def fetch_latest_details(self) -> Dict:
         """Fetch Latest_Details endpoint."""
 
-        self.leds = None
+        self.leds = {}
         return self._fetch_api_endpoint(self.latest_details_api_endpoint)
 
     async def async_fetch_status(self) -> Awaitable[Dict]:
@@ -2057,10 +2065,11 @@ class Sonnen:
         Returns:
             Dict
         """
+
+        assert self._latest_details_data is not None
         # print(f"eclipse: {self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED]}")
         # print(f"ic_status: {self._latest_details_data[IC_STATUS]}")
 
-        assert self._latest_details_data is not None
         return self._latest_details_data[IC_STATUS][IC_ECLIPSE_LED]
 
     @property
@@ -2100,9 +2109,9 @@ class Sonnen:
             calls to led_status & led_state_text
         """
         if not leds:
-            self.leds = leds
-        else:
             self.leds = self.ic_eclipse_led
+        else:
+            self.leds = leds
 
         if len(self.leds) == 15:  # firmware 1.25.6 (December 2025)
             return self.leds
@@ -2148,16 +2157,16 @@ class Sonnen:
             String
         """
 
-        leds = self.led_decode_ic_eclipse()
+        if not self.leds:
+            self.leds = self.led_decode_ic_eclipse()
 
-        return leds["Eclipse Status"]
-
-    #        return self.led_xlate_state_text(leds)
+        return self.leds["Eclipse Status"]
 
     def led_xlate_state(self, leds: dict = {}) -> str:
         """Text of LED state.
         When leds param is supplied by tests it is used for following
-            calls to led_status & led_state_text
+            calls to led_status & led_state_text.
+        Otherwise, leds is extracted from latest_details IC_ECLIPSE_LED
         Returns:
             String
         """
@@ -2205,7 +2214,7 @@ class Sonnen:
             String
         """
 
-        if self.leds is None:
+        if not self.leds:
             leds = self.led_decode_ic_eclipse()
         else:
             leds = self.leds

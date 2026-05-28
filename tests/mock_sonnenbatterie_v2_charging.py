@@ -1,6 +1,7 @@
 """Mock batterie data also used in package sonnenbatterie_api_v2 & ha component sonnenenbatterie"""
 import json
-def __mock_status_charging(*args)-> json:
+
+def __mock_status_charging(*args)-> dict:
     return {
         'Apparent_output': 98,
         'BackupBuffer': '20',
@@ -34,7 +35,7 @@ def __mock_status_charging(*args)-> json:
         'generator_autostart': False
     }
 
-def __mock_latest_charging(*args)-> json:
+def __mock_latest_charging(*args)-> dict:
     return {
         'FullChargeCapacity': 20187.086,
         'GridFeedIn_W': 0,
@@ -141,7 +142,7 @@ def __mock_latest_charging(*args)-> json:
         }
     }
 
-def __mock_configurations(*args)-> json:
+def __mock_configurations(*args)-> dict:
 # Economical Charging (default)
     return {
         "EM_RE_ENABLE_MICROGRID": "1",
@@ -167,7 +168,7 @@ def __mock_configurations(*args)-> json:
         "DepthOfDischargeLimit": 93
     }
 
-def __mock_battery(*args)-> json:
+def __mock_battery(*args)-> dict:
     return {
         "balancechargerequest":0.0,
         "chargecurrentlimit":39.97,
@@ -200,7 +201,7 @@ def __mock_battery(*args)-> json:
         "usableremainingcapacity":163.60
     }
 
-def __mock_powermeter(*args)-> json:
+def __mock_powermeter(*args)-> list:
     return [
         {
             'a_l1': 2.4730000495910645,
@@ -250,7 +251,7 @@ def __mock_powermeter(*args)-> json:
         }
     ]
 
-def __mock_inverter(*args)-> json:
+def __mock_inverter(*args)-> dict:
     return {
         "fac": 0.0,
         "iac_total": 0.39,

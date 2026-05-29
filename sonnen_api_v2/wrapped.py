@@ -263,7 +263,7 @@ def get_battery(self) -> Dict:
         event_loop.close()
 
     if self._battery_status is None:
-        return None
+        return {}
 
     return _aug_battery(self)
 
@@ -284,7 +284,7 @@ def sync_get_battery(self) -> Dict:
 
     self._battery_status = self.fetch_battery_status()
     if self._battery_status is None:
-        return None
+        return {}
 
     if self._configurations is None:
         self.sync_get_configurations()

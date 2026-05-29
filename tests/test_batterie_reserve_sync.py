@@ -18,6 +18,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 @pytest.mark.usefixtures("battery_discharging_reserve")
 @freeze_time("20-11-2023 17:00:59")
 def test_sync_methods(battery_discharging_reserve: Batterie) -> None:
+
     if LOGGER_NAME is not None:
         logging.basicConfig(filename=(f'/tests/logs/{LOGGER_NAME}.log'), level=logging.DEBUG)
         logger = logging.getLogger(LOGGER_NAME)
@@ -25,6 +26,7 @@ def test_sync_methods(battery_discharging_reserve: Batterie) -> None:
 
     assert battery_discharging_reserve.discharging > 0
     assert battery_discharging_reserve.charging == 0
+    assert battery_discharging_reserve.fully_discharged_at is not None
     assert battery_discharging_reserve.fully_discharged_at.strftime('%d.%b.%Y %H:%M') == '20.Nov.2023 18:27'
     assert battery_discharging_reserve.microgrid_enabled is True
 
@@ -59,7 +61,8 @@ def test_sync_methods(battery_discharging_reserve: Batterie) -> None:
     assert battery_status.get('usableremainingcapacity') == 22.2178
 
     inverter_data = battery_discharging_reserve.sync_get_inverter()
-    assert  int(inverter_data.get('pac_microgrid')) == status_data.get('Pac_total_W')
+#    assert  int(inverter_data.get('pac_microgrid')) == status_data.get('Pac_total_W')
+    assert  inverter_data.get('pac_microgrid') == status_data.get('Pac_total_W')
     assert inverter_data.get('pac_microgrid') == 1438.67
     assert inverter_data.get('uac') == 233.55
 
@@ -73,5 +76,7 @@ def test_sync_methods(battery_discharging_reserve: Batterie) -> None:
     from .check_results import check_reserve_results
 
     print(f'dod limit: {round((battery_discharging_reserve.battery_remaining_capacity_wh - battery_discharging_reserve.usable_remaining_capacity_wh)/ battery_discharging_reserve.battery_full_charge_capacity_wh, 2)}%')
+
+    assert battery_discharging_reserve.capacity_until_reserve is None
 
     check_reserve_results(battery_discharging_reserve)

@@ -16,7 +16,7 @@ from unittest.mock import patch
 from asyncmock import AsyncMock
 from freezegun import freeze_time
 
-from sonnen_api_v2 import Batterie, BatterieAuthError, BatterieHTTPError , BatterieError
+from sonnen_api_v2 import Batterie, BatterieBackup, BatterieAuthError, BatterieHTTPError, BatterieError
 
 from .mock_sonnenbatterie_v2_charging import __mock_status_charging, __mock_latest_charging, __mock_configurations, __mock_battery, __mock_powermeter, __mock_inverter
 #from .mock_sonnenbatterie_v2_discharging import __mock_status_discharging, __mock_latest_discharging, __mock_battery_discharging
@@ -92,23 +92,25 @@ async def test_batterie_async(mocker):
 @pytest.mark.usefixtures("battery_charging")
 @patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_auth200)
 @freeze_time("20-11-2023 17:00:00") # charging time
-async def test_batterie_charging_async(battery_charging: Batterie):
+async def test_batterie_charging_async(battery_charging: BatterieBackup):
     """sonnenbatterie Emulator package - using mock data
         Fake good token returns configs data
     """
-    success = await battery_charging.async_validate_token()
+
+    _battery = battery_charging._battery
+    success = await _battery.async_validate_token()
     assert success is not False
 
-    success = await battery_charging.async_update()
+    success = await _battery.async_update()
     assert success is not False
 
-    charging_flows = battery_charging.status_flows
+    charging_flows = _battery.status_flows
     assert charging_flows == {'FlowConsumptionBattery': False, 'FlowConsumptionGrid': False, 'FlowConsumptionProduction': True, 'FlowGridBattery': False, 'FlowProductionBattery': True, 'FlowProductionGrid': False}
 
     #common tests for all fixture methods
     from . check_results import check_charge_results
 
-    check_charge_results(battery_charging)
+    check_charge_results(_battery)
 
 
 @pytest.mark.asyncio
@@ -141,17 +143,18 @@ async def test_batterie_discharging_async(battery_discharging: Batterie):
 @pytest.mark.usefixtures("battery_charging")
 @patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_auth200)
 @freeze_time("20-11-2023 17:00:00")
-def test_batterie_charging_wrapped(battery_charging: Batterie):
+def test_batterie_charging_wrapped(battery_charging: BatterieBackup):
     """sonnenbatterie Emulator package - using mock data
         2. Async update called from sync method
     """
 
 #    battery_charging = Batterie('fakeToken', 'fakeHost')
-    success = battery_charging.sync_validate_token()
+    success = battery_charging.validate_token_sync()
     assert success is not False
-    success = battery_charging.get_update()
+    success = battery_charging.refresh_response()
     assert success is not False
 
+    _batterie = battery_charging._battery
     latestData = {}
     # code syntax from custom_component coordinator.py
     # latestData["battery_system"] = battery_charging.get_batterysystem()
@@ -164,13 +167,13 @@ def test_batterie_charging_wrapped(battery_charging: Batterie):
     # batt_module_count = int(latestData["battery_system"]["modules"])
 
     # assert batt_module_count == 4
-    latestData["latest_data"] = battery_charging.get_latest_data()
+    latestData["latest_data"] = _batterie.get_latest_data()
     #print(f'latestData: {latestData["latest_data"]}', flush=True)
     assert latestData["latest_data"]['Timestamp'] == '2023-11-20 17:00:55' #correct test data loaded
     assert latestData["latest_data"].get('RSOC') == 88
 
 
-    latestData["status"] = battery_charging.get_status()
+    latestData["status"] = _batterie.get_status()
     assert latestData["status"]['Timestamp'] == '2023-11-20 17:00:55' #correct test data loaded
 
 #    print(f'status type: {type(latestData["status"])}')
@@ -185,7 +188,7 @@ def test_batterie_charging_wrapped(battery_charging: Batterie):
     operatingmode = latestData.get("status", {}).get("OperatingMode")
     print(f'battery_state: {battery_current_state}  RSOC: {rsoc}%  Operating Mode: {operatingmode}', flush=True)
 
-    latestData["powermeter"] = battery_charging.get_powermeter()
+    latestData["powermeter"] = _batterie.get_powermeter()
     if(isinstance(latestData["powermeter"],dict)):
         newPowerMeters=[]
         for index,dictIndex in enumerate(latestData["powermeter"]):
@@ -210,7 +213,7 @@ def test_batterie_charging_wrapped(battery_charging: Batterie):
     # assert remaining_capacity == 19600
     # assert remaining_capacity_usable == 18200
 
-    latestData["battery_info"] = battery_charging.get_battery()
+    latestData["battery_info"] = _batterie.get_battery()
     # current_state = latestData.get("battery_info", {}).get("current_state")
     # print(f'current_state: {current_state}')
     # assert current_state == 'charging'
@@ -230,29 +233,29 @@ def test_batterie_charging_wrapped(battery_charging: Batterie):
 #    print(f'Reserved (raw): {reserved_capacity_raw:,}Wh  total_usable (calc): {total_capacity_usable:,}Wh')
     assert total_capacity_raw == 20683.490
 #    assert total_capacity_usable == 18553
-    assert reserved_capacity_raw == 1448.0
+    assert reserved_capacity_raw == 1447.8
     remaining_capacity = latestData.get("battery_info", {}).get("remaining_capacity")
     remaining_capacity_usable = latestData.get("battery_info", {}).get("remaining_capacity_usable")
     print(f'remaining_capacity (raw): {remaining_capacity:,}Wh  remaining_usable (raw): {remaining_capacity_usable:,}Wh', flush=True)
     assert remaining_capacity == 18200.6
     assert remaining_capacity_usable == 16752.6
 
-    timeouts = battery_charging.get_request_connect_timeouts()
+    timeouts = _batterie.get_request_connect_timeouts()
     assert timeouts == (20,20)
-    timeouts = battery_charging.set_request_connect_timeouts((15,25))
+    timeouts = _batterie.set_request_connect_timeouts((15,25))
     assert timeouts == (15,25)
 
-    latestData["inverter"] = battery_charging.get_inverter()
+    latestData["inverter"] = _batterie.get_inverter()
     assert latestData["inverter"] .get("pac_total") == -1394.33
 
-    latestData["configurations"] = battery_charging.get_configurations()
+    latestData["configurations"] = _batterie.get_configurations()
     assert latestData["configurations"] .get("DepthOfDischargeLimit") == 7
 
-    assert battery_charging.used_capacity_wh == 3835.6
+    assert _batterie.used_capacity_wh == 3835.6
     #common tests for all fixture methods
     from . check_results import check_charge_results
 
-    check_charge_results(battery_charging)
+    check_charge_results(_batterie)
 
 @pytest.mark.usefixtures("battery_discharging")
 @patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_auth200)

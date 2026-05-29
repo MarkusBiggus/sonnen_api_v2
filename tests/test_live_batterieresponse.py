@@ -19,10 +19,10 @@ load_dotenv()
 
 BATTERIE_HOST = os.getenv('BATTERIE_HOST','X')
 BATTERIE_PORT = int(os.getenv('BATTERIE_HOST_PORT', '80'))
-API_READ_TOKEN = os.getenv('API_READ_TOKEN')
+API_READ_TOKEN = os.getenv('API_READ_TOKEN', '')
 # SonnenBatterie config parameters to check against
-BACKUP_BUFFER_USOC = int(os.getenv('BACKUP_BUFFER_USOC'))
-OPERATING_MODE = int(os.getenv('OPERATING_MODE'))
+BACKUP_BUFFER_USOC = int(os.getenv('BACKUP_BUFFER_USOC', '15'))
+OPERATING_MODE = int(os.getenv('OPERATING_MODE', '0'))
 FW_VERSION = os.getenv('FW_VERSION')
 
 LOGGER_NAME = None # "sonnenapiv2" #

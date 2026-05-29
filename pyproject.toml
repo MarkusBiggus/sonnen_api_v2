@@ -59,4 +59,5 @@ disable = [
     "C0103", # snake case
     "C0301", # line length
     "W0102", # dangerous default
+    "W0212", # access subclass protected property
 ]

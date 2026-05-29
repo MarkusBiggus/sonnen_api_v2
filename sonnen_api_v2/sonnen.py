@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from functools import wraps
 from typing import Dict, Optional, List, Any
-from collections.abc import Awaitable
+#from collections.abc import Awaitable
 import json
 
 import datetime
@@ -18,7 +18,7 @@ import requests
 
 import urllib3
 from urllib3.util.timeout import Timeout
-from urllib3.response import HTTPResponse
+#from urllib3.response import HTTPResponse
 
 from .const import *  # noqa: F403
 
@@ -214,7 +214,7 @@ class Sonnen:
         print(f"sync_validate_token last: {self._last_configurations}")
         return True
 
-    def _force_HTTPError(self) -> bool:
+    async def _force_HTTPError(self) -> bool:
         """Make a bad GET request to the batterie which it responds to with status 301.
         ONLY to be used for testing!
         """
@@ -923,7 +923,7 @@ class Sonnen:
 
     @property
     @get_item(float)
-    def capacity_until_reserve(self) -> float:
+    def capacity_until_reserve(self) -> float | None:
         """Capacity until backup reserve is reached discharging (battery state goes standby).
         Capacity above Backup Reserve Charge (BRC) is how much to discharge until standby.
         Standby state is reached by discharge when u_soc == status_backup_buffer.
@@ -940,7 +940,7 @@ class Sonnen:
         return (
             round(self.full_charge_capacity_wh * until_reserve / 100, 1)
             if until_reserve >= 0
-            else 0
+            else None
         )
 
     @property

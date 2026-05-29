@@ -1,3 +1,5 @@
+'''Constants used to index API response strings.'''
+
 # API latestdata System-Status Groups
 IC_STATUS = 'ic_status'
 DC_SHUTDOWN_REASON = 'DC Shutdown Reason'

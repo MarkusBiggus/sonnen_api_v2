@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from functools import wraps
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Any
 from collections.abc import Awaitable
 import json
 
@@ -377,7 +377,7 @@ class Sonnen:
         return success
 
 
-    async def _async_fetch_api_endpoint(self, url: str) -> Awaitable[Dict]:
+    async def _async_fetch_api_endpoint(self, url: str) -> Any: # Awaitable[Dict]:
         """Fetch API coroutine."""
 
         try:
@@ -402,7 +402,7 @@ class Sonnen:
 
     async def _async_fetch(
         self, session: aiohttp.ClientSession, url: str
-    ) -> Awaitable[Dict]:  # Awaitable[aiohttp.ClientResponse]:
+    ) -> Any: # Awaitable[Dict]:  # Awaitable[aiohttp.ClientResponse]:
         """Fetch API endpoint with aiohttp client."""
 
         try:
@@ -453,7 +453,7 @@ class Sonnen:
             ) from error
 
     # sync for use with run_in_executor in existing event loop
-    def _fetch_api_endpoint(self, url: str) -> Dict:
+    def _fetch_api_endpoint(self, url: str) -> Any: # Dict:
         """Fetch API requestor."""
 
         try:
@@ -482,7 +482,7 @@ class Sonnen:
 
         return response.json()
 
-    async def async_fetch_configurations(self) -> Awaitable[Dict]:
+    async def async_fetch_configurations(self) -> Dict: # Awaitable[Dict]:
         """Wait for Fetch Configurations endpoint."""
 
         now = datetime.datetime.now().astimezone()
@@ -491,9 +491,9 @@ class Sonnen:
             diff = now - self._last_configurations
             if diff.total_seconds() < RATE_LIMIT:
                 assert self._configurations is not None
-#                return self._configurations
                 print("async_fetch_configurations return cache")
-                return AwaitableThing(self._configurations)
+                return self._configurations
+#                return AwaitableThing(self._configurations)
 
         print("async_fetch_configurations now")
         self._last_configurations = None
@@ -515,7 +515,7 @@ class Sonnen:
         self._configurations = None
         return self._fetch_api_endpoint(self.configurations_api_endpoint)
 
-    async def async_fetch_latest_details(self) -> Awaitable[Dict]:
+    async def async_fetch_latest_details(self) -> Dict:
         """Wait for Fetch Latest_Details endpoint."""
 
         self.leds = {}
@@ -527,7 +527,7 @@ class Sonnen:
         self.leds = {}
         return self._fetch_api_endpoint(self.latest_details_api_endpoint)
 
-    async def async_fetch_status(self) -> Awaitable[Dict]:
+    async def async_fetch_status(self) -> Dict:
         """Wait for Fetch Status endpoint."""
 
         return await self._async_fetch_api_endpoint(self.status_api_endpoint)
@@ -537,7 +537,7 @@ class Sonnen:
 
         return self._fetch_api_endpoint(self.status_api_endpoint)
 
-    async def async_fetch_battery_status(self) -> Awaitable[Dict]:
+    async def async_fetch_battery_status(self) -> Dict:
         """Wait for Fetch Battery endpoint."""
 
         return await self._async_fetch_api_endpoint(self.battery_api_endpoint)
@@ -547,7 +547,7 @@ class Sonnen:
 
         return self._fetch_api_endpoint(self.battery_api_endpoint)
 
-    async def async_fetch_powermeter(self) -> Awaitable[Dict]:
+    async def async_fetch_powermeter(self) -> Dict:
         """Wait for Powermeter Status endpoint."""
 
         return await self._async_fetch_api_endpoint(self.powermeter_api_endpoint)
@@ -557,7 +557,7 @@ class Sonnen:
 
         return self._fetch_api_endpoint(self.powermeter_api_endpoint)
 
-    async def async_fetch_inverter(self) -> Awaitable[Dict]:
+    async def async_fetch_inverter(self) -> Dict:
         """Wait for Fetch Inverter endpoint."""
 
         return await self._async_fetch_api_endpoint(self.inverter_api_endpoint)

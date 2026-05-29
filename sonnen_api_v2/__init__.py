@@ -1,7 +1,7 @@
 """Sonnen Batterie API V2 module."""
 
 import logging
-from collections.abc import Awaitable
+#from collections.abc import Awaitable
 from collections import namedtuple
 from typing import Any #, Dict, Optional, Union, Tuple
 

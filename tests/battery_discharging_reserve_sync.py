@@ -25,24 +25,24 @@ def fixture_battery_discharging_reserve(mocker) -> Batterie:
 
     mocker.patch.object(Batterie, "fetch_status", __mock_status_discharging)
     mocker.patch.object(Batterie, "fetch_latest_details", __mock_latest_discharging)
-#    mocker.patch.object(Batterie, "fetch_configurations", __mock_configurations)
+    mocker.patch.object(Batterie, "fetch_configurations", __mock_configurations)
     mocker.patch.object(Batterie, "fetch_battery_status", __mock_battery_discharging)
     mocker.patch.object(Batterie, "fetch_powermeter", __mock_powermeter)
     mocker.patch.object(Batterie, "fetch_inverter", __mock_inverter_discharging)
 
     battery_discharging_reserve = Batterie('fakeToken', 'fakeHost')
-    urlHost = battery_discharging_reserve.url
+    # urlHost = battery_discharging_reserve.url
 
-    with responses.RequestsMock() as rsps:
+    # with responses.RequestsMock() as rsps:
 
-        url = urlHost + '/api/v2/configurations'
+    #     url = urlHost + '/api/v2/configurations'
 
-        rsps.add(
-            responses.GET,
-            url,
-            json=__mock_configurations(),
-        )
-        success = battery_discharging_reserve.sync_update()
+    #     rsps.add(
+    #         responses.GET,
+    #         url,
+    #         json=__mock_configurations(),
+    #     )
+    success = battery_discharging_reserve.sync_update()
 
     assert success is not False
 

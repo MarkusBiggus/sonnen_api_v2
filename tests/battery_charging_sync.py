@@ -23,25 +23,25 @@ def fixture_battery_charging(mocker) -> Batterie:
         logger.info('Sonnen mock data battery_charging_sync test.')
 
     battery_charging = Batterie('fakeToken', 'fakeHost')
-    urlHost = battery_charging.url
 
     mocker.patch.object(Batterie, "fetch_status", __mock_status_charging)
     mocker.patch.object(Batterie, "fetch_latest_details", __mock_latest_charging)
-#    mocker.patch.object(Batterie, "fetch_configurations", __mock_configurations)
+    mocker.patch.object(Batterie, "fetch_configurations", __mock_configurations)
     mocker.patch.object(Batterie, "fetch_battery_status", __mock_battery)
     mocker.patch.object(Batterie, "fetch_powermeter", __mock_powermeter)
     mocker.patch.object(Batterie, "fetch_inverter", __mock_inverter)
 
-    with responses.RequestsMock() as rsps:
+    # urlHost = battery_charging.url
+    # with responses.RequestsMock() as rsps:
 
-        url = urlHost + '/api/v2/configurations'
+    #     url = urlHost + '/api/v2/configurations'
 
-        rsps.add(
-            responses.GET,
-            url,
-            json=__mock_configurations(),
-        )
-        success = battery_charging.sync_update()
+    #     rsps.add(
+    #         responses.GET,
+    #         url,
+    #         json=__mock_configurations(),
+    #     )
+    success = battery_charging.sync_update()
 
     assert success is not False
 

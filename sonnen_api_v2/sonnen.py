@@ -211,7 +211,6 @@ class Sonnen:
 
         self._configurations = json.loads(response.data)
         self._last_configurations = datetime.datetime.now().astimezone()
-        print(f"sync_validate_token last: {self._last_configurations}")
         return True
 
     async def _force_HTTPError(self) -> bool:
@@ -253,17 +252,17 @@ class Sonnen:
 
         now = datetime.datetime.now().astimezone()
         if self._last_updated is not None:
-            print(f"async_update last: {self._last_updated}")
+    #        print(f"async_update last: {self._last_updated}")
             diff = now - self._last_updated
             if diff.total_seconds() < RATE_LIMIT:
-                print("async_update return cache")
+    #            print("async_update return cache")
                 return True
 
         self._configurations = await self.async_fetch_configurations()
         success = self._configurations is not None
         if success:
             if self._last_configurations is None:
-                print("async_update configurations now")
+    #            print("async_update configurations now")
                 self._last_configurations = now
             self._status_data = await self.async_fetch_status()
             success = self._status_data is not None
@@ -282,7 +281,7 @@ class Sonnen:
             success = self._inverter_data is not None
 
         self._last_updated = now if success else None
-        print(f"async_update now: {self._last_updated}")
+    #    print(f"async_update now: {self._last_updated}")
         return success
 
     def _adjust_current_details(self):
@@ -456,6 +455,52 @@ class Sonnen:
 
     # sync for use with run_in_executor in existing event loop
     def _fetch_api_endpoint(self, url: str) -> Any: # Dict:
+        """Fetch API requestor.
+        urllib3 used to access to low level exceptions obfuscated
+        by aiohttp exception handler.
+        """
+
+        conn = urllib3.connection_from_url(
+            url, headers=self.header, retries=False
+        )
+        timeouts = Timeout(TIMEOUT, TIMEOUT)
+        try:
+            response = conn.urlopen(
+                "GET",
+                url,
+                None,
+                self.header,
+                False,
+                timeout=timeouts,
+            )
+
+        except urllib3.exceptions.NewConnectionError as error:
+            self._log_error(f'Invalid IP address "{url}"')
+            raise BatterieAuthError(
+                f'Invalid IP address "{url}"'
+            ) from error
+        except Exception as error:
+            self._log_error(
+                f'Sync fetch "{url}" fail: {repr(error)}'
+            )
+            raise BatterieError(
+                f'Sync fetch "{url}"  fail: {repr(error)}'
+            ) from error
+
+#        print(f'resp: type: {type(response)} vars: {vars(response)}')
+
+        if response.status in [401, 403]:
+            raise BatterieAuthError(
+                f'Invalid token "{self.auth_token}" status: {response.status}'
+            )
+        if response.status > 299:
+            raise BatterieHTTPError(
+                f'HTTP Error fetching endpoint "{url}" status: {response.status}'
+            )
+        return json.loads(response.data)
+    '''
+    # sync for use with run_in_executor in existing event loop
+    def _oldfetch_api_endpoint(self, url: str) -> Any: # Dict:
         """Fetch API requestor."""
 
         try:
@@ -483,7 +528,7 @@ class Sonnen:
                 )
 
         return response.json()
-
+    '''
     async def async_fetch_configurations(self) -> Dict: # Awaitable[Dict]:
         """Wait for Fetch Configurations endpoint."""
 

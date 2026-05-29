@@ -1,10 +1,11 @@
 """Mock battery configuration as response to validate Auth"""
 
+import typing
 from urllib3 import HTTPResponse
 from . mock_sonnenbatterie_v2_charging import __mock_configurations
 import json
 
-def __battery_auth200(self, _method:str, _url:str, _body, _headers:str, _retries, **kwargs):
+def __battery_auth200(self, _method:str, _url:str, _body, _headers:typing.Mapping[str, str], _retries, **kwargs):
     """Mock response to validate Auth."""
     resp = HTTPResponse(
         request_method=_method, #'GET',
@@ -16,7 +17,7 @@ def __battery_auth200(self, _method:str, _url:str, _body, _headers:str, _retries
     #print(f'resp: {resp._body}')
     return resp
 
-def __battery_AuthError_401(self, _method:str, _url:str, _body, _headers:str, _retries, **kwargs):
+def __battery_AuthError_401(self, _method:str, _url:str, _body, _headers:typing.Mapping[str, str], _retries, **kwargs):
     """Mock response for invalid Auth."""
     resp = HTTPResponse(
         request_method=_method, #'GET',
@@ -26,7 +27,7 @@ def __battery_AuthError_401(self, _method:str, _url:str, _body, _headers:str, _r
     )
     return resp
 
-def __battery_AuthError_403(self, _method:str, _url:str, _body, _headers:str, _retries, **kwargs):
+def __battery_AuthError_403(self, _method:str, _url:str, _body, _headers:typing.Mapping[str, str], _retries, **kwargs):
     """Mock response for invalid Auth.
         Fake forbidden token returns status 403.
     """
@@ -38,7 +39,7 @@ def __battery_AuthError_403(self, _method:str, _url:str, _body, _headers:str, _r
     )
     return resp
 
-def __battery_HTTPError_301(self, _method:str, _url:str, _body, _headers:str, _retries, **kwargs):
+def __battery_HTTPError_301(self, _method:str, _url:str, _body, _headers:typing.Mapping[str, str], _retries, **kwargs):
     """Mock response API error."""
     resp = HTTPResponse(
         request_method=_method, #'GET',

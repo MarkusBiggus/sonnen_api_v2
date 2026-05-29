@@ -101,7 +101,7 @@ class BatterieBackup:
 
         return sensor_value
 
-    async def refresh_response(self) -> BatterieResponse: # Awaitable[BatterieResponse]:
+    async def refresh_response(self) -> BatterieResponse:
         """Query the real time API."""
 
         success = await self._battery.async_update()
@@ -119,7 +119,7 @@ class BatterieBackup:
         )
         return self._response
 
-    async def validate_token(self) -> BatterieResponse: # Awaitable[BatterieResponse]:
+    async def validate_token(self) -> BatterieResponse:
         """Query the real time API."""
 
         success = await self._battery.async_validate_token()
@@ -132,6 +132,24 @@ class BatterieBackup:
         self._response = BatterieResponse(
             version = __version__,
             last_updated = self._battery.last_configurations,
+            package_build = __build__,
+            sensor_values = {},
+        )
+        return self._response
+
+    def refresh_response_sync(self) -> BatterieResponse:
+        """Query the real time API."""
+
+        success = self._battery.sync_update()
+
+        self._attr_available = success
+        if success is False:
+            _LOGGER.error("BatterieBackup: Error updating batterie data! from: %s", self._battery.hostname)
+            raise BatterieError(f'BatterieBackup: Error updating batterie data! from: {self._battery.hostname}')
+
+        self._response = BatterieResponse(
+            version = __version__,
+            last_updated = self._battery.last_updated,
             package_build = __build__,
             sensor_values = {},
         )

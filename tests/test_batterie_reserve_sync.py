@@ -61,8 +61,6 @@ def test_sync_methods(battery_discharging_reserve: Batterie) -> None:
     assert battery_status.get('usableremainingcapacity') == 22.2178
 
     inverter_data = battery_discharging_reserve.sync_get_inverter()
-#    assert  int(inverter_data.get('pac_microgrid')) == status_data.get('Pac_total_W')
-    assert  inverter_data.get('pac_microgrid') == status_data.get('Pac_total_W')
     assert inverter_data.get('pac_microgrid') == 1438.67
     assert inverter_data.get('uac') == 233.55
 

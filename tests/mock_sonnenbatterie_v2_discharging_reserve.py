@@ -1,8 +1,8 @@
 """Mock batterie data also used in package sonnenbatterie_api_v2 & ha component sonnenenbatterie
     Discharging below reserve (OffGrid)
 """
-import json
-def __mock_status_discharging(*args)-> json:
+#import json
+def __mock_status_discharging(*args)-> dict:
     return {
         'Apparent_output': 1438,
         'BackupBuffer': '20',
@@ -36,7 +36,7 @@ def __mock_status_discharging(*args)-> json:
         'generator_autostart': False
     }
 
-def __mock_latest_discharging(*args)-> json:
+def __mock_latest_discharging(*args)-> dict:
     return {
         'FullChargeCapacity': 20187.086,
         'GridFeedIn_W': 0,
@@ -134,7 +134,7 @@ def __mock_latest_discharging(*args)-> json:
         }
     }
 
-def __mock_battery_discharging(*args)-> json:
+def __mock_battery_discharging(*args)-> dict:
     return {
         "balancechargerequest":0.0,
         "chargecurrentlimit":39.97,
@@ -167,7 +167,7 @@ def __mock_battery_discharging(*args)-> json:
         "usableremainingcapacity":22.2178
     }
 
-def __mock_inverter_discharging(*args)-> json:
+def __mock_inverter_discharging(*args)-> dict:
     return {
         "fac": 0.0,
         "iac_total": 0.39,

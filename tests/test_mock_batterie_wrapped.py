@@ -6,6 +6,7 @@
 import os
 import sys
 #import json
+import asyncio
 
 import logging
 import urllib3
@@ -78,8 +79,8 @@ async def test_batterie_async(mocker):
     cycles = battery_charging.battery_cycle_count # mock_battery
     PAC_total = battery_charging.inverter_pac_total # mock_inverter
 
-    print(f'\n\rStatus: {status}  Software Version: {version}   Battery Cycles: {cycles:,}')
-    print(f'PAC: {PAC_total:,.2f}W  Consumed: {kwh_consumed:,.2f}  Backup Buffer: {backup_buffer}%')
+#    print(f'\n\rStatus: {status}  Software Version: {version}   Battery Cycles: {cycles:,}')
+#    print(f'PAC: {PAC_total:,.2f}W  Consumed: {kwh_consumed:,.2f}  Backup Buffer: {backup_buffer}%')
     assert status == 'OnGrid'
     assert cycles == 30
     assert version == '1.14.5'
@@ -141,7 +142,7 @@ async def test_batterie_discharging_async(battery_discharging: Batterie):
 
 
 @pytest.mark.usefixtures("battery_charging")
-@patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_auth200)
+@patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_auth200) #validate token only
 @freeze_time("20-11-2023 17:00:00")
 def test_batterie_charging_wrapped(battery_charging: BatterieBackup):
     """sonnenbatterie Emulator package - using mock data
@@ -151,7 +152,7 @@ def test_batterie_charging_wrapped(battery_charging: BatterieBackup):
 #    battery_charging = Batterie('fakeToken', 'fakeHost')
     success = battery_charging.validate_token_sync()
     assert success is not False
-    success = battery_charging.refresh_response()
+    success = asyncio.run(battery_charging.refresh_response()) # battery_charging.refresh_response_sync()
     assert success is not False
 
     _batterie = battery_charging._battery
@@ -186,14 +187,14 @@ def test_batterie_charging_wrapped(battery_charging: BatterieBackup):
         battery_current_state = "standby"
     rsoc = latestData["status"]["RSOC"]
     operatingmode = latestData.get("status", {}).get("OperatingMode")
-    print(f'battery_state: {battery_current_state}  RSOC: {rsoc}%  Operating Mode: {operatingmode}', flush=True)
+    #print(f'battery_state: {battery_current_state}  RSOC: {rsoc}%  Operating Mode: {operatingmode}', flush=True)
 
     latestData["powermeter"] = _batterie.get_powermeter()
     if(isinstance(latestData["powermeter"],dict)):
         newPowerMeters=[]
         for index,dictIndex in enumerate(latestData["powermeter"]):
             newPowerMeters.append(latestData["powermeter"][dictIndex])
-        print(f'new powermeters: {newPowerMeters}')
+    #    print(f'new powermeters: {newPowerMeters}')
 
     # batt_reserved_factor = 7.0
 #    total_installed_capacity = int(batt_module_count * batt_module_capacity)
@@ -226,17 +227,17 @@ def test_batterie_charging_wrapped(battery_charging: BatterieBackup):
     # )
     BackupBuffer = latestData.get("status", {}).get("BackupBuffer")
     backup_buffer_capacity = latestData.get("battery_info", {}).get("backup_buffer_capacity")
-    print(f'BackupBuffer: {BackupBuffer}%  Backup_Usable: {backup_buffer_capacity:,}Wh', flush=True)
+#    print(f'BackupBuffer: {BackupBuffer}%  Backup_Usable: {backup_buffer_capacity:,}Wh', flush=True)
     total_capacity_raw = latestData.get("battery_info", {}).get("fullchargecapacitywh")
     reserved_capacity_raw = latestData.get("battery_info", {}).get("dod_reserved_capacity")
-    print(f'total_capacity (raw): {total_capacity_raw:,}Wh', flush=True)
+#    print(f'total_capacity (raw): {total_capacity_raw:,}Wh', flush=True)
 #    print(f'Reserved (raw): {reserved_capacity_raw:,}Wh  total_usable (calc): {total_capacity_usable:,}Wh')
     assert total_capacity_raw == 20683.490
 #    assert total_capacity_usable == 18553
     assert reserved_capacity_raw == 1447.8
     remaining_capacity = latestData.get("battery_info", {}).get("remaining_capacity")
     remaining_capacity_usable = latestData.get("battery_info", {}).get("remaining_capacity_usable")
-    print(f'remaining_capacity (raw): {remaining_capacity:,}Wh  remaining_usable (raw): {remaining_capacity_usable:,}Wh', flush=True)
+#    print(f'remaining_capacity (raw): {remaining_capacity:,}Wh  remaining_usable (raw): {remaining_capacity_usable:,}Wh', flush=True)
     assert remaining_capacity == 18200.6
     assert remaining_capacity_usable == 16752.6
 
@@ -285,6 +286,7 @@ def test_batterie_discharging_wrapped(battery_discharging: Batterie):
 @patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_AuthError_401)
 def test_batterie_unauth_token401(battery_discharging: Batterie):
     """sonnenbatterie Emulator package - using mock data.
+        handle status 401
     """
     with pytest.raises(BatterieAuthError, match='Invalid token "fakeToken" status: 401'):
         success = battery_discharging.sync_validate_token()
@@ -294,6 +296,7 @@ def test_batterie_unauth_token401(battery_discharging: Batterie):
 @patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_AuthError_403)
 def test_batterie_unauth_token403(battery_discharging: Batterie):
     """sonnenbatterie Emulator package - using mock data.
+        handle status 403
     """
     with pytest.raises(BatterieAuthError, match='Invalid token "fakeToken" status: 403'):
         success = battery_discharging.sync_validate_token()
@@ -302,6 +305,7 @@ def test_batterie_unauth_token403(battery_discharging: Batterie):
 @patch.object(urllib3.HTTPConnectionPool, 'urlopen', __battery_HTTPError_301)
 def test_batterie_HTTPerror301(battery_discharging: Batterie):
     """sonnenbatterie Emulator package - using mock data.
+        handle status 301
     """
     with pytest.raises(BatterieHTTPError, match='HTTP Error fetching endpoint "http://fakeHost:80/api/v2/configurations" status: 301'):
         success = battery_discharging.sync_validate_token()

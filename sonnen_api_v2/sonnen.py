@@ -15,8 +15,10 @@ import asyncio
 import aiohttp_fast_zlib
 
 import requests
+
 import urllib3
 from urllib3.util.timeout import Timeout
+from urllib3.response import HTTPResponse
 
 from .const import *  # noqa: F403
 
@@ -196,7 +198,7 @@ class Sonnen:
                 f'Sync fetch "{self.configurations_api_endpoint}"  fail: {repr(error)}'
             ) from error
 
-        #        print(f'resp: {vars(response)}')
+#        print(f'resp: type: {type(response)} vars: {vars(response)}')
 
         if response.status in [401, 403]:
             raise BatterieAuthError(
@@ -207,7 +209,7 @@ class Sonnen:
                 f'HTTP Error fetching endpoint "{self.configurations_api_endpoint}" status: {response.status}'
             )
 
-        self._configurations = json.loads(response._body)
+        self._configurations = json.loads(response.data)
         self._last_configurations = datetime.datetime.now().astimezone()
         print(f"sync_validate_token last: {self._last_configurations}")
         return True

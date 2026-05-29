@@ -119,6 +119,8 @@ async def test_batterieresponse_works(battery_charging: BatterieBackup) -> None:
     assert _batterie.get_sensor_value('configuration_de_software') == '1.14.5'
     assert _batterie.get_sensor_value('status_backup_buffer') == 20
     assert _batterie.get_sensor_value('microgrid_enabled') is False
+    tou_schedule = _batterie.get_sensor_value('tou_schedule')
+    assert tou_schedule == [{"start":"09:00","stop":"16:00","threshold_p_max":1200}]
 
 
 @pytest.mark.asyncio

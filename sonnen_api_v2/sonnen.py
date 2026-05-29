@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from functools import wraps
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 from collections.abc import Awaitable
 import json
 
@@ -1766,6 +1766,22 @@ class Sonnen:
 
         assert self._configurations is not None
         return self._configurations[CONFIGURATION_EM_USOC]
+
+    @property
+#    @get_item(List)
+    def tou_schedule(self) -> List[Dict]:
+        """Time-Of-use Schedule.
+        [
+          {
+            \"start\":\"09:00\",\"stop\":\"16:00\",\"threshold_p_max\":1200
+          }
+        ]
+        Returns:
+            List of Schedules
+        """
+
+        assert self._configurations is not None
+        return json.loads(self._configurations[CONFIGURATION_TOU_SCHEDULE])
 
     @property
     @get_item(int)

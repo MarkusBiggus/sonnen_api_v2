@@ -149,7 +149,7 @@ def __mock_configurations(*args)-> dict:
         "NVM_PfcIsFixedCosPhiActive": 0,
         "NVM_PfcFixedCosPhi": 0.8,
         "IC_BatteryModules": 4,
-        "EM_ToU_Schedule": [],
+        "EM_ToU_Schedule":"[{\"start\":\"09:00\",\"stop\":\"16:00\",\"threshold_p_max\":1200}]",
         "DE_Software":"1.14.5",
         "EM_USER_INPUT_TIME_ONE": "08:00",
         "NVM_PfcIsFixedCosPhiLagging": 0,

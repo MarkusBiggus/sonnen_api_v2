@@ -91,13 +91,13 @@ class BatterieBackup:
             try:
                 sensor_value = getattr(self, sensor_name)
             except AttributeError as error:
-                raise BatterieSensorError(f"BatterieBackup: Device has no sensor called '{sensor_name}'. Update sonnen_api_v2 package.") from error
+                raise BatterieSensorError(f'BatterieBackup: Device has no sensor called "{sensor_name}". Update sonnen_api_v2 package.') from error
             except Exception as error:
                 _LOGGER.error("Error getting sensor %s from class: %s", sensor_name, repr(error))
-                raise BatterieError(f'Error getting sensor {sensor_name} from class: {repr(error)}') from error
+                raise BatterieError(f'Error getting sensor "{sensor_name}" from class: {repr(error)}') from error
         except Exception as error:
             _LOGGER.error("Error getting sensor %s from class: %s", sensor_name, repr(error))
-            raise BatterieError(f'Error getting sensor {sensor_name} from battery: {repr(error)}') from error
+            raise BatterieError(f'Error getting sensor "{sensor_name}" from battery: {repr(error)}') from error
 
         return sensor_value
 
